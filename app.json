@@ -1,11 +1,13 @@
-//app.json
 {
   "expo": {
-    "name": "expo-app",
-    "slug": "expo-app",
-    "version": "1.0.0",
+    "name": "ViBets",
+    "slug": "ViBets-app",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/Fer.png",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -21,12 +23,32 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Fer.png",
         "backgroundColor": "#6c93f0"
-      }
+      },
+      "package": "com.vibetsapp.vibets"
     },
-
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "5a389f31-d398-468c-9142-4b3b85da56f7"
+      },
+      "updates": {
+        "enabled": false,
+        "fallbackToCacheTimeout": 0
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5a389f31-d398-468c-9142-4b3b85da56f7"
     }
   }
 }
