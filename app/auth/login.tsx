@@ -25,7 +25,7 @@ export default function LoginScreen() {
       return;
     }
     try {
-      await signIn(email, password); // si no hay throw, ya se logueó
+      await signIn(email, password); // si no hay error, ya se logueó
       router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert(t('error'), error.message || t('loginFailed'));
@@ -62,7 +62,7 @@ export default function LoginScreen() {
             placeholder="••••••••"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            isPassword={true}  // Se encarga de la visibilidad de la contraseña
             leftIcon={<Lock size={20} color={colors.textSecondary} />}
           />
           
@@ -86,7 +86,6 @@ export default function LoginScreen() {
   );
 }
 
-// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,

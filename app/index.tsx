@@ -16,10 +16,10 @@ export default function Index() {
   }, []);
 
   if (loadingSession) {
-    // Spinner o algo similar mientras verificas sesión
+    // Puedes mostrar un spinner o un placeholder mientras se recupera la sesión.
     return null;
   }
 
-  // Si hay sesión, vas a /tabs; si no, /auth/login
+  // Si hay sesión, se redirige a la app principal; si no, a login.
   return isAuthenticated ? <Redirect href="/(tabs)" /> : <Redirect href="/auth/login" />;
 }

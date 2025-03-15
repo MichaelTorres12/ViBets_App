@@ -1,4 +1,4 @@
-//components/Input.tsx
+// components/Input.tsx
 import React, { useState } from 'react';
 import { 
   View, 
@@ -36,13 +36,13 @@ export const Input: React.FC<InputProps> = ({
   ...rest
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const [showPassword, setShowPassword] = useState(!isPassword);
+  // Si es campo de contraseña, iniciamos con showPassword = false (oculto)
+  const [showPassword, setShowPassword] = useState(false);
   const { colors } = useTheme();
   
   const handleFocus = () => setIsFocused(true);
   const handleBlur = () => setIsFocused(false);
-  
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+  const togglePasswordVisibility = () => setShowPassword(prev => !prev);
   
   return (
     <View style={[styles.container, containerStyle]}>
@@ -53,7 +53,7 @@ export const Input: React.FC<InputProps> = ({
           styles.inputContainer,
           { 
             borderColor: colors.border,
-            backgroundColor: colors.cardLight
+            backgroundColor: colors.cardLight,
           },
           isFocused && { borderColor: colors.primary },
           error ? { borderColor: colors.error } : null,
@@ -72,7 +72,7 @@ export const Input: React.FC<InputProps> = ({
           onFocus={handleFocus}
           onBlur={handleBlur}
           placeholderTextColor={colors.textTertiary}
-          secureTextEntry={!showPassword}
+          secureTextEntry={isPassword && !showPassword}
           {...rest}
         />
         

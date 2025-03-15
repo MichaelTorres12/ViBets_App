@@ -9,27 +9,84 @@ import { Button } from '@/components/Button';
 import { useLanguage } from '@/components/LanguageContext';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
+import { supabase } from '@/services/supabaseClient';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-
-  // Tomamos la función signUp y el loading del store
   const { signUp, loading } = useAuthStore();
 
-  // Creamos estados locales para username, email, password
+  // Estados para registro
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleRegister = async () => {
-    if (!username || !email || !password) {
+    // Validaciones REGEX
+    const usernameRegex = /^[a-zA-Z0-9_]{3,}$/; // Al menos 3 caracteres, solo letras, números y guiones bajos.
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    const passwordRegex = /^.{6,}$/; // Al menos 6 caracteres
+
+    if (!username || !email || !password || !confirmPassword) {
       Alert.alert(t('error'), t('fillAllFields'));
       return;
     }
+    if (!usernameRegex.test(username)) {
+      Alert.alert(t('error'), 'El username debe tener al menos 3 caracteres y solo puede contener letras, números y guiones bajos.');
+      return;
+    }
+    if (!emailRegex.test(email)) {
+      Alert.alert(t('error'), 'El correo electrónico no es válido.');
+      return;
+    }
+    if (!passwordRegex.test(password)) {
+      Alert.alert(t('error'), 'La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert(t('error'), 'Las contraseñas no coinciden.');
+      return;
+    }
+
+    // Verificar que el username sea único en la tabla "profiles"
+    const { data: existingProfiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', username);
+
+    if (profileError) {
+      console.error('Error al verificar username:', profileError);
+      Alert.alert(t('error'), 'Error al verificar el username. Intenta de nuevo.');
+      return;
+    }
+    if (existingProfiles && existingProfiles.length > 0) {
+      Alert.alert(t('error'), 'El username ya está en uso.');
+      return;
+    }
+
     try {
+      // Registra en Supabase Auth
       await signUp(email, password, username);
-      // Si no hubo error, redirigimos a la app principal
+      
+      // Obtén el usuario actual desde Supabase
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        throw userError || new Error('Error al obtener el usuario');
+      }
+      const userId = userData.user.id;
+      
+      // Inserta en la tabla "profiles"
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert([{ id: userId, username }]);
+      if (insertError) {
+        console.error('Error al insertar en profiles:', insertError);
+        Alert.alert(t('error'), 'Error al crear el perfil.');
+        return;
+      }
+      
+      // Redirige a la app principal
       router.replace('/(tabs)');
     } catch (error: any) {
       console.error("Error al registrarse:", error);
@@ -78,7 +135,16 @@ export default function RegisterScreen() {
             placeholder="••••••••"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            isPassword={true}
+            leftIcon={<Lock size={20} color={colors.textSecondary} />}
+          />
+
+          <Input
+            label="Confirmar contraseña"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            isPassword={true}
             leftIcon={<Lock size={20} color={colors.textSecondary} />}
           />
           

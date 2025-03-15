@@ -1,5 +1,4 @@
 // app/(tabs)/profile.tsx
-
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,11 +26,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  // Extraemos user y logout del store
   const { user, logout } = useAuthStore();
   const { t } = useLanguage();
   
-  // Si no hay usuario, mostramos pantalla de carga
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
@@ -54,10 +51,12 @@ export default function ProfileScreen() {
         {
           text: t('logout'),
           onPress: async () => {
-            // Llamamos a logout y luego reemplazamos la ruta a /auth/login
             try {
               await logout();
-              router.replace('/auth/login');
+              // Retrasamos la navegación para asegurarnos de que el Root Layout esté montado
+              setTimeout(() => {
+                router.replace('/auth/login');
+              }, 0);
             } catch (err) {
               console.error("Error en logout:", err);
             }
@@ -87,15 +86,11 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.profileSection}>
           <Avatar
-            // Si tienes un avatar en user.user_metadata?.avatar
-            // ponlo aquí. Si no, lo dejas en undefined.
-            uri={undefined}
-            // El nombre para Avatar
+            uri={undefined} // Aquí podrías usar user.user_metadata?.avatar si lo tienes
             name={user.user_metadata?.username ?? user.email}
             size={80}
           />
           <View style={styles.profileInfo}>
-            {/* Mostrar username si lo guardaste en user_metadata */}
             <Text style={styles.username}>
               {user.user_metadata?.username ?? 'Sin Username'}
             </Text>
@@ -113,7 +108,6 @@ export default function ProfileScreen() {
             <View style={styles.balanceContent}>
               <View>
                 <Text style={styles.balanceLabel}>{t('yourBalance')}</Text>
-                {/* Si no tienes coins en Auth, usar 0 */}
                 <Text style={styles.balanceValue}>
                   ${ (user.coins ?? 0).toLocaleString() }
                 </Text>
@@ -125,6 +119,7 @@ export default function ProfileScreen() {
                 leftIcon={<Plus size={16} color="#000000" />}
                 style={{ paddingHorizontal: 12 }}
                 onPress={() => {
+                  // Implementa la lógica para añadir fondos o deja un placeholder
                   console.log('Add funds pressed');
                 }}
               />
@@ -153,9 +148,7 @@ export default function ProfileScreen() {
         
         <View style={styles.menuSection}>
           <Text style={styles.menuTitle}>{t('account')}</Text>
-          
           <Card style={styles.menuCard}>
-            {/* Ejemplo de menú */}
             <TouchableOpacity style={styles.menuItem}>
               <View style={styles.menuItemLeft}>
                 <View style={[styles.menuIcon, { backgroundColor: '#4361EE20' }]}>
@@ -165,12 +158,10 @@ export default function ProfileScreen() {
               </View>
               <ChevronRight size={20} color={colors.textSecondary} />
             </TouchableOpacity>
-            
-            {/* ... Más items */}
+            {/* Otros items del menú... */}
           </Card>
           
           <Text style={styles.menuTitle}>{t('support')}</Text>
-          
           
           <Button
             title={t('logout')}
@@ -186,7 +177,6 @@ export default function ProfileScreen() {
   );
 }
 
-// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,

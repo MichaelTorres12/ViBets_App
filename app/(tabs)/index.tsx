@@ -1,5 +1,5 @@
-//app/(tabs)/index.tsx
-import React, { useEffect } from 'react';
+// app/(tabs)/index.tsx
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,19 +18,24 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user } = useAuthStore();
   const { getUserGroups } = useGroupsStore();
   const { bets, participations, getBetById } = useBetsStore();
   const { t } = useLanguage();
-  
+
+  // Si no hay usuario (por ejemplo, justo tras logout), retornamos null para evitar crash.
+  if (!user) {
+    return null;
+  }
+
   const userGroups = getUserGroups(user.id);
-  
+
   // Get trending bets (last 5)
   const trendingBets = bets
     .filter(bet => bet.status === 'open')
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
-  
+
   // Get user's active bets
   const userBets = participations
     .filter(p => p.userId === user.id && p.status === 'active')
@@ -40,19 +45,19 @@ export default function HomeScreen() {
     })
     .filter(item => item.bet)
     .slice(0, 3);
-  
+
   const navigateToGroup = (groupId: string) => {
     router.push(`/groups/${groupId}`);
   };
-  
+
   const navigateToBet = (betId: string) => {
     router.push(`/bets/${betId}`);
   };
-  
+
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerTop}>
-        <CoinDisplay amount={user.coins} size="large" />
+        <CoinDisplay amount={user.coins ?? 0} size="large" />
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.iconButton}>
             <Search size={24} color={colors.text} />
@@ -64,7 +69,7 @@ export default function HomeScreen() {
       </View>
     </View>
   );
-  
+
   const renderTrendingSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -73,16 +78,16 @@ export default function HomeScreen() {
           <Text style={styles.viewAll}>{t('viewAll')}</Text>
         </TouchableOpacity>
       </View>
-      
+
       {trendingBets.length > 0 ? (
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.trendingScroll}
         >
           {trendingBets.map(bet => (
-            <TouchableOpacity 
-              key={bet.id} 
+            <TouchableOpacity
+              key={bet.id}
               style={styles.trendingCard}
               onPress={() => navigateToBet(bet.id)}
               activeOpacity={0.8}
@@ -103,9 +108,9 @@ export default function HomeScreen() {
                         .reduce((sum, p) => sum + p.amount, 0)
                         .toLocaleString()}
                     </Text>
-                    <Button 
-                      title={t('betNow')} 
-                      size="small" 
+                    <Button
+                      title={t('betNow')}
+                      size="small"
                       rounded
                       style={styles.trendingButton}
                       onPress={() => navigateToBet(bet.id)}
@@ -123,7 +128,7 @@ export default function HomeScreen() {
       )}
     </View>
   );
-  
+
   const renderYourBetsSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -132,7 +137,7 @@ export default function HomeScreen() {
           <Text style={styles.viewAll}>{t('viewAll')}</Text>
         </TouchableOpacity>
       </View>
-      
+
       {userBets.length > 0 ? (
         userBets.map(({ bet, participation }) => (
           bet && (
@@ -147,8 +152,8 @@ export default function HomeScreen() {
       ) : (
         <Card style={styles.emptyCard}>
           <Text style={styles.emptyText}>{t('noActiveBets')}</Text>
-          <Button 
-            title={t('exploreBets')} 
+          <Button
+            title={t('exploreBets')}
             variant="outline"
             style={styles.emptyButton}
             onPress={() => router.push('/bets')}
@@ -157,7 +162,7 @@ export default function HomeScreen() {
       )}
     </View>
   );
-  
+
   const renderYourGroupsSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -166,7 +171,7 @@ export default function HomeScreen() {
           <Text style={styles.viewAll}>{t('viewAll')}</Text>
         </TouchableOpacity>
       </View>
-      
+
       {userGroups.length > 0 ? (
         <View>
           {userGroups.slice(0, 2).map(group => (
@@ -176,9 +181,8 @@ export default function HomeScreen() {
               onPress={() => navigateToGroup(group.id)}
             />
           ))}
-          
           {userGroups.length > 2 && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.moreButton}
               onPress={() => router.push('/groups')}
             >
@@ -193,13 +197,13 @@ export default function HomeScreen() {
         <Card style={styles.emptyCard}>
           <Text style={styles.emptyText}>{t('notInGroups')}</Text>
           <View style={styles.emptyActions}>
-            <Button 
-              title={t('createGroup')} 
+            <Button
+              title={t('createGroup')}
               style={styles.emptyButton}
               onPress={() => router.push('/groups/create')}
             />
-            <Button 
-              title={t('joinGroup')} 
+            <Button
+              title={t('joinGroup')}
               variant="outline"
               style={styles.emptyButton}
               onPress={() => router.push('/groups/join')}
@@ -209,13 +213,12 @@ export default function HomeScreen() {
       )}
     </View>
   );
-  
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {renderHeader()}
-      
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >

@@ -1,68 +1,62 @@
-//app/_layout.tsx
+// app/_layout.tsx
 import React, { useEffect, useState } from 'react';
 import { Slot, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, Text } from 'react-native';
-import { LanguageProvider } from '@/components/LanguageContext';
-import { ThemeProvider } from '@/components/ThemeContext';
-import { useTheme } from '@/components/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemeProvider } from '@/components/ThemeContext';
+import { LanguageProvider } from '@/components/LanguageContext';
+import { useTheme } from '@/components/ThemeContext';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/store/auth-store';
 
-// This component is needed to access the theme context
 const AppContent = () => {
   const { colors, theme } = useTheme();
   const router = useRouter();
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+  const { checkSession, subscribeAuth } = useAuthStore();
 
   useEffect(() => {
-    const checkOnboarding = async () => {
+    const init = async () => {
+      await checkSession();
+      subscribeAuth();
       const seen = await AsyncStorage.getItem('hasSeenOnboarding');
       const complete = seen === 'true';
       setOnboardingComplete(complete);
       if (!complete) {
-        // Una vez montado, redirige al onboarding
         router.replace('/onboarding/step1');
       }
     };
-    checkOnboarding();
-  }, []);
+    init();
+  }, [router, checkSession, subscribeAuth]);
 
-  /*
-  useEffect(() => {
-    // Forzamos siempre la redirección al onboarding para poder depurar sus vistas
-    router.replace('/onboarding/step1');
-
-    // Si prefieres dejar la lógica pero forzando el valor a false, podrías hacerlo así:
-    // setOnboardingComplete(false);
-    // router.replace('/onboarding/step1'); 
-  }, []); */
+  // Mientras se verifica el onboarding, no renderizamos nada
+  if (onboardingComplete === null) {
+    return null;
+  }
 
   return (
     <>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: colors.background },
+          animation: 'slide_from_right',
+          headerTintColor: colors.text,
+          headerTitleStyle: { fontWeight: 'bold' },
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
+        {/* Solo incluimos las rutas que realmente pertenecen a la navegación principal */}
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/login" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
 
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: colors.background, },
-            animation: 'slide_from_right',
-            headerTintColor: colors.text,
-            headerTitleStyle: { fontWeight: 'bold', },
-            contentStyle: { backgroundColor: colors.background, },
-          }}
-        >
-          <Stack.Screen name="step1" options={{ headerShown: false }} />
-          <Stack.Screen name="step2" options={{ headerShown: false }} />
-          <Stack.Screen name="step3" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-          <Stack.Screen name="auth/register" options={{ headerShown: false }} />
-          <Stack.Screen name="settings" options={{ title: 'Settings' }} />
-
-          <Slot />
-        </Stack>
+        {/* Resto de pantallas */}
+        <Slot />
+      </Stack>
     </>
   );
 };
