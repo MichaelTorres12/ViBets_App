@@ -38,12 +38,7 @@ export default function LoginScreen() {
   
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen 
-        options={{
-          title: t('login'),
-          headerBackTitle: t('back'),
-        }}
-      />
+
       
 
 
