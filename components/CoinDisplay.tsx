@@ -2,15 +2,16 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '@/constants/colors';
 import { formatCurrency } from '@/utils/helpers';
-import { Coins } from 'lucide-react-native';
 
 interface CoinDisplayProps {
-  amount: number;
+  // Volvemos 'amount' opcional con '?'
+  amount?: number;
   size?: 'small' | 'medium' | 'large';
 }
 
 export const CoinDisplay: React.FC<CoinDisplayProps> = ({
-  amount,
+  // Si amount no viene, le asignamos 0
+  amount = 0,
   size = 'medium',
 }) => {
   const getIconSize = (): number => {
@@ -23,7 +24,7 @@ export const CoinDisplay: React.FC<CoinDisplayProps> = ({
         return 18;
     }
   };
-  
+
   const getTextSize = (): number => {
     switch (size) {
       case 'small':
@@ -34,7 +35,7 @@ export const CoinDisplay: React.FC<CoinDisplayProps> = ({
         return 14;
     }
   };
-  
+
   return (
     <View style={styles.container}>
       <Text style={[styles.text, { fontSize: getTextSize() }]}>

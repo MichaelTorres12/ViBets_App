@@ -1,6 +1,7 @@
-//app/(tabs)/profile.tsx
+// app/(tabs)/profile.tsx
+
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
@@ -8,7 +9,6 @@ import { useAuthStore } from '@/store/auth-store';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { CoinDisplay } from '@/components/CoinDisplay';
 import { useLanguage } from '@/components/LanguageContext';
 import { 
   LogOut, 
@@ -20,7 +20,6 @@ import {
   Trophy,
   ChevronRight,
   CreditCard,
-  Gift,
   Heart,
   Plus
 } from 'lucide-react-native';
@@ -28,9 +27,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  // Extraemos user y logout del store
   const { user, logout } = useAuthStore();
   const { t } = useLanguage();
   
+  // Si no hay usuario, mostramos pantalla de carga
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
@@ -52,9 +53,14 @@ export default function ProfileScreen() {
         },
         {
           text: t('logout'),
-          onPress: () => {
-            logout();
-            router.replace('/auth/login');
+          onPress: async () => {
+            // Llamamos a logout y luego reemplazamos la ruta a /auth/login
+            try {
+              await logout();
+              router.replace('/auth/login');
+            } catch (err) {
+              console.error("Error en logout:", err);
+            }
           },
           style: 'destructive',
         },
@@ -81,12 +87,18 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.profileSection}>
           <Avatar
-            uri={user.avatar}
-            name={user.username}
+            // Si tienes un avatar en user.user_metadata?.avatar
+            // ponlo aquí. Si no, lo dejas en undefined.
+            uri={undefined}
+            // El nombre para Avatar
+            name={user.user_metadata?.username ?? user.email}
             size={80}
           />
           <View style={styles.profileInfo}>
-            <Text style={styles.username}>{user.username}</Text>
+            {/* Mostrar username si lo guardaste en user_metadata */}
+            <Text style={styles.username}>
+              {user.user_metadata?.username ?? 'Sin Username'}
+            </Text>
             <Text style={styles.email}>{user.email}</Text>
           </View>
         </View>
@@ -101,7 +113,10 @@ export default function ProfileScreen() {
             <View style={styles.balanceContent}>
               <View>
                 <Text style={styles.balanceLabel}>{t('yourBalance')}</Text>
-                <Text style={styles.balanceValue}>${user.coins.toLocaleString()}</Text>
+                {/* Si no tienes coins en Auth, usar 0 */}
+                <Text style={styles.balanceValue}>
+                  ${ (user.coins ?? 0).toLocaleString() }
+                </Text>
               </View>
               <Button
                 title={t('addFunds')}
@@ -110,7 +125,6 @@ export default function ProfileScreen() {
                 leftIcon={<Plus size={16} color="#000000" />}
                 style={{ paddingHorizontal: 12 }}
                 onPress={() => {
-                  // Implementa la lógica para añadir fondos o deja un placeholder
                   console.log('Add funds pressed');
                 }}
               />
@@ -141,6 +155,7 @@ export default function ProfileScreen() {
           <Text style={styles.menuTitle}>{t('account')}</Text>
           
           <Card style={styles.menuCard}>
+            {/* Ejemplo de menú */}
             <TouchableOpacity style={styles.menuItem}>
               <View style={styles.menuItemLeft}>
                 <View style={[styles.menuIcon, { backgroundColor: '#4361EE20' }]}>
@@ -151,80 +166,11 @@ export default function ProfileScreen() {
               <ChevronRight size={20} color={colors.textSecondary} />
             </TouchableOpacity>
             
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.menuIcon, { backgroundColor: '#00E67620' }]}>
-                  <Trophy size={20} color="#00E676" />
-                </View>
-                <Text style={styles.menuItemText}>{t('achievements')}</Text>
-              </View>
-              <ChevronRight size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-            
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.menuIcon, { backgroundColor: '#FFAA0020' }]}>
-                  <Bell size={20} color="#FFAA00" />
-                </View>
-                <Text style={styles.menuItemText}>{t('notifications')}</Text>
-              </View>
-              <ChevronRight size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-            
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.menuIcon, { backgroundColor: '#FF3D7120' }]}>
-                  <CreditCard size={20} color="#FF3D71" />
-                </View>
-                <Text style={styles.menuItemText}>{t('paymentMethods')}</Text>
-              </View>
-              <ChevronRight size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
+            {/* ... Más items */}
           </Card>
           
           <Text style={styles.menuTitle}>{t('support')}</Text>
           
-          <Card style={styles.menuCard}>
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.menuIcon, { backgroundColor: '#4CC9F020' }]}>
-                  <HelpCircle size={20} color="#4CC9F0" />
-                </View>
-                <Text style={styles.menuItemText}>{t('helpFaq')}</Text>
-              </View>
-              <ChevronRight size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-            
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.menuIcon, { backgroundColor: '#7209B720' }]}>
-                  <Shield size={20} color="#7209B7" />
-                </View>
-                <Text style={styles.menuItemText}>{t('privacyPolicy')}</Text>
-              </View>
-              <ChevronRight size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-            
-            <View style={styles.menuDivider} />
-            
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={styles.menuItemLeft}>
-                <View style={[styles.menuIcon, { backgroundColor: '#F7258520' }]}>
-                  <Heart size={20} color="#F72585" />
-                </View>
-                <Text style={styles.menuItemText}>{t('inviteFriends')}</Text>
-              </View>
-              <ChevronRight size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </Card>
           
           <Button
             title={t('logout')}
@@ -240,6 +186,7 @@ export default function ProfileScreen() {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -319,9 +266,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
-  addCoinsButton: {
-    paddingHorizontal: 12,
-  },
   statsCard: {
     marginHorizontal: 16,
     marginBottom: 24,
@@ -387,10 +331,6 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     color: colors.text,
-  },
-  menuDivider: {
-    height: 1,
-    backgroundColor: colors.border,
   },
   logoutButton: {
     marginTop: 8,

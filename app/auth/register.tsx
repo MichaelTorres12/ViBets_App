@@ -1,38 +1,42 @@
-//app/auth/register.tsx
+// app/auth/register.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { useAuthStore } from '@/store/auth-store';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/components/LanguageContext';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react-native';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register, isLoading } = useAuthStore();
   const { t } = useLanguage();
-  
+
+  // Tomamos la función signUp y el loading del store
+  const { signUp, loading } = useAuthStore();
+
+  // Creamos estados locales para username, email, password
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   const handleRegister = async () => {
     if (!username || !email || !password) {
       Alert.alert(t('error'), t('fillAllFields'));
       return;
     }
-    
     try {
-      await register(username, email, password);
+      await signUp(email, password, username);
+      // Si no hubo error, redirigimos a la app principal
       router.replace('/(tabs)');
-    } catch (error) {
-      Alert.alert(t('error'), t('registrationFailed'));
+    } catch (error: any) {
+      console.error("Error al registrarse:", error);
+      Alert.alert(t('error'), error.message || t('registrationFailed'));
     }
   };
-  
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen 
@@ -49,18 +53,19 @@ export default function RegisterScreen() {
         </View>
         
         <View style={styles.form}>
+          {/* Campo para username */}
           <Input
-            label={t('username')}
-            placeholder="johndoe"
+            label="Username"
+            placeholder="Tu nombre de usuario"
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
             leftIcon={<User size={20} color={colors.textSecondary} />}
           />
-          
+
           <Input
             label={t('email')}
-            placeholder="example@email.com"
+            placeholder="user@example.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -80,7 +85,7 @@ export default function RegisterScreen() {
           <Button
             title={t('register')}
             onPress={handleRegister}
-            isLoading={isLoading}
+            isLoading={loading}
             style={styles.registerButton}
             rightIcon={<ArrowRight size={20} color="#000000" />}
           />
@@ -97,6 +102,7 @@ export default function RegisterScreen() {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,

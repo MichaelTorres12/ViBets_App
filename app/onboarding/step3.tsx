@@ -1,7 +1,7 @@
-//app/onboarding/step3.tsx
+// app/onboarding/step3.tsx
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,11 +9,14 @@ import { colors } from '@/constants/colors';
 // Si quieres usar un gradiente de fondo, descomenta lo siguiente:
 // import { LinearGradient } from 'expo-linear-gradient';
 
-export default function OnboardingStep1() {
+export default function OnboardingStep3() {
   const router = useRouter();
 
-  const handleNext = () => {
-    router.push('/auth/login');
+  const handleFinishOnboarding = async () => {
+    // Guardar que el usuario ya completó el onboarding
+    await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+    // Luego redirigir a la pantalla de login (o donde prefieras)
+    router.replace('/auth/login');
   };
 
   return (
@@ -47,7 +50,7 @@ export default function OnboardingStep1() {
       </View>
 
       {/* Botón de acción */}
-      <TouchableOpacity style={styles.button} onPress={handleNext}>
+      <TouchableOpacity style={styles.button} onPress={handleFinishOnboarding}>
         <Text style={styles.buttonText}>Siguiente</Text>
       </TouchableOpacity>
 

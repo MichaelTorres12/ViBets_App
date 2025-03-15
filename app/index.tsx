@@ -1,16 +1,25 @@
-//app/index.tsx
+// app/index.tsx
 import { Redirect } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth-store';
-import { View } from 'react-native';
 
 export default function Index() {
-  const { isAuthenticated } = useAuthStore();
-  
-  // Simple redirect based on authentication state
-  // Wrap in a View to ensure we have a component rendering before navigation
-  return (
-    <View style={{ flex: 1 }}>
-      {isAuthenticated ? <Redirect href="/(tabs)" /> : <Redirect href="/auth/login" />}
-    </View>
-  );
+  const { isAuthenticated, checkSession } = useAuthStore();
+  const [loadingSession, setLoadingSession] = useState(true);
+
+  useEffect(() => {
+    const init = async () => {
+      await checkSession();
+      setLoadingSession(false);
+    };
+    init();
+  }, []);
+
+  if (loadingSession) {
+    // Spinner o algo similar mientras verificas sesión
+    return null;
+  }
+
+  // Si hay sesión, vas a /tabs; si no, /auth/login
+  return isAuthenticated ? <Redirect href="/(tabs)" /> : <Redirect href="/auth/login" />;
 }

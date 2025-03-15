@@ -23,16 +23,6 @@ export default function HomeScreen() {
   const { bets, participations, getBetById } = useBetsStore();
   const { t } = useLanguage();
   
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/auth/login');
-    }
-  }, [isAuthenticated, router]);
-  
-  if (!user) {
-    return null;
-  }
-  
   const userGroups = getUserGroups(user.id);
   
   // Get trending bets (last 5)
