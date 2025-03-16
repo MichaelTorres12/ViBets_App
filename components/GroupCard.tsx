@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '@/constants/colors';
 import { Group } from '@/types';
 import { Avatar } from './Avatar';
-import { Users, ArrowRight } from 'lucide-react-native';
+import { Users, ArrowRight, TrendingUp, Trophy, Calendar, Key, Coins } from 'lucide-react-native';
 import { formatDate } from '@/utils/helpers';
 import { Card } from './Card';
+import { useLanguage } from './LanguageContext';
+import { useAuthStore } from '@/store/auth-store';
 
 interface GroupCardProps {
   group: Group;
@@ -18,11 +20,33 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   onPress,
   compact = false
 }) => {
-  // Calculate total group coins
-  const totalGroupCoins = group.members.reduce((total, member) => total + member.groupCoins, 0);
+  const { t } = useLanguage();
+  const { user } = useAuthStore();
   
-  // Get current user's coins in this group
-  const currentUserCoins = group.members.find(m => m.userId === '1')?.groupCoins || 0;
+  // Obtener las monedas del usuario actual en este grupo
+  const currentUserMember = group.members.find(m => m.userId === user?.id);
+  const userCoins = currentUserMember?.groupCoins || 0;
+  
+  // Contar apuestas en este grupo (si están disponibles)
+  const betsCount = group.bets?.length || 0;
+  
+  // Contar desafíos en este grupo
+  const challengesCount = group.challenges?.length || 0;
+
+  // Formatear fecha de creación
+  const creationDate = formatDate(group.createdAt);
+
+  // Código de invitación
+  const inviteCode = group.inviteCode;
+
+  /*console.log('Datos del grupo en GroupCard:', {
+    groupId: group.id,
+    groupName: group.name,
+    userCoins,
+    creationDate,
+    inviteCode,
+    members: group.members
+  }); */
 
   if (compact) {
     return (
@@ -62,41 +86,50 @@ export const GroupCard: React.FC<GroupCardProps> = ({
           />
           <View style={styles.headerInfo}>
             <Text style={styles.name}>{group.name}</Text>
-            <Text style={styles.description} numberOfLines={1}>
-              {group.description || 'No description'}
-            </Text>
+            <View style={styles.coinsContainer}>
+              <Coins size={16} color={colors.warning} style={styles.coinIcon} />
+              <Text style={styles.coinsText}>
+                {t('yourCoins')}: {userCoins.toLocaleString()}
+              </Text>
+            </View>
           </View>
         </View>
         
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{group.members.length}</Text>
-            <Text style={styles.statLabel}>Members</Text>
+            <Text style={styles.statLabel}>{t('members')}</Text>
+            <Users size={16} color={colors.primary} style={styles.statIcon} />
           </View>
           
           <View style={styles.statDivider} />
           
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{group.challenges?.length || 0}</Text>
-            <Text style={styles.statLabel}>Challenges</Text>
+            <Text style={styles.statValue}>{betsCount}</Text>
+            <Text style={styles.statLabel}>{t('bets')}</Text>
+            <TrendingUp size={16} color={colors.primary} style={styles.statIcon} />
           </View>
           
           <View style={styles.statDivider} />
           
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{currentUserCoins}</Text>
-            <Text style={styles.statLabel}>Your Coins</Text>
+            <Text style={styles.statValue}>{challengesCount}</Text>
+            <Text style={styles.statLabel}>{t('challenges')}</Text>
+            <Trophy size={16} color={colors.primary} style={styles.statIcon} />
           </View>
         </View>
         
         <View style={styles.footer}>
           <View style={styles.footerItem}>
-            <Text style={styles.footerLabel}>Created</Text>
-            <Text style={styles.footerValue}>{formatDate(group.createdAt)}</Text>
+            <View style={styles.footerRow}>
+              <Calendar size={14} color={colors.textSecondary} style={styles.footerIcon} />
+              <Text style={styles.footerValue}>{creationDate}</Text>
+            </View>
           </View>
           
-          <View style={styles.inviteCode}>
-            <Text style={styles.inviteCodeText}>{group.inviteCode}</Text>
+          <View style={styles.inviteCodeContainer}>
+            <Key size={14} color={colors.primary} style={styles.inviteIcon} />
+            <Text style={styles.inviteCodeText}>{inviteCode}</Text>
           </View>
         </View>
       </Card>
@@ -107,6 +140,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
+    padding: 16,
   },
   header: {
     flexDirection: 'row',
@@ -123,9 +157,17 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 4,
   },
-  description: {
+  coinsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  coinIcon: {
+    marginRight: 4,
+  },
+  coinsText: {
     fontSize: 14,
-    color: colors.textSecondary,
+    fontWeight: '600',
+    color: colors.warning,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -148,6 +190,10 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 12,
     color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  statIcon: {
+    opacity: 0.8,
   },
   statDivider: {
     width: 1,
@@ -161,21 +207,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerItem: {
-    
+    flex: 1,
   },
-  footerLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerIcon: {
+    marginRight: 4,
   },
   footerValue: {
     fontSize: 14,
     color: colors.text,
   },
-  inviteCode: {
+  inviteCodeContainer: {
     backgroundColor: colors.cardLight,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inviteIcon: {
+    marginRight: 4,
   },
   inviteCodeText: {
     fontSize: 14,
@@ -199,15 +253,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 4,
   },
   compactMembers: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    marginTop: 4,
   },
   compactMembersText: {
     fontSize: 12,
     color: colors.textSecondary,
+    marginLeft: 4,
   },
 });

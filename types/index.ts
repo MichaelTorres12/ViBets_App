@@ -1,4 +1,4 @@
-//types/index.tsx
+// types/index.tsx
 import { ReactNode } from 'react';
 
 export interface User {
@@ -23,21 +23,6 @@ export interface ChatMessage {
   message?: string;
   image?: string;
   timestamp: string;
-}
-
-export interface Challenge {
-  id: string;
-  title: string;
-  description: string;
-  reward: string;
-  progress: number;
-  endDate: string;
-  createdBy: string;
-  createdAt: string;
-  tasks: ChallengeTask[];
-  leaderboard?: ChallengeLeaderboard[];
-  participants?: ChallengeParticipant[];
-  completedBy?: ChallengeCompleted[];
 }
 
 export interface ChallengeTask {
@@ -70,6 +55,21 @@ export interface ChallengeCompleted {
   avatar: string;
 }
 
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  reward: string;
+  progress: number;
+  endDate: string;
+  createdBy: string;
+  createdAt: string;
+  tasks: ChallengeTask[];
+  leaderboard?: ChallengeLeaderboard[];
+  participants?: ChallengeParticipant[];
+  completedBy?: ChallengeCompleted[];
+}
+
 export interface Group {
   id: string;
   name: string;
@@ -81,32 +81,34 @@ export interface Group {
   inviteCode: string;
   chatMessages?: ChatMessage[];
   challenges?: Challenge[];
+  bets?: Bet[];
 }
 
+export type BetType = 'binary' | 'multiple' | 'custom';
+export type BetStatus = 'open' | 'closed' | 'settled';
+export type ParticipationStatus = 'active' | 'won' | 'lost';
+
 export interface BetOption {
-  text: ReactNode;
   id: string;
+  betId: string;
+  text: string;
   name: string;
   odds: number;
 }
 
-export type BetType = 'binary' | 'multiple' | 'custom';
-
 export interface Bet {
-  endDate: string | number | Date;
   id: string;
   title: string;
   description?: string;
   groupId: string;
   createdBy: string;
-  createdAt: string;
-  expiresAt: string;
-  options: BetOption[];
-  status: 'open' | 'closed' | 'settled';
-  winningOptionId?: string;
   type: BetType;
-  // Agregar la propiedad settledOption como opcional:
+  options: BetOption[];
+  endDate: string;
+  status: BetStatus;
   settledOption?: string;
+  createdAt: string;
+  expiresAt?: string;
 }
 
 export interface BetParticipation {
@@ -115,12 +117,6 @@ export interface BetParticipation {
   userId: string;
   optionId: string;
   amount: number;
+  status: ParticipationStatus;
   createdAt: string;
-  status: 'active' | 'won' | 'lost';
-}
-
-export interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
 }

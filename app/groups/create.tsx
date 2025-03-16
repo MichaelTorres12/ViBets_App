@@ -1,4 +1,4 @@
-//app/groups/create.tsx
+// app/groups/create.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,49 +15,43 @@ export default function CreateGroupScreen() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
-  
+
   const handleCreateGroup = async () => {
     if (!name) {
       setError('Please enter a group name');
       return;
     }
-    
     try {
       const newGroup = await createGroup(name, description);
-      router.push(`/groups/${newGroup.id}`);
+      if (newGroup) {
+        router.push(`/groups/${newGroup.id}`);
+      } else {
+        setError('Failed to create group. Please try again.');
+      }
     } catch (err) {
       setError('Failed to create group. Please try again.');
     }
   };
-  
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen 
         options={{ 
           title: 'Create Group',
-          headerTitleStyle: {
-            fontWeight: '600',
-          },
+          headerTitleStyle: { fontWeight: '600' },
           headerLeft: () => (
-            <TouchableOpacity 
-              style={styles.headerBackButton}
-              onPress={() => router.back()}
-            >
+            <TouchableOpacity style={styles.headerBackButton} onPress={() => router.back()}>
               <ChevronLeft size={24} color={colors.text} />
             </TouchableOpacity>
           ),
         }} 
       />
-      
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <View style={styles.iconContainer}>
               <Users size={32} color="#FFFFFF" />
@@ -68,16 +62,15 @@ export default function CreateGroupScreen() {
             </Text>
           </View>
           
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          
           <View style={styles.formContainer}>
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            
             <Input
               label="Group Name"
               placeholder="Enter a name for your group"
               value={name}
               onChangeText={setName}
             />
-            
             <Input
               label="Description (Optional)"
               placeholder="What's this group about?"
@@ -86,7 +79,6 @@ export default function CreateGroupScreen() {
               multiline
               numberOfLines={3}
               textAlignVertical="top"
-              inputStyle={styles.textArea}
             />
             
             <Button
@@ -103,24 +95,11 @@ export default function CreateGroupScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  headerBackButton: {
-    marginRight: 8,
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  headerBackButton: { marginRight: 8 },
+  keyboardAvoidingView: { flex: 1 },
+  scrollContent: { flexGrow: 1, padding: 24 },
+  header: { alignItems: 'center', marginBottom: 32 },
   iconContainer: {
     width: 64,
     height: 64,
@@ -130,31 +109,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  formContainer: {
-    marginBottom: 24,
-  },
-  errorText: {
-    color: colors.error,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  textArea: {
-    height: 100,
-    paddingTop: 12,
-  },
-  createButton: {
-    marginTop: 16,
-  },
+  title: { fontSize: 24, fontWeight: 'bold', color: colors.text, marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 16, color: colors.textSecondary, textAlign: 'center' },
+  formContainer: { marginBottom: 24 },
+  errorText: { color: colors.error, marginBottom: 16, textAlign: 'center' },
+  createButton: { marginTop: 16 },
 });
