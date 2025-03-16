@@ -15,6 +15,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Plus, TrendingUp, ChevronRight, Search, Bell, ArrowRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Bet, BetParticipation } from '@/types';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -37,14 +38,12 @@ export default function HomeScreen() {
     .slice(0, 5);
 
   // Get user's active bets
-  const userBets = participations
+  const userBets: Array<{ bet: Bet | undefined, participation: BetParticipation }> = participations
     .filter(p => p.userId === user.id && p.status === 'active')
     .map(p => {
       const bet = getBetById(p.betId);
       return { participation: p, bet };
-    })
-    .filter(item => item.bet)
-    .slice(0, 3);
+    });
 
   const navigateToGroup = (groupId: string) => {
     router.push(`/groups/${groupId}`);
@@ -134,7 +133,7 @@ export default function HomeScreen() {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{t('yourBets')}</Text>
         <TouchableOpacity onPress={() => router.push('/bets')}>
-          <Text style={styles.viewAll}>{t('viewAll')}</Text>
+          <Text style={styles.seeAll}>{t('seeAll')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -153,10 +152,8 @@ export default function HomeScreen() {
         <Card style={styles.emptyCard}>
           <Text style={styles.emptyText}>{t('noActiveBets')}</Text>
           <Button
-            title={t('exploreBets')}
-            variant="outline"
-            style={styles.emptyButton}
-            onPress={() => router.push('/bets')}
+            title={t('createBet')}
+            onPress={() => router.push('/create-bet')}
           />
         </Card>
       )}
@@ -362,5 +359,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
+  },
+  seeAll: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '600',
   },
 });

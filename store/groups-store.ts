@@ -1,7 +1,7 @@
 // store/groups-store.ts
 import { create } from 'zustand';
 import { supabase } from '@/services/supabaseClient';
-import { Group, GroupMember, ChatMessage, Challenge } from '@/types';
+import { Group, GroupMember, ChatMessage } from '@/types';
 import { useAuthStore } from './auth-store';
 
 interface GroupsState {
@@ -23,13 +23,6 @@ interface GroupsState {
   // Métodos para chat
   addMessage: (groupId: string, message: ChatMessage) => Promise<void>;
   getChatMessages: (groupId: string) => Promise<ChatMessage[]>;
-
-  // Métodos para desafíos (ejemplo básico)
-  createChallenge: (groupId: string, challenge: Omit<Challenge, 'id'>) => Promise<Challenge | null>;
-  getChallenges: (groupId: string) => Promise<Challenge[]>;
-  getChallengeById: (groupId: string, challengeId: string) => Promise<Challenge | undefined>;
-  completeChallenge: (groupId: string, challengeId: string, userId: string) => Promise<void>;
-  completeTask: (groupId: string, challengeId: string, taskId: string) => Promise<void>;
 }
 
 export const useGroupsStore = create<GroupsState>((set, get) => ({
@@ -49,7 +42,7 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         `);
       if (groupsError) throw groupsError;
 
-      console.log(':', JSON.stringify(groupsData, null, 2));
+      console.log('Grupos:', JSON.stringify(groupsData, null, 2));
       
       // Para cada grupo, obtenemos sus apuestas
       const groupsWithBets = await Promise.all(
@@ -68,25 +61,8 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         })
       );
 
-      // Para cada grupo, obtenemos sus desafíos
-      const groupsWithBetsAndChallenges = await Promise.all(
-        groupsWithBets.map(async (group: any) => {
-          const { data: challengesData, error: challengesError } = await supabase
-            .from('challenges')
-            .select('*')
-            .eq('group_id', group.id);
-          
-          if (challengesError) {
-            console.error('Error fetching challenges:', challengesError);
-            return { ...group, challenges: [] };
-          }
-          
-          return { ...group, challenges: challengesData || [] };
-        })
-      );
-
-      // Transformamos los datos para que coincidan con nuestro modelo
-      const transformedGroups = groupsWithBetsAndChallenges.map((group: any) => {
+      // Por el momento no usaremos challenges, asignamos un arreglo vacío
+      const transformedGroups = groupsWithBets.map((group: any) => {
         // Transformamos los miembros para que coincidan con nuestro modelo
         const transformedMembers = group.members.map((member: any) => ({
           userId: member.user_id,
@@ -94,7 +70,6 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
           joinedAt: member.joined_at
         }));
 
-        // Devolvemos el grupo transformado
         return {
           id: group.id,
           name: group.name,
@@ -105,11 +80,9 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
           createdAt: group.created_at,
           inviteCode: group.invite_code,
           bets: group.bets || [],
-          challenges: group.challenges || []
+          challenges: [] // Valor por defecto: sin challenges
         };
       });
-
-      //console.log('Grupos transformados:', JSON.stringify(transformedGroups[0], null, 2));
 
       set({ groups: transformedGroups as Group[], isLoading: false });
     } catch (err: any) {
@@ -169,7 +142,7 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
       if (!groupsData || groupsData.length === 0) throw new Error('Invalid invite code');
       const group = groupsData[0] as Group;
 
-      // Verifica si el usuario ya es miembro (usamos la propiedad transformada)
+      // Verifica si el usuario ya es miembro
       const isMember = group.members.some((m: any) => m.user_id === userId);
       if (isMember) throw new Error('You are already a member of this group');
 
@@ -215,12 +188,10 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     return get().groups.find(g => g.id === groupId);
   },
 
-  // IMPORTANTE: usamos la propiedad transformada "userId" para filtrar
   getUserGroups: (userId) => {
     return get().groups.filter(g => g.members.some((m) => m.userId === userId));
   },
 
-  // También se actualiza aquí para usar "userId"
   getGroupMember: (groupId, userId) => {
     const group = get().getGroupById(groupId);
     if (!group) return undefined;
@@ -298,104 +269,4 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
       return [];
     }
   },
-
-  // Métodos para desafíos (ejemplo básico)
-  createChallenge: async (groupId, challenge) => {
-    set({ isLoading: true, error: null });
-    try {
-      const newChallenge: Challenge = {
-        ...challenge,
-        id: `c${Date.now()}`,
-        createdBy: '',
-        createdAt: new Date().toISOString(),
-      };
-      const { data, error } = await supabase
-        .from('challenges')
-        .insert([{ group_id: groupId, ...newChallenge }])
-        .select();
-      if (error) throw error;
-      set({ isLoading: false });
-      return data[0] as Challenge;
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
-      throw error;
-    }
-  },
-
-  getChallenges: async (groupId) => {
-    try {
-      const { data, error } = await supabase
-        .from('challenges')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as Challenge[];
-    } catch (error: any) {
-      set({ error: error.message });
-      return [];
-    }
-  },
-
-  getChallengeById: async (groupId, challengeId) => {
-    try {
-      const { data, error } = await supabase
-        .from('challenges')
-        .select('*')
-        .eq('group_id', groupId)
-        .eq('id', challengeId)
-        .single();
-      if (error) throw error;
-      return data as Challenge;
-    } catch (error: any) {
-      set({ error: error.message });
-      return undefined;
-    }
-  },
-
-  completeChallenge: async (groupId, challengeId, userId) => {
-    try {
-      const { error } = await supabase
-        .from('challenges')
-        .update({ progress: 100 })
-        .eq('group_id', groupId)
-        .eq('id', challengeId);
-      if (error) throw error;
-      // Extrae el valor numérico del reward (ej: "200 coins")
-      const challenge = await get().getChallengeById(groupId, challengeId);
-      if (challenge) {
-        const rewardAmount = parseInt(challenge.reward.split(' ')[0]) || 0;
-        await get().updateGroupCoins(groupId, userId, rewardAmount);
-      }
-    } catch (error: any) {
-      set({ error: error.message });
-      throw error;
-    }
-  },
-
-  completeTask: async (groupId, challengeId, taskId) => {
-    try {
-      const challenge = await get().getChallengeById(groupId, challengeId);
-      if (!challenge) throw new Error('Challenge not found');
-      const updatedTasks = challenge.tasks.map(t => {
-        if (t.id === taskId) {
-          return { ...t, completed: true, progress: t.total };
-        }
-        return t;
-      });
-      const totalTasks = updatedTasks.length;
-      const completedTasks = updatedTasks.filter(t => t.completed).length;
-      const newProgress = Math.round((completedTasks / totalTasks) * 100);
-      const { error } = await supabase
-        .from('challenges')
-        .update({ tasks: updatedTasks, progress: newProgress })
-        .eq('group_id', groupId)
-        .eq('id', challengeId);
-      if (error) throw error;
-    } catch (error: any) {
-      set({ error: error.message });
-      throw error;
-    }
-  },
 }));
-

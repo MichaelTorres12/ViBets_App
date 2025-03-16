@@ -1,3 +1,4 @@
+//Components/ThemeContext.tsx
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useThemeStore, Theme } from '@/store/theme-store';
 import { darkColors, lightColors, ColorTheme } from '@/constants/colors';

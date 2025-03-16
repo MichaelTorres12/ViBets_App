@@ -1,3 +1,4 @@
+//components/LangugageContext.tsx
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useLanguageStore, Language } from '@/store/language-store';
 import { useTranslation } from '@/constants/translations';
