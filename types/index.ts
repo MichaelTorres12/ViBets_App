@@ -12,7 +12,8 @@ export interface User {
 
 export interface GroupMember {
   userId: string;
-  groupCoins: number; // Group-specific coins
+  username?: string;  // Make it optional in case we can't fetch the username
+  groupCoins: number;
   joinedAt: string;
 }
 

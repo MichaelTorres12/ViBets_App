@@ -128,6 +128,7 @@ export default function HomeScreen() {
     </View>
   );
 
+  /*
   const renderYourBetsSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -159,6 +160,7 @@ export default function HomeScreen() {
       )}
     </View>
   );
+  */
 
   const renderYourGroupsSection = () => (
     <View style={styles.section}>
@@ -220,7 +222,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {renderTrendingSection()}
-        {renderYourBetsSection()}
+        {/*{renderYourBetsSection()}*/}
         {renderYourGroupsSection()}
       </ScrollView>
     </SafeAreaView>

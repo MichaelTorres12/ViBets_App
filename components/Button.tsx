@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
 
-interface ButtonProps extends TouchableOpacityProps {
+export interface ButtonProps extends TouchableOpacityProps {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
@@ -23,6 +23,7 @@ interface ButtonProps extends TouchableOpacityProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   rounded?: boolean;
+  icon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -37,6 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
   leftIcon,
   rightIcon,
   rounded = false,
+  icon,
   ...rest
 }) => {
   const { colors } = useTheme();
@@ -182,6 +184,11 @@ export const Button: React.FC<ButtonProps> = ({
             <Text style={[styles.text, getTextStyle(), textStyle]}>{title}</Text>
             {rightIcon && <View style={styles.iconContainer}>{rightIcon}</View>}
           </>
+        )}
+        {icon && !isLoading && (
+          <View style={styles.iconContainer}>
+            {icon}
+          </View>
         )}
       </TouchableOpacity>
     );

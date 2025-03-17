@@ -2,7 +2,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/services/supabaseClient';
 import { Group, GroupMember, ChatMessage } from '@/types';
-import { useAuthStore } from './auth-store';
 
 interface GroupsState {
   groups: Group[];
@@ -18,11 +17,23 @@ interface GroupsState {
   getUserGroups: (userId: string) => Group[];
   getGroupMember: (groupId: string, userId: string) => GroupMember | undefined;
   updateGroupCoins: (groupId: string, userId: string, amount: number) => Promise<void>;
-  getGroupMembersSorted: (groupId: string) => Promise<Array<{ userId: string; username: string; avatar: string; groupCoins: number }>>;
+  getGroupMembersSorted: (
+    groupId: string
+  ) => Promise<Array<{ userId: string; username: string; avatar: string; groupCoins: number }>>;
 
   // Métodos para chat
   addMessage: (groupId: string, message: ChatMessage) => Promise<void>;
   getChatMessages: (groupId: string) => Promise<ChatMessage[]>;
+
+  fetchGroupMembers: (groupId: string) => Promise<void>;
+
+  // Método para crear apuestas
+  createBet: (
+    groupId: string,
+    title: string,
+    description?: string,
+    end_date?: string
+  ) => Promise<any>;
 }
 
 export const useGroupsStore = create<GroupsState>((set, get) => ({
@@ -30,44 +41,51 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
   isLoading: false,
   error: null,
 
+  /**
+   * Obtiene todos los grupos junto con sus miembros y datos de perfil (username).
+   * Además, se trae la información de apuestas de cada grupo.
+   */
   fetchGroups: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Obtenemos los grupos con sus miembros
       const { data: groupsData, error: groupsError } = await supabase
         .from('groups')
         .select(`
           *,
-          members:group_members(*)
+          members:group_members(
+            user_id,
+            group_coins,
+            joined_at,
+            profiles:profiles(username)
+          )
         `);
       if (groupsError) throw groupsError;
 
       console.log('Grupos:', JSON.stringify(groupsData, null, 2));
-      
-      // Para cada grupo, obtenemos sus apuestas
+
+      // Para cada grupo se obtienen sus apuestas
       const groupsWithBets = await Promise.all(
         groupsData.map(async (group: any) => {
           const { data: betsData, error: betsError } = await supabase
             .from('bets')
             .select('*')
             .eq('group_id', group.id);
-          
           if (betsError) {
             console.error('Error fetching bets:', betsError);
             return { ...group, bets: [] };
           }
-          
           return { ...group, bets: betsData || [] };
         })
       );
 
-      // Por el momento no usaremos challenges, asignamos un arreglo vacío
+      // Transformamos los grupos y sus miembros
       const transformedGroups = groupsWithBets.map((group: any) => {
-        // Transformamos los miembros para que coincidan con nuestro modelo
         const transformedMembers = group.members.map((member: any) => ({
           userId: member.user_id,
           groupCoins: member.group_coins,
-          joinedAt: member.joined_at
+          joinedAt: member.joined_at,
+          username: member.profiles?.username ?? 'Unknown User',
+          avatar: member.profiles?.avatar ?? '',
         }));
 
         return {
@@ -91,18 +109,17 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     }
   },
 
+  /**
+   * Crea un nuevo grupo y agrega al creador como miembro.
+   */
   createGroup: async (name, description) => {
     set({ isLoading: true, error: null });
     try {
-      // Genera un código de invitación (6 caracteres en mayúsculas)
       const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-      // Obtén el usuario actual
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData.user) throw userError || new Error('User not found');
       const userId = userData.user.id;
 
-      // Inserta el nuevo grupo en la tabla groups
       const { data: groupData, error: groupError } = await supabase
         .from('groups')
         .insert([{ name, description, invite_code: inviteCode, created_by: userId }])
@@ -110,13 +127,11 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
       if (groupError) throw groupError;
       const newGroup = groupData[0] as Group;
 
-      // Inserta al creador en la tabla group_members
       const { error: memberError } = await supabase
         .from('group_members')
         .insert([{ group_id: newGroup.id, user_id: userId, group_coins: 1000 }]);
       if (memberError) throw memberError;
 
-      // Refresca los grupos
       await get().fetchGroups();
       set({ isLoading: false });
       return newGroup;
@@ -126,6 +141,9 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     }
   },
 
+  /**
+   * Permite unirse a un grupo mediante un código de invitación.
+   */
   joinGroup: async (inviteCode) => {
     set({ isLoading: true, error: null });
     try {
@@ -133,20 +151,25 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
       if (userError || !userData.user) throw userError || new Error('User not found');
       const userId = userData.user.id;
 
-      // Busca el grupo por código de invitación
       const { data: groupsData, error: groupError } = await supabase
         .from('groups')
-        .select('*, members:group_members(*)')
+        .select(`
+          *,
+          members:group_members(
+            user_id,
+            group_coins,
+            joined_at,
+            profiles:profiles(username)
+          )
+        `)
         .eq('invite_code', inviteCode);
       if (groupError) throw groupError;
       if (!groupsData || groupsData.length === 0) throw new Error('Invalid invite code');
       const group = groupsData[0] as Group;
 
-      // Verifica si el usuario ya es miembro
       const isMember = group.members.some((m: any) => m.user_id === userId);
       if (isMember) throw new Error('You are already a member of this group');
 
-      // Inserta el usuario en group_members
       const { error: memberError } = await supabase
         .from('group_members')
         .insert([{ group_id: group.id, user_id: userId, group_coins: 1000 }]);
@@ -161,6 +184,9 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     }
   },
 
+  /**
+   * Permite salir de un grupo eliminando la relación en group_members.
+   */
   leaveGroup: async (groupId) => {
     set({ isLoading: true, error: null });
     try {
@@ -168,7 +194,6 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
       if (userError || !userData.user) throw userError || new Error('User not found');
       const userId = userData.user.id;
 
-      // Elimina la relación en group_members
       const { error } = await supabase
         .from('group_members')
         .delete()
@@ -185,19 +210,30 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
   },
 
   getGroupById: (groupId) => {
-    return get().groups.find(g => g.id === groupId);
+    return get().groups.find((g) => g.id === groupId);
   },
 
   getUserGroups: (userId) => {
-    return get().groups.filter(g => g.members.some((m) => m.userId === userId));
+    return get().groups.filter((g) => g.members.some((m) => m.userId === userId));
   },
 
+  /**
+   * Retorna un miembro de un grupo, asegurándose de que 'username' sea un string.
+   */
   getGroupMember: (groupId, userId) => {
     const group = get().getGroupById(groupId);
     if (!group) return undefined;
-    return group.members.find((m) => m.userId === userId);
+    return group.members.find((m) => m.userId === userId) || { 
+      userId, 
+      username: 'Unknown User', 
+      groupCoins: 0, 
+      joinedAt: '' 
+    };
   },
 
+  /**
+   * Actualiza las monedas de un miembro en un grupo y refresca la lista.
+   */
   updateGroupCoins: async (groupId, userId, amount) => {
     try {
       const { data: memberData, error: fetchError } = await supabase
@@ -221,20 +257,25 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     }
   },
 
+  /**
+   * Obtiene los miembros de un grupo ordenados por monedas.
+   */
   getGroupMembersSorted: async (groupId) => {
     try {
-      // Se asume que existe una tabla "profiles" con información adicional del usuario
       const { data, error } = await supabase
         .from('group_members')
         .select('user_id, group_coins, joined_at, profiles(username, avatar)')
         .eq('group_id', groupId);
       if (error) throw error;
-      const members = data.map((row: any) => ({
-        userId: row.user_id,
-        username: row.profiles.username,
-        avatar: row.profiles.avatar,
-        groupCoins: row.group_coins,
-      }));
+      const members = data.map((row: any) => {
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+        return {
+          userId: row.user_id,
+          username: profile?.username ?? 'Unknown User',
+          avatar: profile?.avatar ?? '',
+          groupCoins: row.group_coins,
+        };
+      });
       return members.sort((a, b) => b.groupCoins - a.groupCoins);
     } catch (error: any) {
       set({ error: error.message });
@@ -242,9 +283,11 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     }
   },
 
+  /**
+   * Agrega un mensaje al chat del grupo.
+   */
   addMessage: async (groupId, message) => {
     try {
-      // Se asume que existe una tabla "chat_messages" con campo group_id
       const { error } = await supabase
         .from('chat_messages')
         .insert([{ group_id: groupId, ...message }]);
@@ -255,6 +298,9 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     }
   },
 
+  /**
+   * Obtiene los mensajes del chat del grupo, ordenados por timestamp.
+   */
   getChatMessages: async (groupId) => {
     try {
       const { data, error } = await supabase
@@ -267,6 +313,70 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     } catch (error: any) {
       set({ error: error.message });
       return [];
+    }
+  },
+
+  /**
+   * Obtiene los miembros de un grupo (consulta individual) y actualiza el store.
+   */
+  fetchGroupMembers: async (groupId: string) => {
+    try {
+      const { data: membersData, error: membersError } = await supabase
+        .from('group_members')
+        .select(`
+          user_id,
+          group_coins,
+          joined_at,
+          profiles:user_id (
+            username,
+            avatar
+          )
+        `)
+        .eq('group_id', groupId);
+      if (membersError) throw membersError;
+
+      const members: GroupMember[] = membersData.map((member: any) => ({
+        userId: member.user_id,
+        username: member.profiles?.username ?? 'Unknown User',
+        groupCoins: member.group_coins,
+        joinedAt: member.joined_at,
+      }));
+
+      const groups = get().groups.map((group) => {
+        if (group.id === groupId) {
+          return { ...group, members };
+        }
+        return group;
+      });
+      set({ groups });
+    } catch (error) {
+      console.error('Error fetching group members:', error);
+    }
+  },
+
+  /**
+   * Crea una apuesta para un grupo, inserta en la tabla bets y refresca los grupos.
+   */
+  createBet: async (
+    groupId: string,
+    title: string,
+    description?: string,
+    end_date?: string
+  ) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data, error } = await supabase
+        .from('bets')
+        .insert([{ group_id: groupId, title, description, end_date }])
+        .select();
+      if (error) throw error;
+      
+      await get().fetchGroups();
+      set({ isLoading: false });
+      return data[0];
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
     }
   },
 }));

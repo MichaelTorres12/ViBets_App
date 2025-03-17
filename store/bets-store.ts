@@ -17,6 +17,13 @@ interface BetsState {
   // New functions
   participateInBet: (betId: string, userId: string, optionId: string, amount: number) => Promise<void>;
   settleBet: (betId: string, winningOptionId: string) => Promise<void>;
+  createBet: (data: {
+    groupId: string;
+    title: string;
+    description?: string;
+    endDate: string;
+    options: Array<{ text: string; odds: number }>;
+  }) => Promise<void>;
 }
 
 export const useBetsStore = create<BetsState>((set, get) => ({
@@ -32,7 +39,7 @@ export const useBetsStore = create<BetsState>((set, get) => ({
     return get().bets.filter((bet) => bet.groupId === groupId);
   },
 
-  getBetParticipations: (betId) => {
+  getBetParticipations: (betId: string) => {
     return get().participations.filter((p) => p.betId === betId);
   },
 
@@ -127,6 +134,50 @@ export const useBetsStore = create<BetsState>((set, get) => ({
       set({ loading: false });
     } catch (error) {
       console.error('Error settling bet:', error);
+      set({ loading: false });
+      throw error;
+    }
+  },
+
+  createBet: async ({ groupId, title, description, endDate, options }) => {
+    set({ loading: true });
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw userError || new Error('User not found');
+
+      // Create bet
+      const { data: betData, error: betError } = await supabase
+        .from('bets')
+        .insert([{
+          group_id: groupId,
+          created_by: user.id,
+          title,
+          description,
+          end_date: endDate,
+          status: 'open'
+        }])
+        .select()
+        .single();
+
+      if (betError) throw betError;
+
+      // Create options
+      const optionsToInsert = options.map(opt => ({
+        bet_id: betData.id,
+        option_text: opt.text,
+        odds: opt.odds
+      }));
+
+      const { error: optionsError } = await supabase
+        .from('bet_options')
+        .insert(optionsToInsert);
+
+      if (optionsError) throw optionsError;
+
+      set({ loading: false });
+    } catch (error) {
+      console.error('Error creating bet:', error);
       set({ loading: false });
       throw error;
     }
