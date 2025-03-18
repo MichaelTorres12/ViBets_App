@@ -93,23 +93,22 @@ export interface BetOption {
   id: string;
   betId: string;
   text: string;
-  name: string;
-  odds: number;
+  label: string;     // antes 'text'
+  odd: number;       // antes 'odds'
 }
 
 export interface Bet {
   id: string;
-  title: string;
-  description?: string;
   groupId: string;
   createdBy: string;
-  type: BetType;
-  options: BetOption[];
-  endDate: string;
+  title: string;
+  description: string;
   status: BetStatus;
-  settledOption?: string;
+  endDate?: string;
   createdAt: string;
-  expiresAt?: string;
+  options: BetOption[];
+  participations?: BetParticipation[];
+  userParticipation?: BetParticipation;
 }
 
 export interface BetParticipation {

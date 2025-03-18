@@ -9,6 +9,7 @@ import { Button } from '@/components/Button';
 import { useLanguage } from '@/components/LanguageContext';
 import { Mail, Lock, ArrowRight } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
+import { Image } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -41,6 +42,17 @@ export default function LoginScreen() {
         }}
       />
       <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          {/* Logo a la izquierda */}
+          <Image
+            source={require('../../assets/images/ghostIcon.png')} // Ajusta la ruta a tu imagen
+            style={styles.logoImage}
+          />
+          {/* Nombre de la app */}
+          <Text style={styles.logoText}>Vi</Text>
+          <Text style={styles.logoText}>Bets</Text>
+        </View>
+      
         <View style={styles.header}>
           <Text style={styles.title}>{t('welcome')}</Text>
           <Text style={styles.subtitle}>{t('signIn')}</Text>
@@ -98,6 +110,23 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 32,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center', 
+    marginBottom: 50,
+    gap: 2,
+  },
+  logoImage: {
+    width: 80,
+    height: 70,
+    marginRight: 2,
+  },
+  logoText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: colors.text,
   },
   title: {
     fontSize: 32,

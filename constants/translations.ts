@@ -93,6 +93,10 @@ type TranslationKey =
   | 'noGroupsJoined'
   | 'groupCoins'
   | 'yourGroupCoins'
+  | 'recentBets'
+  | 'seeAll'
+  | 'allBets'
+
   
   // Bets
   | 'bets'
@@ -143,6 +147,12 @@ type TranslationKey =
   | 'current'
   | 'best'
   | 'viewActiveBets'
+  | 'allChallenges'
+  | 'myChallenges'
+  | 'newChallenge'
+
+  // Chat
+  | 'typeAMessage'
   
   // History
   | 'history'
@@ -168,6 +178,8 @@ type TranslationKey =
   | 'noMoreMembers'
   | 'topEarner'
   | 'totalCoins'
+  | 'thisMonth'
+  | 'allTime'
   
   // Profile
   | 'profile'
@@ -298,7 +310,10 @@ export const translations: Translations = {
     noGroupsJoined: "You haven't joined any groups yet",
     groupCoins: 'Group Coins',
     yourGroupCoins: 'Your Group Coins',
-    
+    recentBets: 'Recent Bets',
+    seeAll: 'See All',
+    allBets: 'All Bets',
+
     // Bets
     bets: 'Bets',
     activeBets: 'Active Bets',
@@ -348,7 +363,13 @@ export const translations: Translations = {
     current: 'Current',
     best: 'Best',
     viewActiveBets: 'View Active Bets',
-    
+    allChallenges: 'All Challenges',
+    myChallenges: 'My Challenges',
+    newChallenge: 'New Challenge',
+
+    // Chat
+    typeAMessage: 'Type a message...',
+
     // History
     history: 'History',
     betHistory: 'Bet History',
@@ -372,6 +393,8 @@ export const translations: Translations = {
     noMoreMembers: 'No more members',
     topEarner: 'Top Earner',
     totalCoins: 'Total Coins',
+    thisMonth: 'This Month',
+    allTime: 'All Time',
     
     // Profile
     profile: 'Profile',
@@ -495,6 +518,8 @@ export const translations: Translations = {
     noGroupsJoined: 'Aún no te has unido a ningún grupo',
     groupCoins: 'Monedas del Grupo',
     yourGroupCoins: 'Tus Monedas del Grupo',
+    recentBets: 'Apuestas Recientes',
+    allBets: 'Todas las Apuestas',
     
     // Bets
     bets: 'Apuestas',
@@ -545,7 +570,13 @@ export const translations: Translations = {
     current: 'Actual',
     best: 'Mejor',
     viewActiveBets: 'Ver Apuestas Activas',
-    
+    allChallenges: 'Todos los retos',
+    myChallenges: 'Mis Retos',
+    newChallenge: 'Nuevo Reto',
+
+    // Chat
+    typeAMessage: 'Escribe un mensaje...',
+
     // History
     history: 'Historial',
     betHistory: 'Historial de Apuestas',
@@ -569,6 +600,8 @@ export const translations: Translations = {
     noMoreMembers: 'No hay más miembros',
     topEarner: 'Mayor Ganador',
     totalCoins: 'Total de Monedas',
+    thisMonth: 'Este Mes',
+    allTime: 'Desde siempre',
     
     // Profile
     profile: 'Perfil',
@@ -582,6 +615,7 @@ export const translations: Translations = {
     helpFaq: 'Ayuda y Preguntas Frecuentes',
     privacyPolicy: 'Política de Privacidad',
     inviteFriends: 'Invitar Amigos',
+    seeAll: 'Ver Todo',
     
     // Settings
     appSettings: 'Configuración de la Aplicación',

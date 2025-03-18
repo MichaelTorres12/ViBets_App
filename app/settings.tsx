@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/auth-store';
 import { useLanguage } from '@/components/LanguageContext';
+import { colors } from '@/constants/colors';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguageStore, Language } from '@/store/language-store';
 import { useThemeStore, Theme } from '@/store/theme-store';
@@ -82,6 +83,17 @@ export default function SettingsScreen() {
           headerBackTitle: t('back'),
         }}
       />
+
+      <View style={styles.logoContainer}>
+        {/* Logo a la izquierda */}
+        <Image
+          source={require('../assets/images/ghostIcon.png')} // Ajusta la ruta a tu imagen
+          style={styles.logoImage}
+        />
+        {/* Nombre de la app */}
+        <Text style={styles.logoText}>Vi</Text>
+        <Text style={styles.logoText}>Bets</Text>
+      </View>
       
       <ScrollView style={styles.content}>
         <View style={[styles.section, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
@@ -210,6 +222,23 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 16,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    marginBottom: 10,
+  },
+  logoImage: {
+    width: 55,
+    height: 50,
+    marginRight: 6,
+  },
+  logoText: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: colors.text,
   },
   section: {
     marginBottom: 24,

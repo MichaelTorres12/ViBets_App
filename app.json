@@ -4,7 +4,7 @@
     "slug": "ViBets-app",
     "version": "1.0.6",
     "orientation": "portrait",
-    "icon": "./assets/images/Fer.png",
+    "icon": "./assets/images/icon.png",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -12,17 +12,17 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/Fer.png",
+      "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#6c93f0"
+      "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/Fer.png",
-        "backgroundColor": "#6c93f0"
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#000000"
       },
       "package": "com.vibetsapp.vibets"
     },

@@ -1,7 +1,7 @@
 // store/groups-store.ts
 import { create } from 'zustand';
 import { supabase } from '@/services/supabaseClient';
-import { Group, GroupMember, ChatMessage } from '@/types';
+import { Group, GroupMember, ChatMessage, Challenge } from '@/types';
 
 interface GroupsState {
   groups: Group[];
@@ -20,6 +20,7 @@ interface GroupsState {
   getGroupMembersSorted: (
     groupId: string
   ) => Promise<Array<{ userId: string; username: string; avatar: string; groupCoins: number }>>;
+  createChallenge: (groupId: string, newChallenge: Omit<Challenge, 'id'>) => Promise<void>;
 
   // Métodos para chat
   addMessage: (groupId: string, message: ChatMessage) => Promise<void>;
@@ -379,4 +380,36 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
       throw err;
     }
   },
+
+  createChallenge: async (groupId, newChallenge) => {
+    try {
+      // Aquí podrías hacer un insert en tu tabla de 'challenges' en Supabase,
+      // relacionándolo con el groupId, por ejemplo:
+      const { data, error } = await supabase
+        .from('challenges')
+        .insert([{ 
+          group_id: groupId,
+          title: newChallenge.title,
+          description: newChallenge.description,
+          reward: newChallenge.reward,
+          progress: 0,
+          end_date: newChallenge.endDate,
+          created_by: newChallenge.createdBy,
+          created_at: newChallenge.createdAt,
+          // etc. Agrega lo que necesites
+        }])
+        .select();
+      if (error) throw error;
+
+      const insertedChallenge = data?.[0];
+      // Si tuvieras una tabla 'challenge_tasks', insertarías también las tasks con challenge_id = insertedChallenge.id
+      // ...
+      // Por simplicidad, lo omitimos aquí.
+
+      console.log('Challenge creado:', insertedChallenge);
+    } catch (err: any) {
+      console.error('Error creando challenge:', err);
+      throw err;
+    }
+  }
 }));

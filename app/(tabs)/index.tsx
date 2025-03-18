@@ -56,7 +56,16 @@ export default function HomeScreen() {
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerTop}>
-        <CoinDisplay amount={user.coins ?? 0} size="large" />
+      <View style={styles.logoContainer}>
+        {/* Logo a la izquierda */}
+        <Image
+          source={require('../../assets/images/ghostIcon.png')}
+          style={styles.logoImage}
+        />
+        {/* Nombre de la app */}
+        <Text style={styles.logoText}>Vi</Text>
+        <Text style={styles.logoText}>Bets</Text>
+      </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.iconButton}>
             <Search size={24} color={colors.text} />
@@ -248,6 +257,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  logoImage: {
+    width: 45,
+    height: 40,
+    marginRight: 5,
+  },
+  logoText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
   },
   headerActions: {
     flexDirection: 'row',

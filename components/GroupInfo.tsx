@@ -90,16 +90,17 @@ export function GroupInfo({ group, onShareInvite }: GroupInfoProps) {
 const styles = StyleSheet.create({
   container: {
     padding: 0,
-    gap: 8,
+    gap: 4,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
+    marginBottom: 12,
   },
   avatarContainer: {
-    width: 80,
-    height: 80,
+    width: 65,
+    height: 65,
     borderRadius: 40,
     overflow: 'hidden',
   },
@@ -155,10 +156,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   inviteTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   inviteCodeContainer: {

@@ -1,43 +1,48 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { 
   View, 
-  Text, 
   StyleSheet, 
-  ScrollView, 
-  TouchableOpacity 
+  ScrollView
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { Plus } from 'lucide-react-native';
 
 import { useAuthStore } from '@/store/auth-store';
 import { useGroupsStore } from '@/store/groups-store';
 import { useBetsStore } from '@/store/bets-store';
 import { useTheme } from '@/components/ThemeContext';
-import { useLanguage } from '@/components/LanguageContext';
 
 import { GroupInfo } from '@/components/GroupInfo';
 import { GroupCoins } from '@/components/GroupCoins';
-import { GroupMembers } from '@/components/GroupMembers';
-import { BetCard } from '@/components/BetCard';
+import { GroupHome } from '@/components/group/GroupHome';
+import { GroupBets } from '@/components/group/GroupBets';
+import { GroupChallenges } from '@/components/group/GroupChallenges';
+import { GroupLeaderboard } from '@/components/group/GroupLeaderboard';
+import { GroupChat } from '@/components/group/GroupChat';
+import { GroupTabNavigator } from '@/components/group/GroupTabNavigator';
 
 export default function GroupScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, tab: initialTab } = useLocalSearchParams<{ id: string; tab?: string }>();
   const { user } = useAuthStore();
-  const { t } = useLanguage();
   const { colors } = useTheme();
   
   const { getGroupById, fetchGroups } = useGroupsStore();
-  const { getGroupBets } = useBetsStore();
+  
+  // Estado para controlar la pestaña activa, con inicialización desde params o default a 'home'
+  const [activeTab, setActiveTab] = useState<string>(initialTab || 'home');
 
-  // Estado local para manejar las pestañas: 'bets' o 'members'
-  const [activeTab, setActiveTab] = useState<'bets' | 'members'>('bets');
+  // Actualizar activeTab si cambia initialTab (navegación desde otra pantalla)
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   // Refrescamos datos cada vez que la pantalla se enfoque
   useFocusEffect(
     useCallback(() => {
       fetchGroups();
-    }, [])
+    }, [fetchGroups])
   );
 
   const group = getGroupById(id);
@@ -45,12 +50,26 @@ export default function GroupScreen() {
 
   if (!group) return null;
 
-  const handleCreateBet = () => {
-    router.push(`/groups/${id}/create-bet`);
-  };
-
   const handleShareInvite = () => {
     // Funcionalidad para compartir la invitación
+  };
+
+  // Renderiza el contenido según la pestaña activa
+  const renderTabContent = () => {
+    switch(activeTab) {
+      case 'home':
+        return <GroupHome group={group} userGroupCoins={userGroupCoins} />;
+      case 'bets':
+        return <GroupBets group={group} />;
+      case 'challenges':
+        return <GroupChallenges group={group} />;
+      case 'goats':
+        return <GroupLeaderboard group={group} />;
+      case 'chat':
+        return <GroupChat group={group} />;
+      default:
+        return <GroupHome group={group} userGroupCoins={userGroupCoins} />;
+    }
   };
 
   return (
@@ -58,164 +77,47 @@ export default function GroupScreen() {
       <Stack.Screen 
         options={{ 
           title: group.name,
-
         }} 
       />
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Parte superior: Información del grupo */}
-        <View style={styles.topSection}>
-          <GroupInfo group={group} onShareInvite={handleShareInvite} />
-          
-          {/* Monedas del usuario en este grupo */}
-          <View style={styles.coinsContainer}>
-            <GroupCoins amount={userGroupCoins} />
-          </View>
+      <View style={styles.content}>
 
-          {/* Pestañas de Bets | Members */}
-          <View style={styles.tabsContainer}>
-            <TouchableOpacity 
-              style={[styles.tabButton, activeTab === 'bets' && styles.activeTabButton]}
-              onPress={() => setActiveTab('bets')}
-            >
-              <Text 
-                style={[
-                  styles.tabText, 
-                  { color: activeTab === 'bets' ? colors.primary : colors.textSecondary }
-                ]}
-              >
-                {t('bets') || 'Bets'} 
-                <Text style={styles.countBadge}>
-                  {group.bets ? ` (${group.bets.length})` : ' (0)'}
-                </Text>
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.tabButton, activeTab === 'members' && styles.activeTabButton]}
-              onPress={() => setActiveTab('members')}
-            >
-              <Text 
-                style={[
-                  styles.tabText, 
-                  { color: activeTab === 'members' ? colors.primary : colors.textSecondary }
-                ]}
-              >
-                {t('members') || 'Members'}
-                <Text style={styles.countBadge}>
-                  {group.members ? ` (${group.members.length})` : ' (0)'}
-                </Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
+        
+        {/* Contenido principal según la pestaña activa */}
+        <View style={styles.tabContent}>
+          {renderTabContent()}
         </View>
+      </View>
 
-        {/* Contenido que depende de la pestaña activa */}
-        <View style={styles.contentSection}>
-          {activeTab === 'bets' ? (
-            <View>
-              {/* Botón Crear Apuesta estilo inline (opcional) */}
-              <TouchableOpacity style={styles.newBetButton} onPress={handleCreateBet}>
-                <Plus size={16} color="#000" />
-                <Text style={styles.newBetButtonText}>{t('newBet') || 'New Bet'}</Text>
-              </TouchableOpacity>
-
-              {/* Lista de apuestas */}
-              {group.bets && group.bets.length > 0 ? (
-                group.bets.map((bet: any) => (
-                  <BetCard 
-                    key={bet.id} 
-                    bet={bet} 
-                    userParticipation={bet.userParticipation ?? null} 
-                    onPress={() => router.push(`/groups/${id}/bet/${bet.id}`)}
-                  />
-                ))
-              ) : (
-                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                  {t('noBets') || 'No bets in this group'}
-                </Text>
-              )}
-            </View>
-          ) : (
-            // Pestana de miembros
-            <View>
-              <GroupMembers members={group.members} />
-            </View>
-          )}
-        </View>
-      </ScrollView>
+      {/* Navegador de pestañas en la parte inferior */}
+      <GroupTabNavigator 
+        activeTab={activeTab} 
+        onChangeTab={setActiveTab} 
+      />
     </View>
   );
 }
 
-/* ======================= ESTILOS ======================= */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollView: {
+  content: {
     flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
   },
-  createButton: {
-    marginRight: 16,
+  infoScrollView: {
+    maxHeight: 250,
   },
-
-  /* Top Section (Info del grupo, monedas, tabs) */
-  topSection: {
+  infoContainer: {
     padding: 16,
-    paddingBottom: 0,
+    paddingBottom: 8,
+    gap: 8,
   },
-  coinsContainer: {
-    marginTop: 8,
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    marginTop: 16,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  tabButton: {
+  tabContent: {
     flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  activeTabButton: {
-    borderBottomWidth: 2,
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  countBadge: {
-    fontSize: 14,
-    fontWeight: 'normal',
-  },
-
-  /* Contenido de cada pestaña */
-  contentSection: {
-    padding: 16,
-    paddingTop: 8,
-  },
-
-  /* Apuestas */
-  newBetButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-end',
-    backgroundColor: '#FFD60A',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  newBetButtonText: {
-    marginLeft: 6,
-    color: '#000',
-    fontWeight: '600',
-  },
-  emptyText: {
-    marginTop: 8,
-    textAlign: 'center',
   },
 });
+
 
