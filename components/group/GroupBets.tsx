@@ -1,4 +1,5 @@
-import React from 'react';
+// components/group/GroupBets.tsx
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
@@ -15,6 +16,36 @@ export function GroupBets({ group }: GroupBetsProps) {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const router = useRouter();
+
+  // Estados para ordenación y filtro de estado
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed'>('all');
+
+  // Opciones de filtro de estado
+  const statuses = [
+    { label: t('all') || 'Todas', value: 'all' },
+    { label: t('open') || 'Abiertas', value: 'open' },
+    { label: t('closed') || 'Cerradas', value: 'closed' },
+  ];
+
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+  };
+
+  // Filtrar y ordenar las apuestas
+  const bets = group.bets || [];
+  const filteredBets = bets.filter((bet) => {
+    if (statusFilter === 'all') return true;
+    return bet.status === statusFilter;
+  });
+  const sortedBets = [...filteredBets].sort((a, b) => {
+    // Se asume que cada apuesta tiene una propiedad "createdAt" o "created_at"
+    const dateA = new Date(a.createdAt || a.created_at);
+    const dateB = new Date(b.createdAt || b.created_at);
+    return sortOrder === 'desc'
+      ? dateB.getTime() - dateA.getTime()
+      : dateA.getTime() - dateB.getTime();
+  });
 
   const handleCreateBet = () => {
     router.push(`/groups/${group.id}/create-bet`);
@@ -39,24 +70,58 @@ export function GroupBets({ group }: GroupBetsProps) {
           </Text>
         </TouchableOpacity>
       </View>
-
-    {/* Lista de apuestas */}
-    {group.bets && group.bets.length > 0 ? (
-    <FlatList
-        data={group.bets}
-        renderItem={({ item }) => (
-        <BetCard 
-            key={item.id} 
-            bet={item} 
-            userParticipation={item.userParticipation || null} 
-            onPress={() => router.push(`/groups/${group.id}/bet/${item.id}`)}
+      
+      {/* Contenedor de filtros: Orden y Estado */}
+      <View style={styles.filtersContainer}>
+        <TouchableOpacity style={styles.filterButton} onPress={toggleSortOrder}>
+          <Text style={[styles.filterButtonText, { color: colors.text }]}>
+            {sortOrder === 'desc'
+              ? (t('recentFirst') || 'Recientes primero')
+              : (t('oldFirst') || 'Antiguas primero')}
+          </Text>
+        </TouchableOpacity>
+        <View style={styles.statusFilters}>
+          {statuses.map((status) => (
+            <TouchableOpacity
+              key={status.value}
+              style={[
+                styles.statusButton,
+                statusFilter === status.value && { backgroundColor: colors.primary },
+              ]}
+              onPress={() =>
+                setStatusFilter(status.value as 'all' | 'open' | 'closed')
+              }
+            >
+              <Text
+                style={[
+                  styles.statusButtonText,
+                  statusFilter === status.value && { color: '#fff' },
+                ]}
+              >
+                {status.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      
+      {/* Lista de apuestas */}
+      {sortedBets.length > 0 ? (
+        <FlatList
+          data={sortedBets}
+          renderItem={({ item }) => (
+            <BetCard
+              key={item.id}
+              bet={item}
+              userParticipation={item.userParticipation || null}
+              onPress={() => router.push(`/groups/${group.id}/bet/${item.id}`)}
+            />
+          )}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.betsList}
+          showsVerticalScrollIndicator={false}
         />
-        )}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.betsList}
-        showsVerticalScrollIndicator={false}
-    />
-    ) : (
+      ) : (
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             {t('noBets') || 'No bets in this group'}
@@ -98,6 +163,33 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '600',
   },
+  filtersContainer: {
+    marginBottom: 16,
+  },
+  filterButton: {
+    marginBottom: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  filterButtonText: {
+    fontSize: 14,
+  },
+  statusFilters: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  statusButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  statusButtonText: {
+    fontSize: 14,
+  },
   betsList: {
     gap: 2,
   },
@@ -116,5 +208,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
-  }
+  },
 }); 

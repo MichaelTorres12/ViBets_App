@@ -1,20 +1,22 @@
+// store/bets-store.ts
 import { create } from 'zustand';
-import { Bet, BetParticipation, BetStatus } from '@/types'; // Asegúrate de que tengas el tipo Bet definido en tu proyecto
+import { Bet, BetParticipation, BetStatus } from '@/types';
 import { supabase } from '@/services/supabaseClient';
 
 interface BetsState {
-  bets: Bet[];                          // Array de apuestas
-  participations: BetParticipation[];   // Array de participaciones de usuarios en apuestas
-  loading: boolean;                     // Loading state for async operations
+  bets: Bet[];
+  participations: BetParticipation[];
+  loading: boolean;
 
   getBetById: (betId: string) => Bet | undefined;
   getGroupBets: (groupId: string) => Bet[];
-  
-  // Participaciones por bet
+
+  // Participaciones
   getBetParticipations: (betId: string) => BetParticipation[];
   getUserParticipationInBet: (betId: string, userId: string) => BetParticipation | undefined;
-  
-  // New functions
+
+  // Apuestas
+  fetchBets: (groupId: string) => Promise<void>;
   participateInBet: (betId: string, userId: string, optionId: string, amount: number) => Promise<void>;
   settleBet: (betId: string, winningOptionId: string) => Promise<void>;
   createBet: (data: {
@@ -35,8 +37,9 @@ export const useBetsStore = create<BetsState>((set, get) => ({
     return get().bets.find((bet) => bet.id === betId);
   },
 
+  // Importante: filtra por "bet.group_id" (como en la DB)
   getGroupBets: (groupId: string) => {
-    return get().bets.filter((bet) => bet.groupId === groupId);
+    return get().bets.filter((bet) => bet.group_id === groupId);
   },
 
   getBetParticipations: (betId: string) => {
@@ -46,15 +49,60 @@ export const useBetsStore = create<BetsState>((set, get) => ({
   getUserParticipationInBet: (betId, userId) => {
     return get().participations.find((p) => p.betId === betId && p.userId === userId);
   },
-  
+
+  /** NUEVA FUNCIÓN: Trae las apuestas y sus opciones via JOIN */
+  fetchBets: async (groupId: string) => {
+    set({ loading: true });
+
+    try {
+      // Consulta con JOIN
+      const { data, error } = await supabase
+        .from('bets')
+        .select(`
+          *,
+          bet_options (
+            id,
+            option_text,
+            odds
+          )
+        `)
+        .eq('group_id', groupId);
+
+      if (error) {
+        console.error('Error fetching bets:', error);
+        set({ loading: false });
+        return;
+      }
+
+      // Mapeamos bet_options a "options"
+      const betsMapped = data.map((bet: any) => ({
+        ...bet,
+        options: bet.bet_options
+          ? bet.bet_options.map((opt: any) => ({
+              id: opt.id,
+              label: opt.option_text,
+              odd: parseFloat(opt.odds)
+            }))
+          : []
+      }));
+
+      // Log para depurar
+      console.log('fetchBets - betsMapped:', betsMapped);
+
+      // Actualiza estado
+      set({ bets: betsMapped, loading: false });
+    } catch (e) {
+      console.error('fetchBets - exception:', e);
+      set({ loading: false });
+    }
+  },
+
   participateInBet: async (betId, userId, optionId, amount) => {
     set({ loading: true });
     try {
-      // Check if user already participated
       const existingParticipation = get().getUserParticipationInBet(betId, userId);
-      
+
       if (existingParticipation) {
-        // Update existing participation
         const { error } = await supabase
           .from('bet_participations')
           .update({ 
@@ -63,10 +111,8 @@ export const useBetsStore = create<BetsState>((set, get) => ({
             updated_at: new Date().toISOString()
           })
           .eq('id', existingParticipation.id);
-          
         if (error) throw error;
       } else {
-        // Create new participation
         const { error } = await supabase
           .from('bet_participations')
           .insert({
@@ -76,14 +122,11 @@ export const useBetsStore = create<BetsState>((set, get) => ({
             amount: amount,
             status: 'active'
           });
-          
         if (error) throw error;
       }
-      
-      // Refresh bets data
-      // You would need to implement a fetchBets function to refresh the data
-      // await get().fetchBets();
-      
+
+      // Si quieres refrescar luego de participar:
+      // await get().fetchBets('elGroupId');
       set({ loading: false });
     } catch (error) {
       console.error('Error participating in bet:', error);
@@ -91,7 +134,7 @@ export const useBetsStore = create<BetsState>((set, get) => ({
       throw error;
     }
   },
-  
+
   settleBet: async (betId, winningOptionId) => {
     set({ loading: true });
     try {
@@ -104,33 +147,26 @@ export const useBetsStore = create<BetsState>((set, get) => ({
           updated_at: new Date().toISOString()
         })
         .eq('id', betId);
-        
       if (betError) throw betError;
-      
-      // Update participations status
-      const participations = get().getBetParticipations(betId);
-      
+
       // Update winners
       const { error: winnersError } = await supabase
         .from('bet_participations')
         .update({ status: 'won' })
         .eq('bet_id', betId)
         .eq('option_id', winningOptionId);
-        
       if (winnersError) throw winnersError;
-      
+
       // Update losers
       const { error: losersError } = await supabase
         .from('bet_participations')
         .update({ status: 'lost' })
         .eq('bet_id', betId)
         .neq('option_id', winningOptionId);
-        
       if (losersError) throw losersError;
-      
-      // Refresh bets data
-      // await get().fetchBets();
-      
+
+      // Si quieres refrescar:
+      // await get().fetchBets('elGroupId');
       set({ loading: false });
     } catch (error) {
       console.error('Error settling bet:', error);
@@ -142,11 +178,9 @@ export const useBetsStore = create<BetsState>((set, get) => ({
   createBet: async ({ groupId, title, description, endDate, options }) => {
     set({ loading: true });
     try {
-      // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw userError || new Error('User not found');
 
-      // Create bet
       const { data: betData, error: betError } = await supabase
         .from('bets')
         .insert([{
@@ -159,10 +193,8 @@ export const useBetsStore = create<BetsState>((set, get) => ({
         }])
         .select()
         .single();
-
       if (betError) throw betError;
 
-      // Create options
       const optionsToInsert = options.map(opt => ({
         bet_id: betData.id,
         option_text: opt.text,
@@ -172,7 +204,6 @@ export const useBetsStore = create<BetsState>((set, get) => ({
       const { error: optionsError } = await supabase
         .from('bet_options')
         .insert(optionsToInsert);
-
       if (optionsError) throw optionsError;
 
       set({ loading: false });
@@ -181,5 +212,5 @@ export const useBetsStore = create<BetsState>((set, get) => ({
       set({ loading: false });
       throw error;
     }
-  }
+  },
 }));

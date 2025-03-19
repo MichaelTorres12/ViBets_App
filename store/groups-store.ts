@@ -69,13 +69,33 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         groupsData.map(async (group: any) => {
           const { data: betsData, error: betsError } = await supabase
             .from('bets')
-            .select('*')
+            .select(`
+              *,
+              bet_options (
+                id,
+                option_text,
+                odds
+              )
+            `)
             .eq('group_id', group.id);
           if (betsError) {
             console.error('Error fetching bets:', betsError);
             return { ...group, bets: [] };
           }
-          return { ...group, bets: betsData || [] };
+
+          // Mapeamos las apuestas para que bet_options quede en "options"
+          const betsWithOptions = (betsData || []).map((bet: any) => ({
+            ...bet,
+            options: bet.bet_options
+              ? bet.bet_options.map((opt: any) => ({
+                  id: opt.id,
+                  label: opt.option_text,
+                  odd:  parseFloat(opt.odds),
+                }))
+              : []
+          }));
+
+          return { ...group, bets: betsWithOptions };
         })
       );
 

@@ -1,48 +1,53 @@
-import React, { useMemo } from 'react';
+// components/BetCard.tsx
+import React, { useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
+import { Clock, Users, DollarSign } from 'lucide-react-native';
 
-interface BetOption {
-  label: string;
-  odd: number;
+export interface BetOption {
+  id: string;
+  label: string; // Corresponde a option_text en la DB
+  odd: number;   // Corresponde a odds en la DB
 }
 
-interface Bet {
+export interface Bet {
   id: string;
   title: string;
   description?: string;
   status?: string;       // 'open', 'closed', 'settled'
-  options?: BetOption[];
+  options?: BetOption[]; // Se espera que venga mapeado desde el JOIN de bet_options
   betsCount?: number;
   pot?: number;
-  end_date?: string;     // Fecha/hora final de la apuesta (ISO)
+  end_date?: string;     // Fecha/hora final
 }
 
 interface BetCardProps {
   bet: Bet;
-  userParticipation: any; 
+  userParticipation: any;
   onPress: () => void;
 }
 
 export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPress }) => {
   const { colors } = useTheme();
-  
-  // Cálculo del tiempo restante
+
+  // Consola para revisar la data de la apuesta
+  useEffect(() => {
+    console.log("BetCard - Datos de la apuesta:", bet);
+  }, [bet]);
+
+  // 1. Calcular tiempo restante
   const { timeLeft, isEnded } = useMemo(() => {
     if (!bet.end_date) {
       return { timeLeft: 'No end date', isEnded: false };
     }
-
     const now = Date.now();
     const endTime = new Date(bet.end_date).getTime();
     const diff = endTime - now;
 
     if (diff <= 0) {
-      // El tiempo ya expiró
       return { timeLeft: 'Ended', isEnded: true };
     }
-    
-    // Convertir milisegundos a d/h/m
+
     let seconds = Math.floor(diff / 1000);
     const days = Math.floor(seconds / 86400);
     seconds %= 86400;
@@ -50,14 +55,13 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
     seconds %= 3600;
     const minutes = Math.floor(seconds / 60);
 
-    const dStr = days > 0 ? `${days}d ` : '';
-    const hStr = hours > 0 ? `${hours}h ` : '';
-    const mStr = minutes > 0 ? `${minutes}m ` : '';
+    const dStr = days ? `${days}d ` : '';
+    const hStr = hours ? `${hours}h ` : '';
+    const mStr = minutes ? `${minutes}m ` : '';
     return { timeLeft: `${dStr}${hStr}${mStr}left`.trim(), isEnded: false };
   }, [bet.end_date]);
 
-  // Override local del status:
-  // Si status es 'open' y ya expiró, lo tratamos como 'closed' para la UI
+  // 2. Ajustar el status local según expiración
   const localStatus = useMemo(() => {
     if (bet.status === 'open' && isEnded) {
       return 'closed';
@@ -65,34 +69,29 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
     return bet.status ?? 'unknown';
   }, [bet.status, isEnded]);
 
-  // Decidir color y texto del badge
-  function getStatusBadge(status: string) {
-    switch (status) {
-      case 'open':
-        return { label: 'Open', bgColor: '#4CAF50' };   // Verde
-      case 'closed':
-        return { label: 'Closed', bgColor: '#F44336' }; // Rojo
-      case 'settled':
-        return { label: 'Settled', bgColor: '#9E9E9E' };
-      default:
-        return { label: 'Unknown', bgColor: '#777' };
-    }
-  }
+  // 3. Obtener badge y color según el status
   const { label: statusLabel, bgColor: statusColor } = getStatusBadge(localStatus);
 
-  const participationAmount = userParticipation?.amount ?? 0;
+  // 4. Datos adicionales de la apuesta
   const betsCount = bet.betsCount ?? 0;
   const pot = bet.pot ?? 0;
+  // Se usa un array vacío como valor por defecto para evitar error de TS
+  const options = bet.options ?? [];
+
+  // Consola para revisar las opciones obtenidas
+  useEffect(() => {
+    console.log("BetCard - Opciones de la apuesta:", options);
+  }, [options]);
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.card, { backgroundColor: colors.card }]}
       onPress={onPress}
       activeOpacity={0.9}
     >
-      {/* Header: Título y badge de estado */}
+      {/* Header: Título y estado */}
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
           {bet.title}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
@@ -102,59 +101,80 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
 
       {/* Descripción */}
       {bet.description && (
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          {bet.description}
-        </Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{bet.description}</Text>
       )}
 
-      {/* Opciones */}
-      {bet.options && bet.options.length > 0 && (
+      {/* Opciones de apuesta */}
+      {options.length > 0 && (
         <View style={styles.optionsContainer}>
-          {bet.options.map((option, idx) => (
-            <View key={idx} style={styles.optionRow}>
-              <Text style={[styles.optionLabel, { color: colors.text }]}>
-                {option.label}
-              </Text>
-              <Text style={[styles.optionOdd, { color: '#FFD60A' }]}>
-                {option.odd.toFixed(2)}
-              </Text>
+          {options.map((option, idx) => (
+            <View key={option.id}>
+              <View style={styles.optionRow}>
+                <Text style={[styles.optionLabel, { color: colors.text }]}>{option.label}</Text>
+                <Text style={[styles.optionOdd, { color: '#FFD60A' }]}>{option.odd.toFixed(2)}</Text>
+              </View>
+              {idx < options.length - 1 && (
+                <View style={[styles.divider, { backgroundColor: 'rgba(255,255,255,0.1)' }]} />
+              )}
             </View>
           ))}
         </View>
       )}
 
-      {/* Footer */}
+      {/* Footer: Tiempo restante, número de apuestas y pozo */}
       <View style={styles.footerRow}>
-        <Text style={[styles.footerItem, { color: colors.textSecondary }]}>
-          {timeLeft}
-        </Text>
-        <Text style={[styles.footerItem, { color: colors.textSecondary }]}>
-          {betsCount} bets
-        </Text>
-        <Text style={[styles.footerItem, { color: colors.textSecondary }]}>
-          Pot ${pot}
-        </Text>
+        <View style={styles.footerItemRow}>
+          <Clock size={14} color={colors.textSecondary} style={styles.footerIcon} />
+          <Text style={[styles.footerItemText, { color: colors.textSecondary }]}>{timeLeft}</Text>
+        </View>
+        <View style={styles.footerItemRow}>
+          <Users size={14} color={colors.textSecondary} style={styles.footerIcon} />
+          <Text style={[styles.footerItemText, { color: colors.textSecondary }]}>{betsCount} bets</Text>
+        </View>
+        <View style={styles.footerItemRow}>
+          <DollarSign size={14} color={colors.textSecondary} style={styles.footerIcon} />
+          <Text style={[styles.footerItemText, { color: colors.textSecondary }]}>Pot ${pot}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
 };
 
+/** Función que retorna el label y color del badge según el status */
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'open':
+      return { label: 'LIVE', bgColor: '#FFD60A' };
+    case 'closed':
+      return { label: 'Closed', bgColor: '#F44336' };
+    case 'settled':
+      return { label: 'Settled', bgColor: '#9E9E9E' };
+    default:
+      return { label: 'Unknown', bgColor: '#777' };
+  }
+}
+
 const styles = StyleSheet.create({
   card: {
-    padding: 12,
+    padding: 16,
     borderRadius: 12,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
   },
   title: {
+    flex: 1,
     fontSize: 16,
     fontWeight: 'bold',
-    maxWidth: '80%',
+    marginRight: 8,
   },
   statusBadge: {
     borderRadius: 8,
@@ -162,21 +182,22 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   statusBadgeText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   description: {
     fontSize: 14,
+    marginTop: 4,
     marginBottom: 8,
   },
   optionsContainer: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   optionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 2,
+    alignItems: 'center',
   },
   optionLabel: {
     fontSize: 14,
@@ -184,14 +205,24 @@ const styles = StyleSheet.create({
   },
   optionOdd: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: 'bold',
+  },
+  divider: {
+    height: 1,
+    marginVertical: 4,
   },
   footerRow: {
     flexDirection: 'row',
-    marginTop: 4,
     justifyContent: 'space-between',
   },
-  footerItem: {
+  footerItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  footerIcon: {
+    marginRight: 4,
+  },
+  footerItemText: {
     fontSize: 12,
   },
 });
