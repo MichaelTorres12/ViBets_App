@@ -120,6 +120,8 @@ type TranslationKey =
   | 'potentialWinnings'
   | 'betsWon'
   | 'betsLost'
+  | 'recentFirst'
+  | 'oldFirst'
   
   // Challenges
   | 'challengeTitle'
@@ -336,6 +338,8 @@ export const translations: Translations = {
     potentialWinnings: 'Potential Winnings',
     betsWon: 'Bets Won',
     betsLost: 'Bets Lost',
+    recentFirst: 'Recent First',
+    oldFirst: 'Old First',
     
     // Challenges
     challengeTitle: 'Challenge Title',
@@ -366,6 +370,7 @@ export const translations: Translations = {
     allChallenges: 'All Challenges',
     myChallenges: 'My Challenges',
     newChallenge: 'New Challenge',
+
 
     // Chat
     typeAMessage: 'Type a message...',
@@ -543,6 +548,8 @@ export const translations: Translations = {
     potentialWinnings: 'Ganancias Potenciales',
     betsWon: 'Apuestas Ganadas',
     betsLost: 'Apuestas Perdidas',
+    recentFirst: 'Más recientes',
+    oldFirst: 'Más antiguas',
     
     // Challenges
     challengeTitle: 'Título del Desafío',

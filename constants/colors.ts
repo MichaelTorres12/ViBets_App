@@ -13,6 +13,7 @@ export type ColorTheme = {
   textSecondary: string;
   textTertiary: string;
   border: string;
+  filter: string;
   
   // Status colors
   success: string;
@@ -44,7 +45,7 @@ export const darkColors: ColorTheme = {
   textSecondary: '#AAAAAA',
   textTertiary: '#666666',
   border: '#333333',
-  
+  filter: '#2388fc',
   // Status colors
   success: '#00E676',
   error: '#FF3D71',
@@ -73,7 +74,8 @@ export const lightColors: ColorTheme = {
   textSecondary: '#555555',
   textTertiary: '#999999',
   border: '#E0E0E0',
-  
+  filter: '#2388fc',
+
   // Status colors
   success: '#00C853',
   error: '#D50000',

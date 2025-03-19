@@ -1,3 +1,4 @@
+// components/GroupHome.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
@@ -29,16 +30,22 @@ export function GroupHome({ group, userGroupCoins }: GroupHomeProps) {
     // Funcionalidad para compartir la invitación
   };
 
-  // Obtener sólo las últimas 3 apuestas
-  const recentBets = group.bets && group.bets.length > 0 
-    ? group.bets.slice(0, 3) 
-    : [];
+  // Ordenar las apuestas de forma descendente (más recientes primero) y obtener sólo las 3 primeras
+  const recentBets =
+    group.bets && group.bets.length > 0
+      ? [...group.bets]
+          .sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.created_at).getTime();
+            const dateB = new Date(b.createdAt || b.created_at).getTime();
+            return dateB - dateA;
+          })
+          .slice(0, 3)
+      : [];
 
   return (
     <ScrollView 
       style={styles.container}
       showsVerticalScrollIndicator={false}
-      
     >
       {/* Información del grupo */}
       <View style={styles.infoSection}>
@@ -145,7 +152,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoSection: {
-    padding: 16,
+    padding: 10,
   },
   coinsContainer: {
     marginTop: 4,
@@ -173,7 +180,7 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
   },
   tabContent: {
-    padding: 16,
+    padding: 10,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -218,5 +225,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
-  }
-}); 
+  },
+});

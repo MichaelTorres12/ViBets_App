@@ -95,7 +95,7 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
           {bet.title}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-          <Text style={styles.statusBadgeText}>{statusLabel}</Text>
+          <Text style={[styles.statusBadgeText, { color: statusColor === '#FFD60A' ? '#000' : '#fff' }]}>{statusLabel}</Text>
         </View>
       </View>
 
@@ -144,9 +144,9 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
 function getStatusBadge(status: string) {
   switch (status) {
     case 'open':
-      return { label: 'LIVE', bgColor: '#FFD60A' };
+      return { label: 'Open', bgColor: '#FFD60A', color: '#000' };
     case 'closed':
-      return { label: 'Closed', bgColor: '#F44336' };
+      return { label: 'Closed', bgColor: '#F44336', color: '#fff' };
     case 'settled':
       return { label: 'Settled', bgColor: '#9E9E9E' };
     default:
@@ -182,8 +182,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   statusBadgeText: {
-    color: '#000',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
   },
   description: {
@@ -192,7 +191,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   optionsContainer: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   optionRow: {
     flexDirection: 'row',
@@ -200,7 +199,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   optionLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   optionOdd: {
@@ -208,7 +207,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   divider: {
-    height: 1,
+    height: 2,
     marginVertical: 4,
   },
   footerRow: {
@@ -223,6 +222,6 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   footerItemText: {
-    fontSize: 12,
+    fontSize: 13,
   },
 });

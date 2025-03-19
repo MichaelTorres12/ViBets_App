@@ -106,7 +106,10 @@ export interface Bet {
   status: BetStatus;
   endDate?: string;
   createdAt: string;
-  options: BetOption[];
+  // Se llena tras hacer JOIN
+  options?: BetOption[];
+  // Otros campos calculados (ej. betsCount, pot, etc.) si los deseas
+
   participations?: BetParticipation[];
   userParticipation?: BetParticipation;
 }
