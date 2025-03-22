@@ -110,7 +110,7 @@ export interface Bet {
   options?: BetOption[];
   // Otros campos calculados (ej. betsCount, pot, etc.) si los deseas
 
-  participations?: BetParticipation[];
+  participations?: any[];
   userParticipation?: BetParticipation;
 }
 

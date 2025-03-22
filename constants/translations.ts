@@ -54,6 +54,10 @@ type TranslationKey =
   | 'createGroup'
   | 'joinGroup'
   | 'viewMoreGroups'
+  | 'open'
+  | 'closed'
+  | 'settled'
+  | 'unknown'
   
   // Groups
   | 'groups'
@@ -96,7 +100,9 @@ type TranslationKey =
   | 'recentBets'
   | 'seeAll'
   | 'allBets'
-
+  | 'ended'
+  | 'left'
+  | 'noEndDate'   
   
   // Bets
   | 'bets'
@@ -122,7 +128,20 @@ type TranslationKey =
   | 'betsLost'
   | 'recentFirst'
   | 'oldFirst'
-  
+  | 'placeYourBet'
+  | 'available'
+  | 'coins'
+  | 'noParticipants'  
+  | 'betStatistics'
+  | 'optionsDistribution'
+  | 'averageBet'
+  | 'highestBet'
+  | 'ends'
+  | 'betPlacedSuccess'
+  | 'betPlaceError'
+  | 'alreadyVoted'
+  | 'option'
+
   // Challenges
   | 'challengeTitle'
   | 'challengeDescription'
@@ -273,6 +292,10 @@ export const translations: Translations = {
     createGroup: 'Create Group',
     joinGroup: 'Join Group',
     viewMoreGroups: 'View more groups',
+    open: 'Open',
+    closed: 'Closed',
+    settled: 'Settled',
+    unknown: 'Unknown',
     
     // Groups
     groups: 'Groups',
@@ -315,6 +338,10 @@ export const translations: Translations = {
     recentBets: 'Recent Bets',
     seeAll: 'See All',
     allBets: 'All Bets',
+    ended: 'Ended',
+    left: 'Left',
+    noEndDate: 'No end date',
+
 
     // Bets
     bets: 'Bets',
@@ -340,6 +367,19 @@ export const translations: Translations = {
     betsLost: 'Bets Lost',
     recentFirst: 'Recent First',
     oldFirst: 'Old First',
+    placeYourBet: 'Place Your Bet',
+    available: 'Available',
+    coins: 'coins',
+    noParticipants: 'No participants',
+    betStatistics: 'Bet Statistics',
+    optionsDistribution: 'Options Distribution',
+    averageBet: 'Average Bet',
+    highestBet: 'Highest Bet',
+    ends: 'Ends at',
+    betPlacedSuccess: 'Bet placed successfully',
+    betPlaceError: 'Bet placement failed',
+    alreadyVoted: 'You have already voted',
+    option: 'Option',
     
     // Challenges
     challengeTitle: 'Challenge Title',
@@ -484,6 +524,10 @@ export const translations: Translations = {
     createGroup: 'Crear Grupo',
     joinGroup: 'Unirse a Grupo',
     viewMoreGroups: 'Ver más grupos',
+    open: 'Abierta',
+    closed: 'Cerrada',
+    settled: 'Resuelta',
+    unknown: 'Desconocida',
     
     // Groups
     groups: 'Grupos',
@@ -525,6 +569,9 @@ export const translations: Translations = {
     yourGroupCoins: 'Tus Monedas del Grupo',
     recentBets: 'Apuestas Recientes',
     allBets: 'Todas las Apuestas',
+    ended: 'Terminado',
+    left: 'Faltan',
+    noEndDate: 'No hay fecha de fin',
     
     // Bets
     bets: 'Apuestas',
@@ -550,6 +597,19 @@ export const translations: Translations = {
     betsLost: 'Apuestas Perdidas',
     recentFirst: 'Más recientes',
     oldFirst: 'Más antiguas',
+    placeYourBet: 'Realiza tu Apuesta',
+    available: 'Disponible',
+    coins: 'monedas',
+    noParticipants: 'No hay participantes',
+    betStatistics: 'Estadísticas de la Apuesta',
+    optionsDistribution: 'Distribución de Opciones',
+    averageBet: 'Apuesta Promedio',
+    highestBet: 'Apuesta Más Alta',
+    ends: 'Termina el',
+    betPlacedSuccess: 'Apuesta realizada correctamente',
+    betPlaceError: 'Error al realizar la apuesta',
+    alreadyVoted: 'Ya has votado en esta apuesta',
+    option: 'Opción',
     
     // Challenges
     challengeTitle: 'Título del Desafío',

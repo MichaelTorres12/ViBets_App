@@ -1,6 +1,14 @@
 // app/(tabs)/index.tsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  FlatList,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
@@ -13,7 +21,14 @@ import { GroupCard } from '@/components/GroupCard';
 import { BetCard } from '@/components/BetCard';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { Plus, TrendingUp, ChevronRight, Search, Bell, ArrowRight } from 'lucide-react-native';
+import {
+  Plus,
+  TrendingUp,
+  ChevronRight,
+  Search,
+  Bell,
+  ArrowRight,
+} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Bet, BetParticipation } from '@/types';
 
@@ -24,48 +39,51 @@ export default function HomeScreen() {
   const { bets, participations, getBetById } = useBetsStore();
   const { t } = useLanguage();
 
-  // Si no hay usuario (por ejemplo, justo tras logout), retornamos null para evitar crash.
   if (!user) {
     return null;
   }
 
   const userGroups = getUserGroups(user.id);
 
-  // Get trending bets (last 5)
+  // Obtener trending bets (últimas 5 abiertas)
   const trendingBets = bets
-    .filter(bet => bet.status === 'open')
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .filter((bet) => bet.status === 'open')
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
     .slice(0, 5);
 
-  // Get user's active bets
-  const userBets: Array<{ bet: Bet | undefined, participation: BetParticipation }> = participations
-    .filter(p => p.userId === user.id && p.status === 'active')
-    .map(p => {
-      const bet = getBetById(p.betId);
-      return { participation: p, bet };
-    });
+  // Obtener las apuestas activas del usuario
+  const userBets: Array<{ bet: Bet | undefined; participation: BetParticipation }> =
+    participations
+      .filter((p) => p.userId === user.id && p.status === 'active')
+      .map((p) => {
+        const bet = getBetById(p.betId);
+        return { participation: p, bet };
+      });
 
   const navigateToGroup = (groupId: string) => {
     router.push(`/groups/${groupId}`);
   };
 
-  const navigateToBet = (betId: string) => {
-    router.push(`/bets/${betId}`);
+  // Navega a /groups/[groupId]/bet/[betId]
+  const navigateToBet = (betId: string, groupId: string) => {
+    router.push(`/groups/${groupId}/bet/${betId}`);
   };
 
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerTop}>
-      <View style={styles.logoContainer}>
-        {/* Logo a la izquierda */}
-        <Image
-          source={require('../../assets/images/ghostIcon.png')}
-          style={styles.logoImage}
-        />
-        {/* Nombre de la app */}
-        <Text style={styles.logoText}>Vi</Text>
-        <Text style={styles.logoText}>Bets</Text>
-      </View>
+        <View style={styles.logoContainer}>
+          {/* Logo a la izquierda */}
+          <Image
+            source={require('../../assets/images/ghostIcon.png')}
+            style={styles.logoImage}
+          />
+          <Text style={styles.logoText}>Vi</Text>
+          <Text style={styles.logoText}>Bets</Text>
+        </View>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.iconButton}>
             <Search size={24} color={colors.text} />
@@ -93,41 +111,95 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.trendingScroll}
         >
-          {trendingBets.map(bet => (
-            <TouchableOpacity
-              key={bet.id}
-              style={styles.trendingCard}
-              onPress={() => navigateToBet(bet.id)}
-              activeOpacity={0.8}
+{trendingBets.map((bet) => {
+  // Obtener el grupo correspondiente usando el group_id de la apuesta
+  const groupForBet = userGroups.find((g) => g.id === bet.group_id);
+
+  // Calcular si la apuesta ya terminó
+  const now = Date.now();
+  const endTime = bet.end_date ? new Date(bet.end_date).getTime() : 0;
+  const isEnded = endTime <= now;
+  // Si la apuesta está en "open" pero ya terminó, cambiamos el status a "closed"
+  const localStatus =
+    bet.status === 'open' && isEnded ? 'closed' : bet.status ?? 'unknown';
+
+  // Función para obtener el badge según el estado, similar a BetCard
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'open':
+        return { label: t('open'), bgColor: '#FFD60A', color: '#000' };
+      case 'closed':
+        return { label: t('closed'), bgColor: '#F44336', color: '#fff' };
+      case 'settled':
+        return { label: t('settled'), bgColor: '#9E9E9E', color: '#fff' };
+      default:
+        return { label: t('unknown'), bgColor: '#777', color: '#fff' };
+    }
+  };
+
+  const { label: statusLabel, bgColor: statusColor } = getStatusBadge(localStatus);
+
+  return (
+    <TouchableOpacity
+      key={bet.id}
+      style={styles.trendingCard}
+      onPress={() => navigateToBet(bet.id, bet.group_id)}
+      activeOpacity={0.8}
+    >
+      <LinearGradient
+        colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.3)']}
+        style={styles.trendingGradient}
+      >
+        <View style={styles.trendingContent}>
+          <View style={styles.trendingTopRow}>
+            {/* Nombre del grupo en extremo izquierdo */}
+            <Text style={styles.trendingGroupText}>
+              {groupForBet?.name || ''}
+            </Text>
+            {/* Badge con el estado recalculado */}
+            <View
+              style={[
+                styles.trendingBadge,
+                { backgroundColor: statusColor },
+              ]}
             >
-              <LinearGradient
-                colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.3)']}
-                style={styles.trendingGradient}
+              <Text
+                style={[
+                  styles.trendingBadgeText,
+                  {
+                    color: statusColor === '#FFD60A' ? '#000' : '#fff',
+                  },
+                ]}
               >
-                <View style={styles.trendingContent}>
-                  <View style={styles.trendingBadge}>
-                    <Text style={styles.trendingBadgeText}>LIVE</Text>
-                  </View>
-                  <Text style={styles.trendingTitle} numberOfLines={2}>{bet.title}</Text>
-                  <View style={styles.trendingFooter}>
-                    <Text style={styles.trendingPot}>
-                      {t('pot')}: ${participations
-                        .filter(p => p.betId === bet.id)
-                        .reduce((sum, p) => sum + p.amount, 0)
-                        .toLocaleString()}
-                    </Text>
-                    <Button
-                      title={t('betNow')}
-                      size="small"
-                      rounded
-                      style={styles.trendingButton}
-                      onPress={() => navigateToBet(bet.id)}
-                    />
-                  </View>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
+                {statusLabel}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.trendingTitle} numberOfLines={2}>
+            {bet.title}
+          </Text>
+          <View style={styles.trendingFooter}>
+            <Text style={styles.trendingPot}>
+              {t('pot')}: $
+              {participations
+                .filter((p) => p.betId === bet.id)
+                .reduce((sum, p) => sum + p.amount, 0)
+                .toLocaleString()}
+            </Text>
+            <Button
+              title={t('betNow')}
+              size="small"
+              rounded
+              style={styles.trendingButton}
+              onPress={() => navigateToBet(bet.id, bet.group_id)}
+            />
+          </View>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+})}
+
         </ScrollView>
       ) : (
         <Card style={styles.emptyCard}>
@@ -136,40 +208,6 @@ export default function HomeScreen() {
       )}
     </View>
   );
-
-  /*
-  const renderYourBetsSection = () => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{t('yourBets')}</Text>
-        <TouchableOpacity onPress={() => router.push('/bets')}>
-          <Text style={styles.seeAll}>{t('seeAll')}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {userBets.length > 0 ? (
-        userBets.map(({ bet, participation }) => (
-          bet && (
-            <BetCard
-              key={participation.id}
-              bet={bet}
-              userParticipation={participation}
-              onPress={() => navigateToBet(bet.id)}
-            />
-          )
-        ))
-      ) : (
-        <Card style={styles.emptyCard}>
-          <Text style={styles.emptyText}>{t('noActiveBets')}</Text>
-          <Button
-            title={t('createBet')}
-            onPress={() => router.push('/create-bet')}
-          />
-        </Card>
-      )}
-    </View>
-  );
-  */
 
   const renderYourGroupsSection = () => (
     <View style={styles.section}>
@@ -182,7 +220,7 @@ export default function HomeScreen() {
 
       {userGroups.length > 0 ? (
         <View>
-          {userGroups.slice(0, 2).map(group => (
+          {userGroups.slice(0, 2).map((group) => (
             <GroupCard
               key={group.id}
               group={group}
@@ -231,7 +269,6 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {renderTrendingSection()}
-        {/*{renderYourBetsSection()}*/}
         {renderYourGroupsSection()}
       </ScrollView>
     </SafeAreaView>
@@ -326,15 +363,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
+  trendingTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  trendingGroupText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+  },
   trendingBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.primary,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 15,
+    paddingVertical: 6,
     borderRadius: 12,
   },
   trendingBadgeText: {
-    color: '#000000',
+    color: '#fff',
     fontSize: 12,
     fontWeight: '700',
   },

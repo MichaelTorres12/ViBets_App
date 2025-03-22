@@ -10,15 +10,19 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { ArrowLeft, Trophy, Users, Clock } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useBetsStore } from '@/store/bets-store';
 import { useGroupsStore } from '@/store/groups-store';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
-import { ArrowLeft, Trophy, Users, DollarSign, Clock } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { Image } from 'react-native';
 
-const formatDate = (date: Date): string => date.toLocaleDateString();
+// Función para formatear fechas
+function formatDate(date: Date): string {
+  return date.toLocaleDateString();
+}
 
 export default function BetDetailScreen() {
   const { colors } = useTheme();
@@ -26,53 +30,71 @@ export default function BetDetailScreen() {
   const router = useRouter();
   const { id, betId } = useLocalSearchParams<{ id: string; betId: string }>();
 
-  console.log("LocalSearchParams:", { id, betId });
+  const { user, getUserById } = useAuthStore();
+  const group = useGroupsStore((state) => state.groups.find((g) => g.id === id));
+  const fetchGroups = useGroupsStore((state) => state.fetchGroups);
+  const betsStore = useBetsStore();
 
-  const { user } = useAuthStore();
-  const { getGroupById } = useGroupsStore();
-  // Obtenemos el grupo
-  const group = getGroupById(id);
-  console.log("Group obtenido:", group);
+  // Si el grupo aún no está cargado, se dispara fetchGroups (esto se hace una sola vez)
+  useEffect(() => {
+    if (group?.id) {
+      betsStore.fetchBets(group.id);
+    }
+  }, [group?.id]);
+  
 
-  // Para la apuesta, la extraemos del grupo
-  const bet = group?.bets?.find(b => String(b.id).trim() === String(betId).trim());
-  console.log("Bet obtenida desde el group:", bet);
-
-  const participations = bet ? useBetsStore().getBetParticipations(betId) : [];
-  console.log("Participaciones:", participations);
-  const userParticipation = user ? useBetsStore().getUserParticipationInBet(betId, user.id) : undefined;
-  console.log("UserParticipation:", userParticipation);
-
-  if (!bet || !group) {
-    console.log("Faltan datos: bet o group son undefined");
+  if (!group) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <Text style={{ color: 'red', textAlign: 'center' }}>Cargando datos de la apuesta...</Text>
+        <Text style={{ color: 'red', textAlign: 'center' }}>
+          {t('loadingGroup') || 'Cargando datos del grupo...'}
+        </Text>
       </SafeAreaView>
     );
   }
+
+  // Extraemos la apuesta específica comparando como strings para evitar problemas de espacios
+  const bet = group.bets?.find(
+    (b) => String(b.id).trim() === String(betId).trim()
+  );
+  if (!bet) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <Text style={{ color: 'red', textAlign: 'center' }}>
+          {t('loadingBet') || 'Cargando datos de la apuesta...'}
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  // Obtenemos las participaciones de esta apuesta
+  const participations = betsStore.getBetParticipations(betId);
+  console.log("BetDetailScreen - participations for bet", betId, participations);
+  const userParticipation = user
+    ? betsStore.getUserParticipationInBet(betId, user.id)
+    : undefined;
 
   // Estadísticas
   const totalParticipants = participations.length;
   const totalPot = participations.reduce((sum, p) => sum + p.amount, 0);
   const averageBet = totalParticipants > 0 ? totalPot / totalParticipants : 0;
-  const highestBet = totalParticipants > 0 ? Math.max(...participations.map(p => p.amount)) : 0;
+  const highestBet =
+    totalParticipants > 0 ? Math.max(...participations.map((p) => p.amount)) : 0;
 
   // Distribución de opciones
-  const optionsDistribution = bet.options?.map(option => {
-    const optionBets = participations.filter(p => p.optionId === option.id);
-    const percentage = totalParticipants > 0 ? (optionBets.length / totalParticipants) * 100 : 0;
-    return {
-      ...option,
-      percentage,
-      count: optionBets.length,
-    };
+  const optionsDistribution = bet.options?.map((option) => {
+    const optionBets = participations.filter((p) => p.optionId === option.id);
+    const percentage =
+      totalParticipants > 0 ? (optionBets.length / totalParticipants) * 100 : 0;
+    return { ...option, percentage, count: optionBets.length };
   }) || [];
 
-  // Estados para el formulario de apuesta
+  // Estados locales para el formulario y mensajes
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [betAmount, setBetAmount] = useState<string>('100');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     if (userParticipation) {
@@ -81,58 +103,70 @@ export default function BetDetailScreen() {
     }
   }, [userParticipation]);
 
-  // Saldo disponible del usuario en el grupo
-  const userMember = group.members.find(m => m.userId === user?.id);
+  // Saldo del usuario en el grupo
+  const userMember = group.members.find((m) => m.userId === user?.id);
   const userCoins = userMember?.groupCoins || 0;
 
-  // Usar los nombres de campo de la BD
+  // Formateo de fechas
   const endDate = bet.end_date ? formatDate(new Date(bet.end_date)) : 'Sin fecha';
   const creationDate = bet.created_at ? formatDate(new Date(bet.created_at)) : 'Sin fecha';
 
+  // Función para obtener el nombre del creador de la apuesta
+  const getCreatorUsername = (creatorId: string) => {
+    const creatorMember = group.members.find(
+      (member) => member.userId === creatorId
+    );
+    if (creatorMember && creatorMember.username) {
+      return creatorMember.username;
+    }
+    const creator = getUserById ? getUserById(creatorId) : null;
+    return creator?.username || t('betCreator') || 'Bet Creator';
+  };
+
+  // Determinar si el usuario puede apostar (si la apuesta está abierta y el usuario NO ha apostado)
+  const isBetOpen = bet.status === 'open';
+  const canPlaceBet = isBetOpen && !!user && !userParticipation;
+
+  // Función para colocar la apuesta
   const handlePlaceBet = async () => {
+    setSuccessMessage('');
+    setErrorMessage('');
+
     if (!user || !selectedOption || !betAmount || isSubmitting) return;
-    
     const amount = parseInt(betAmount);
     if (isNaN(amount) || amount <= 0 || amount > userCoins) {
+      setErrorMessage(t('invalidBetData') || "Datos de apuesta inválidos");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      await useBetsStore().participateInBet(betId, user.id, selectedOption, amount);
+      await betsStore.participateInBet(betId, user.id, selectedOption, amount);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setSuccessMessage(t('betPlacedSuccess') || "¡Apuesta realizada con éxito!");
+      // Después de apostar, redirigimos a la vista de GroupBets
+      router.push(`/groups/${id}?tab=bets`);
     } catch (error) {
       console.error('Error al colocar apuesta:', error);
+      setErrorMessage(t('betPlaceError') || "Error al colocar apuesta");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isBetOpen = bet.status === 'open';
-  const canPlaceBet = isBetOpen && !!user && !userParticipation;
-
-  // Altura fija para la cabecera
-  const HEADER_HEIGHT = 20;
-
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen options={{ headerShown: true, headerTitle: group.name }} />
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-        {/* Cabecera fija con el nombre del grupo */}
-        <View style={[styles.fixedHeader, { backgroundColor: colors.background }]}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.fixedHeaderTitle, { color: colors.text }]} numberOfLines={1}>
-            {group.name}
-          </Text>
-        </View>
-        {/* Contenido desplazable, con paddingTop para no quedar tapado por la cabecera */}
-        <ScrollView contentContainerStyle={{ paddingTop: HEADER_HEIGHT, paddingHorizontal: 10 }}>
-          {/* Tarjeta Principal */}
+        <ScrollView contentContainerStyle={{ paddingTop: 20, paddingHorizontal: 10 }}>
+          {/* Mensajes */}
+          {successMessage ? <Text style={styles.successMessage}>{successMessage}</Text> : null}
+          {errorMessage ? <Text style={styles.errorMessage}>{errorMessage}</Text> : null}
+
+          {/* Detalles de la Apuesta */}
           <View style={[styles.mainCard, { backgroundColor: colors.card }]}>
             <View style={styles.betTypeRow}>
               <View style={styles.betTypeBadge}>
@@ -141,11 +175,15 @@ export default function BetDetailScreen() {
                   {bet.options?.length === 2 ? 'Binary Bet' : 'Multiple Bet'}
                 </Text>
               </View>
-              <Text style={[styles.groupName, { color: colors.textSecondary }]}>{group.name}</Text>
+              <Text style={[styles.groupName, { color: colors.textSecondary }]}>
+                {bet.created_by ? getCreatorUsername(bet.created_by) : t('unknownCreator')}
+              </Text>
             </View>
             <Text style={[styles.betTitle, { color: colors.text }]}>{bet.title}</Text>
             {bet.description && (
-              <Text style={[styles.betDescription, { color: colors.textSecondary }]}>{bet.description}</Text>
+              <Text style={[styles.betDescription, { color: colors.textSecondary }]}>
+                {bet.description}
+              </Text>
             )}
             <View style={styles.dateRow}>
               <Clock size={14} color={colors.textSecondary} style={styles.icon} />
@@ -156,14 +194,14 @@ export default function BetDetailScreen() {
               <Text style={[styles.dateText, { color: colors.textSecondary }]}>{t('ends')}: {endDate}</Text>
             </View>
           </View>
-          
-          {/* Colocar Apuesta */}
-          {canPlaceBet && (
+
+          {/* Formulario de apuesta o mensaje: si ya apostó, se muestra mensaje */}
+          {canPlaceBet ? (
             <View style={[styles.placeBetCard, { backgroundColor: colors.card }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('placeYourBet')}</Text>
               <Text style={[styles.formLabel, { color: colors.textSecondary }]}>{t('selectOption')}:</Text>
               <View style={styles.optionsContainer}>
-                {bet.options?.map(option => (
+                {bet.options?.map((option) => (
                   <TouchableOpacity
                     key={option.id}
                     style={[
@@ -176,8 +214,8 @@ export default function BetDetailScreen() {
                     <Text
                       style={[
                         styles.optionButtonText,
-                        selectedOption === option.id 
-                          ? { color: '#000', fontWeight: 'bold' } 
+                        selectedOption === option.id
+                          ? { color: '#000', fontWeight: 'bold' }
                           : { color: colors.text },
                       ]}
                     >
@@ -199,7 +237,7 @@ export default function BetDetailScreen() {
               />
               <View style={styles.balanceRow}>
                 <Text style={{ color: colors.textSecondary }}>{t('available')}: </Text>
-                <Text style={{ color: '#FFD60A', fontWeight: 'bold' }}>{userCoins} coins</Text>
+                <Text style={{ color: '#FFD60A', fontWeight: 'bold' }}>{userCoins} {t('coins')}</Text>
               </View>
               <TouchableOpacity
                 style={[
@@ -214,44 +252,89 @@ export default function BetDetailScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-          )}
-          
-          {/* Participantes */}
-          <View style={[styles.sectionCard, { backgroundColor: colors.card }]}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('participants')}</Text>
-              <View style={styles.countBadge}>
-                <Users size={14} color="#fff" style={styles.countIcon} />
-                <Text style={styles.countText}>{totalParticipants}</Text>
-              </View>
+          ) : (
+            <View style={styles.alreadyVoted}>
+              <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 16 }}>
+                {t('alreadyVoted') || "Ya has apostado"}
+              </Text>
             </View>
-            {totalParticipants > 0 ? (
-              <View style={styles.participantsList}>
-                {/* Lista de participantes */}
-              </View>
-            ) : (
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('noParticipants')}</Text>
-            )}
+          )}
+
+{/* Lista de Participantes */}
+<View style={[styles.sectionCard, { backgroundColor: colors.card }]}>
+  <View style={styles.sectionHeader}>
+    <Text style={[styles.sectionTitle, { color: colors.text }]}>
+      {t('participants')}
+    </Text>
+    <View style={styles.countBadge}>
+      <Users size={14} color="#fff" style={styles.countIcon} />
+      <Text style={styles.countText}>{totalParticipants}</Text>
+    </View>
+  </View>
+
+  {totalParticipants > 0 ? (
+    <View style={styles.participantsList}>
+      {participations.map((p) => {
+        const member = group.members.find((m) => m.userId === p.userId);
+        const option = bet.options?.find((opt) => opt.id === p.optionId);
+
+        // Nombre o fallback
+        const username = member?.username || "Usuario desconocido";
+        // Dos primeras letras (mayúsculas) o "??"
+        const initials = username.substring(0, 2).toUpperCase() || "??";
+
+        return (
+          <View key={p.id} style={styles.participantItem}>
+            {/* Avatar con iniciales */}
+            <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+              <Text style={styles.avatarText}>{initials}</Text>
+            </View>
+
+            {/* Info: Nombre y Opción */}
+            <View style={styles.participantInfo}>
+              <Text style={[styles.name, { color: colors.text }]}>
+                {username}
+              </Text>
+              <Text style={[styles.option, { color: colors.textSecondary }]}>
+                {t('option')}: {option?.label || "Opción desconocida"}
+              </Text>
+            </View>
+
+            {/* Cantidad */}
+            <Text style={[styles.amount, { color: colors.text }]}>
+              {p.amount} {t('coins')}
+            </Text>
           </View>
-          
-          {/* Estadísticas */}
+        );
+      })}
+    </View>
+  ) : (
+    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+      {t('noParticipants')}
+    </Text>
+  )}
+</View>
+
+
+
+          {/* Sección de Estadísticas */}
           <View style={[styles.sectionCard, { backgroundColor: colors.card }]}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('betStatistics')}</Text>
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('totalPot')}</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{totalPot} coins</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{totalPot} {t('coins')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('averageBet')}</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{Math.round(averageBet)} coins</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{Math.round(averageBet)} {t('coins')}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('highestBet')}</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{highestBet} coins</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{highestBet} {t('coins')}</Text>
             </View>
             <View style={styles.separator} />
             <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 16 }]}>{t('optionsDistribution')}</Text>
-            {optionsDistribution.map(option => (
+            {optionsDistribution.map((option) => (
               <View key={option.id} style={styles.distributionItem}>
                 <Text style={[styles.distributionLabel, { color: colors.text }]}>{option.label}</Text>
                 <Text style={[styles.distributionValue, { color: colors.text }]}>{option.percentage.toFixed(0)}%</Text>
@@ -271,7 +354,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fixedHeader: {
-    marginTop: 32,
+    position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
     height: 50,
@@ -288,10 +372,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
     flex: 1,
-  },
-  container: {
-    flexGrow: 1,
-    paddingBottom: 16,
   },
   mainCard: {
     borderRadius: 12,
@@ -395,6 +475,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  alreadyVoted: {
+    marginVertical: 20,
+    alignItems: 'center',
+  },
   sectionCard: {
     borderRadius: 12,
     padding: 16,
@@ -426,7 +510,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   participantsList: {
-    // Estilos para la lista de participantes
+    // margen o padding si deseas
+  },
+  participantItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#1B1B1B', // Ejemplo, o usa un color del tema
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  participantInfo: {
+    flex: 1,
+    // Deja espacio para que la cantidad se alinee a la derecha
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  option: {
+    fontSize: 14,
+  },
+  amount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    // color: '#FFD60A', // Ejemplo si quieres destacar
+  },
+  participantText: {
+    fontSize: 14,
   },
   statItem: {
     flexDirection: 'row',
@@ -456,5 +581,21 @@ const styles = StyleSheet.create({
   distributionValue: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  successMessage: {
+    backgroundColor: '#DFF2BF',
+    color: '#4F8A10',
+    padding: 8,
+    borderRadius: 4,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  errorMessage: {
+    backgroundColor: '#FFBABA',
+    color: '#D8000C',
+    padding: 8,
+    borderRadius: 4,
+    textAlign: 'center',
+    marginBottom: 10,
   },
 });

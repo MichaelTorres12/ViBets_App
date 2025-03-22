@@ -3,6 +3,7 @@ import React, { useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
 import { Clock, Users, DollarSign } from 'lucide-react-native';
+import { useLanguage } from '@/components/LanguageContext';
 
 export interface BetOption {
   id: string;
@@ -19,6 +20,8 @@ export interface Bet {
   betsCount?: number;
   pot?: number;
   end_date?: string;     // Fecha/hora final
+  // Se asume que también viene la propiedad participations
+  participations?: any[];
 }
 
 interface BetCardProps {
@@ -29,23 +32,24 @@ interface BetCardProps {
 
 export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPress }) => {
   const { colors } = useTheme();
+  const { t } = useLanguage();
 
   // Consola para revisar la data de la apuesta
   useEffect(() => {
     console.log("BetCard - Datos de la apuesta:", bet);
   }, [bet]);
 
-  // 1. Calcular tiempo restante
+  // 1. Calcular tiempo restante usando traducciones para "Ended" y "left"
   const { timeLeft, isEnded } = useMemo(() => {
     if (!bet.end_date) {
-      return { timeLeft: 'No end date', isEnded: false };
+      return { timeLeft: t('noEndDate') || 'No end date', isEnded: false };
     }
     const now = Date.now();
     const endTime = new Date(bet.end_date).getTime();
     const diff = endTime - now;
 
     if (diff <= 0) {
-      return { timeLeft: 'Ended', isEnded: true };
+      return { timeLeft: t('ended') || 'Ended', isEnded: true };
     }
 
     let seconds = Math.floor(diff / 1000);
@@ -58,8 +62,8 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
     const dStr = days ? `${days}d ` : '';
     const hStr = hours ? `${hours}h ` : '';
     const mStr = minutes ? `${minutes}m ` : '';
-    return { timeLeft: `${dStr}${hStr}${mStr}left`.trim(), isEnded: false };
-  }, [bet.end_date]);
+    return { timeLeft: `${dStr}${hStr}${mStr}${t('left') || 'left'}`.trim(), isEnded: false };
+  }, [bet.end_date, t]);
 
   // 2. Ajustar el status local según expiración
   const localStatus = useMemo(() => {
@@ -73,9 +77,12 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
   const { label: statusLabel, bgColor: statusColor } = getStatusBadge(localStatus);
 
   // 4. Datos adicionales de la apuesta
-  const betsCount = bet.betsCount ?? 0;
-  const pot = bet.pot ?? 0;
-  // Se usa un array vacío como valor por defecto para evitar error de TS
+  // Calculamos la cantidad de participantes a partir del array de participations.
+  const participantsCount = bet.participations ? bet.participations.length : 0;
+  // Calculamos el pot como la sumatoria de todas las amounts de las participaciones.
+  const computedPot = bet.participations
+    ? bet.participations.reduce((total, part) => total + part.amount, 0)
+    : 0;
   const options = bet.options ?? [];
 
   // Consola para revisar las opciones obtenidas
@@ -95,7 +102,9 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
           {bet.title}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-          <Text style={[styles.statusBadgeText, { color: statusColor === '#FFD60A' ? '#000' : '#fff' }]}>{statusLabel}</Text>
+          <Text style={[styles.statusBadgeText, { color: statusColor === '#FFD60A' ? '#000' : '#fff' }]}>
+            {statusLabel}
+          </Text>
         </View>
       </View>
 
@@ -121,7 +130,7 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
         </View>
       )}
 
-      {/* Footer: Tiempo restante, número de apuestas y pozo */}
+      {/* Footer: Tiempo restante, número de bets (participantes) y pozo */}
       <View style={styles.footerRow}>
         <View style={styles.footerItemRow}>
           <Clock size={14} color={colors.textSecondary} style={styles.footerIcon} />
@@ -129,11 +138,14 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
         </View>
         <View style={styles.footerItemRow}>
           <Users size={14} color={colors.textSecondary} style={styles.footerIcon} />
-          <Text style={[styles.footerItemText, { color: colors.textSecondary }]}>{betsCount} bets</Text>
+          <Text style={[styles.footerItemText, { color: colors.textSecondary }]}>
+            {participantsCount} {t('bets')}
+          </Text>
         </View>
         <View style={styles.footerItemRow}>
-          <DollarSign size={14} color={colors.textSecondary} style={styles.footerIcon} />
-          <Text style={[styles.footerItemText, { color: colors.textSecondary }]}>Pot ${pot}</Text>
+          <Text style={[styles.footerItemText, { color: colors.textSecondary }]}>
+            {t('pot')} $ {computedPot}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -142,15 +154,16 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
 
 /** Función que retorna el label y color del badge según el status */
 function getStatusBadge(status: string) {
+  const { t } = useLanguage();
   switch (status) {
     case 'open':
-      return { label: 'Open', bgColor: '#FFD60A', color: '#000' };
+      return { label: t('open'), bgColor: '#FFD60A', color: '#000' };
     case 'closed':
-      return { label: 'Closed', bgColor: '#F44336', color: '#fff' };
+      return { label: t('closed'), bgColor: '#F44336', color: '#fff' };
     case 'settled':
-      return { label: 'Settled', bgColor: '#9E9E9E' };
+      return { label: t('settled'), bgColor: '#9E9E9E', color: '#fff' };
     default:
-      return { label: 'Unknown', bgColor: '#777' };
+      return { label: t('unknown'), bgColor: '#777', color: '#fff' };
   }
 }
 

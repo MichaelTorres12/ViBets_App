@@ -68,16 +68,23 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
       const groupsWithBets = await Promise.all(
         groupsData.map(async (group: any) => {
           const { data: betsData, error: betsError } = await supabase
-            .from('bets')
-            .select(`
-              *,
-              bet_options (
-                id,
-                option_text,
-                odds
-              )
-            `)
-            .eq('group_id', group.id);
+          .from('bets')
+          .select(`
+            *,
+            bet_options (
+              id,
+              option_text,
+              odds
+            ),
+            bet_participations (
+              id,
+              user_id,
+              option_id,
+              amount,
+              created_at
+            )
+          `)
+          .eq('group_id', group.id);
           if (betsError) {
             console.error('Error fetching bets:', betsError);
             return { ...group, bets: [] };
@@ -90,9 +97,10 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
               ? bet.bet_options.map((opt: any) => ({
                   id: opt.id,
                   label: opt.option_text,
-                  odd:  parseFloat(opt.odds),
+                  odd: parseFloat(opt.odds),
                 }))
-              : []
+              : [],
+            participations: bet.bet_participations || [],
           }));
 
           return { ...group, bets: betsWithOptions };

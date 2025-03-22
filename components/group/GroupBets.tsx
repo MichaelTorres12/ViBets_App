@@ -1,4 +1,4 @@
-// components/group/GroupBets.tsx
+// components/GroupBets.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
@@ -17,11 +17,11 @@ export function GroupBets({ group }: GroupBetsProps) {
   const { t } = useLanguage();
   const router = useRouter();
 
-  // Extender el estado de filtro para incluir "settled"
+  // Estado para orden y filtro
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed' | 'settled'>('all');
 
-  // Opciones de filtro de estado, ahora con iconos asignados
+  // Opciones de filtro con iconos
   const statuses = [
     { label: t('all') || 'Todas', value: 'all', icon: List },
     { label: t('open') || 'Abiertas', value: 'open', icon: CheckCircle },
@@ -30,17 +30,16 @@ export function GroupBets({ group }: GroupBetsProps) {
   ];
 
   const toggleSortOrder = () => {
-    setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+    setSortOrder(prev => (prev === 'desc' ? 'asc' : 'desc'));
   };
 
-  // Filtrar y ordenar las apuestas según el status y la fecha de creación
+  // Filtrar y ordenar las apuestas según el status y fecha
   const bets = group.bets || [];
-  const filteredBets = bets.filter((bet) => {
+  const filteredBets = bets.filter(bet => {
     if (statusFilter === 'all') return true;
     return bet.status === statusFilter;
   });
   const sortedBets = [...filteredBets].sort((a, b) => {
-    // Se asume que cada apuesta tiene "createdAt" o "created_at"
     const dateA = new Date(a.createdAt || a.created_at);
     const dateB = new Date(b.createdAt || b.created_at);
     return sortOrder === 'desc'
@@ -56,23 +55,9 @@ export function GroupBets({ group }: GroupBetsProps) {
     router.push(`/groups/${group.id}/create-bet`);
   };
 
-  return (
-    <View style={styles.container}>
-      {/* Título de sección */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('allBets') || 'All Bets'}
-        </Text>
-
-        {/* Botón Crear Apuesta */}
-        <TouchableOpacity style={styles.newBetButton} onPress={handleCreateBet}>
-          <Plus size={16} color="#000" />
-          <Text style={styles.newBetButtonText}>
-            {t('newBet') || 'New Bet'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
+  // Componente header para la FlatList (incluye los filtros)
+  const listHeader = () => (
+    <>
       {/* Contenedor de filtros: Orden y Estado */}
       <View style={styles.filtersContainer}>
         <TouchableOpacity style={styles.filterButton} onPress={toggleSortOrder}>
@@ -88,10 +73,10 @@ export function GroupBets({ group }: GroupBetsProps) {
           </Text>
         </TouchableOpacity>
 
-        {/* Envolvemos los botones de filtro en un ScrollView horizontal */}
-        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+        {/* Filtros horizontales */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.statusFilters}>
-            {statuses.map((status) => {
+            {statuses.map(status => {
               const IconComponent = status.icon;
               return (
                 <TouchableOpacity
@@ -123,33 +108,40 @@ export function GroupBets({ group }: GroupBetsProps) {
           </View>
         </ScrollView>
       </View>
+    </>
+  );
 
-      {/* Lista de apuestas */}
-      {sortedBets.length > 0 ? (
-        <FlatList
-          data={sortedBets}
-          renderItem={({ item }) => (
-            <BetCard
-              key={item.id}
-              bet={item}
-              userParticipation={item.userParticipation || null}
-              onPress={() => router.push(`/groups/${group.id}/bet/${item.id}`)}
-            />
-          )}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.betsList}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {t('noBets') || 'No bets in this group'}
+  return (
+    <View style={styles.container}>
+      {/* Encabezado fijo: Título y botón de crear apuesta */}
+      <View style={styles.fixedHeader}>
+        <Text style={[styles.fixedTitle, { color: colors.text }]}>
+          {t('allBets') || 'All Bets'}
+        </Text>
+        <TouchableOpacity style={styles.newBetButton} onPress={handleCreateBet}>
+          <Plus size={16} color="#000" />
+          <Text style={styles.newBetButtonText}>
+            {t('newBet') || 'New Bet'}
           </Text>
-          <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-            {t('createFirstBet') || 'Create your first bet!'}
-          </Text>
-        </View>
-      )}
+        </TouchableOpacity>
+      </View>
+
+      {/* FlatList con ListHeaderComponent para filtros y lista de apuestas */}
+      <FlatList
+        data={sortedBets}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={listHeader}
+        renderItem={({ item }) => (
+          <BetCard
+            key={item.id}
+            bet={item}
+            userParticipation={item.userParticipation || null}
+            onPress={() => router.push(`/groups/${group.id}/bet/${item.id}`)}
+          />
+        )}
+        contentContainerStyle={styles.betsList}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 }
@@ -157,15 +149,22 @@ export function GroupBets({ group }: GroupBetsProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
   },
-  header: {
+  fixedHeader: {
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    backgroundColor: '#000', // O el color que uses para el header
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    // Puedes agregar sombra si lo deseas
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  title: {
+  fixedTitle: {
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -183,7 +182,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   filtersContainer: {
-    marginBottom: 16,
+    marginVertical: 10,
+    paddingHorizontal: 10,
   },
   filterButton: {
     flexDirection: 'row',
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   betsList: {
-    gap: 2,
+    paddingBottom: 20,
   },
   emptyContainer: {
     flex: 1,
