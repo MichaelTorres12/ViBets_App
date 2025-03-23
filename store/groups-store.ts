@@ -317,10 +317,13 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
    */
   addMessage: async (groupId, message) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('chat_messages')
-        .insert([{ group_id: groupId, ...message }]);
+        .insert([{ group_id: groupId, ...message }])
+        .select(); // Para obtener el mensaje insertado
       if (error) throw error;
+      // Retornamos el primer mensaje insertado
+      return data[0];
     } catch (error: any) {
       set({ error: error.message });
       throw error;

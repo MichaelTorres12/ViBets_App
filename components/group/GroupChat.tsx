@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+// components/group/GroupChat.tsx
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -14,19 +15,12 @@ import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
 import { Send, PlusCircle, Image as ImageIcon } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
-import { Group } from '@/types';
+import { useGroupsStore } from '@/store/groups-store';
+import { ChatMessage, Group } from '@/types';
+import { supabase } from '@/services/supabaseClient';
 
 interface GroupChatProps {
   group: Group;
-}
-
-interface Message {
-  id: string;
-  text: string;
-  userId: string;
-  username: string;
-  timestamp: Date;
-  image?: string;
 }
 
 export function GroupChat({ group }: GroupChatProps) {
@@ -34,69 +28,48 @@ export function GroupChat({ group }: GroupChatProps) {
   const { t } = useLanguage();
   const { user } = useAuthStore();
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
-  // Datos de mensajes ficticios para la UI
-  const mockMessages: Message[] = [
-    {
-      id: '1',
-      text: 'Hey everyone! Welcome to the group chat!',
-      userId: 'admin',
-      username: 'Admin',
-      timestamp: new Date(Date.now() - 3600000 * 24)
-    },
-    {
-      id: '2',
-      text: 'Thanks for creating this group!',
-      userId: group.members[0]?.userId,
-      username: group.members[0]?.username || 'User 1',
-      timestamp: new Date(Date.now() - 3600000 * 12)
-    },
-    {
-      id: '3',
-      text: 'I just created a new bet, check it out!',
-      userId: group.members[1]?.userId,
-      username: group.members[1]?.username || 'User 2',
-      timestamp: new Date(Date.now() - 3600000 * 6)
-    },
-    {
-      id: '4',
-      text: 'Who wants to participate in my challenge?',
-      userId: group.createdBy,
-      username: group.members.find(m => m.userId === group.createdBy)?.username || 'Creator',
-      timestamp: new Date(Date.now() - 3600000)
+  // Cargar mensajes reales desde Supabase al montar el componente
+  useEffect(() => {
+    async function fetchMessages() {
+      const fetched = await useGroupsStore.getState().getChatMessages(group.id);
+      setMessages(fetched);
     }
-  ];
+    fetchMessages();
+  }, [group.id]);
 
-  const handleSendMessage = () => {
-    if (message.trim() === '') return;
-    
-    // Aquí iría la lógica para enviar el mensaje a Supabase
-    console.log('Sending message:', message);
-    
-    // Limpiamos el input
-    setMessage('');
-    
-    // Hacemos scroll al final de los mensajes
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 200);
-  };
+  // Suscripción en tiempo real: solo para el grupo actual
+  useEffect(() => {
+    const channel = supabase
+      .channel(`groups:${group.id}:chat`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `group_id=eq.${group.id}` },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
 
-  const handleAttachImage = () => {
-    // Implementar lógica para adjuntar imagen
-    console.log('Attach image');
-  };
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [group.id]);
 
-  const formatTime = (date: Date) => {
+  // Función para formatear la hora
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formatDate = (date: Date) => {
+  // Función para formatear la fecha
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    
     const diffTime = Math.abs(today.getTime() - messageDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
@@ -109,11 +82,12 @@ export function GroupChat({ group }: GroupChatProps) {
     }
   };
 
-  const renderMessage = ({ item, index }: { item: Message, index: number }) => {
-    const isCurrentUser = item.userId === user?.id;
+  // Renderiza cada mensaje
+  const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
+    const isCurrentUser = item.sender === user?.id;
     const showDateHeader = index === 0 || 
-      formatDate(mockMessages[index - 1].timestamp) !== formatDate(item.timestamp);
-    
+      formatDate(messages[index - 1].timestamp) !== formatDate(item.timestamp);
+
     return (
       <>
         {showDateHeader && (
@@ -121,12 +95,17 @@ export function GroupChat({ group }: GroupChatProps) {
             <Text style={[styles.dateHeader, { color: colors.textSecondary }]}>
               {formatDate(item.timestamp)}
             </Text>
+            <Text style={{ color: colors.primary }}>
+                (We Just save last 50 messages)
+              </Text>
           </View>
         )}
-        <View style={[
-          styles.messageContainer,
-          isCurrentUser ? styles.currentUserMessage : styles.otherUserMessage
-        ]}>
+        <View
+          style={[
+            styles.messageContainer,
+            isCurrentUser ? styles.currentUserMessage : styles.otherUserMessage,
+          ]}
+        >
           {!isCurrentUser && (
             <View style={styles.messageBubbleHeader}>
               <Text style={[styles.messageUsername, { color: colors.primary }]}>
@@ -134,33 +113,74 @@ export function GroupChat({ group }: GroupChatProps) {
               </Text>
             </View>
           )}
-          
-          <View style={[
-            styles.messageBubble,
-            { 
-              backgroundColor: isCurrentUser ? colors.primary : colors.card,
-              alignSelf: isCurrentUser ? 'flex-end' : 'flex-start',
-            }
-          ]}>
+          <View
+            style={[
+              styles.messageBubble,
+              {
+                backgroundColor: isCurrentUser ? colors.chatBubbleSender : colors.card,
+                alignSelf: isCurrentUser ? 'flex-end' : 'flex-start',
+              },
+            ]}
+          >
             {item.image && (
               <Image source={{ uri: item.image }} style={styles.messageImage} />
             )}
-            <Text style={[
-              styles.messageText,
-              { color: isCurrentUser ? '#FFFFFF' : colors.text }
-            ]}>
-              {item.text}
+            <Text
+              style={[
+                styles.messageText,
+                { color: isCurrentUser ? '#FFFFFF' : colors.text },
+              ]}
+            >
+              {item.message}
             </Text>
-            <Text style={[
-              styles.messageTime,
-              { color: isCurrentUser ? 'rgba(255,255,255,0.7)' : colors.textSecondary }
-            ]}>
+            <Text
+              style={[
+                styles.messageTime,
+                { color: isCurrentUser ? 'rgba(255,255,255,0.7)' : colors.textSecondary },
+              ]}
+            >
               {formatTime(item.timestamp)}
             </Text>
           </View>
         </View>
       </>
     );
+  };
+
+  // Enviar mensaje
+  const handleSendMessage = async () => {
+    if (message.trim() === '') return;
+  
+    const newMessage = {
+      sender: user.id,
+      username: user.user_metadata?.username || 'Unknown',
+      message: message.trim(),
+      timestamp: new Date().toISOString(),
+    };
+  
+    try {
+      // Insertamos el mensaje en la base de datos y obtenemos el mensaje insertado
+      const insertedMessage = await useGroupsStore.getState().addMessage(group.id, newMessage);
+  
+      // Actualizamos el estado local inmediatamente (evitando duplicados)
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === insertedMessage.id)) return prev;
+        return [...prev, insertedMessage];
+      });
+  
+      setMessage('');
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 200);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  };
+  
+
+  const handleAttachImage = () => {
+    // Implementa la lógica para adjuntar imagen
+    console.log('Attach image');
   };
 
   return (
@@ -171,19 +191,19 @@ export function GroupChat({ group }: GroupChatProps) {
     >
       <FlatList
         ref={flatListRef}
-        data={mockMessages}
+        data={messages}
         renderItem={renderMessage}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.messagesContainer}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
-      
+
       <View style={[styles.inputContainer, { backgroundColor: colors.card }]}>
         <TouchableOpacity style={styles.attachButton} onPress={handleAttachImage}>
           <PlusCircle size={24} color={colors.primary} />
         </TouchableOpacity>
-        
+
         <TextInput
           style={[styles.input, { color: colors.text }]}
           placeholder={t('typeAMessage') || 'Type a message...'}
@@ -192,13 +212,13 @@ export function GroupChat({ group }: GroupChatProps) {
           onChangeText={setMessage}
           multiline
         />
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.sendButton, { backgroundColor: colors.primary }]}
           onPress={handleSendMessage}
           disabled={message.trim() === ''}
         >
-          <Send size={20} color="#FFFFFF" />
+          <Send size={20} color="#000000" />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -218,13 +238,13 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   dateHeader: {
-    fontSize: 12,
+    fontSize: 14,
     padding: 4,
     borderRadius: 12,
     paddingHorizontal: 12,
   },
   messageContainer: {
-    marginBottom: 12,
+    marginBottom: 15,
     maxWidth: '80%',
   },
   currentUserMessage: {
@@ -238,7 +258,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   messageUsername: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
   },
   messageBubble: {
@@ -256,7 +276,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   messageTime: {
-    fontSize: 10,
+    fontSize: 9,
     position: 'absolute',
     right: 12,
     bottom: 8,
@@ -285,4 +305,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-}); 
+});

@@ -14,6 +14,7 @@ export type ColorTheme = {
   textTertiary: string;
   border: string;
   filter: string;
+  chatBubbleSender: string;
   
   // Status colors
   success: string;
@@ -50,6 +51,7 @@ export const darkColors: ColorTheme = {
   success: '#00E676',
   error: '#FF3D71',
   warning: '#FFAA00',
+  chatBubbleSender: '#1A1A1A',
   
   // Special
   coin: '#DDFF00',
@@ -75,6 +77,7 @@ export const lightColors: ColorTheme = {
   textTertiary: '#999999',
   border: '#E0E0E0',
   filter: '#2388fc',
+  chatBubbleSender: '#000000',
 
   // Status colors
   success: '#00C853',
