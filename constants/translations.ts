@@ -58,6 +58,8 @@ type TranslationKey =
   | 'closed'
   | 'settled'
   | 'unknown'
+  | 'yourCoins'
+  | 'yourOpenBets'
   
   // Groups
   | 'groups'
@@ -296,6 +298,8 @@ export const translations: Translations = {
     closed: 'Closed',
     settled: 'Settled',
     unknown: 'Unknown',
+    yourCoins: 'Coins',
+    yourOpenBets: 'Your Bets',
     
     // Groups
     groups: 'Groups',
@@ -528,7 +532,8 @@ export const translations: Translations = {
     closed: 'Cerrada',
     settled: 'Resuelta',
     unknown: 'Desconocida',
-    
+    yourCoins: 'Monedas',
+    yourOpenBets: 'Tus Apuestas',
     // Groups
     groups: 'Grupos',
     myGroups: 'Mis Grupos',

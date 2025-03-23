@@ -120,6 +120,48 @@ export const useBetsStore = create<BetsState>((set, get) => ({
     }
   },  
 
+  // Nueva función: Trae todas las apuestas con status "open" en las que el usuario ha participado
+  fetchUserBets: async (userId: string) => {
+    set({ loading: true });
+    try {
+      const { data, error } = await supabase
+        .from('bets')
+        .select(`
+          *,
+          bet_participations (
+            id,
+            user_id,
+            option_id,
+            amount,
+            created_at,
+            status
+          )
+        `)
+        .eq('status', 'open');
+      
+      if (error) {
+        console.error("Error fetching user bets:", error);
+        set({ loading: false });
+        return;
+      }
+      
+      // Filtrar apuestas donde el usuario aparece en las participaciones
+      const userBets = data.filter((bet: any) =>
+        bet.bet_participations.some((p: any) => p.user_id === userId)
+      ).map((bet: any) => ({
+        ...bet,
+        participations: bet.bet_participations || [],
+      }));
+      
+      console.log("fetchUserBets result:", userBets);
+      set({ bets: userBets, loading: false });
+    } catch (err) {
+      console.error("fetchUserBets exception:", err);
+      set({ loading: false });
+    }
+  },
+
+
   participateInBet: async (betId, userId, optionId, amount) => {
     set({ loading: true });
     try {

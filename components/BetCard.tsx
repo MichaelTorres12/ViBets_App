@@ -138,13 +138,19 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
         </View>
         <View style={styles.footerItemRow}>
           <Users size={14} color={colors.textSecondary} style={styles.footerIcon} />
+          <Text style={[styles.footerItemText, { fontWeight: 'bold', color: '#fff' }]}>
+            {participantsCount}{' '}
+          </Text>
           <Text style={[styles.footerItemText, { color: colors.textSecondary }]}>
-            {participantsCount} {t('bets')}
+            {t('bets')}
           </Text>
         </View>
         <View style={styles.footerItemRow}>
           <Text style={[styles.footerItemText, { color: colors.textSecondary }]}>
-            {t('pot')} $ {computedPot}
+            {t('pot')}{'  '}
+          </Text>
+          <Text style={[styles.footerItemText, { fontWeight: 'bold', color: '#fff' }]}>
+            ${computedPot}
           </Text>
         </View>
       </View>
