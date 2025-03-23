@@ -176,6 +176,9 @@ type TranslationKey =
 
   // Chat
   | 'typeAMessage'
+  | 'today'
+  | 'yesterday'
+  | 'headerMessage'
   
   // History
   | 'history'
@@ -418,6 +421,9 @@ export const translations: Translations = {
 
     // Chat
     typeAMessage: 'Type a message...',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    headerMessage: '(We Just save last 50 messages)',
 
     // History
     history: 'History',
@@ -534,6 +540,7 @@ export const translations: Translations = {
     unknown: 'Desconocida',
     yourCoins: 'Monedas',
     yourOpenBets: 'Tus Apuestas',
+
     // Groups
     groups: 'Grupos',
     myGroups: 'Mis Grupos',
@@ -647,7 +654,10 @@ export const translations: Translations = {
     newChallenge: 'Nuevo Reto',
 
     // Chat
-    typeAMessage: 'Escribe un mensaje...',
+    typeAMessage: 'Escribe un mensaje...',  
+    today: 'Hoy',
+    yesterday: 'Ayer',
+    headerMessage: '(Solo guardamos los últimos 50 mensajes)',
 
     // History
     history: 'Historial',

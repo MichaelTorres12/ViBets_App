@@ -9,15 +9,21 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Image
+  Image,
+  Alert
 } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
-import { Send, PlusCircle, Image as ImageIcon } from 'lucide-react-native';
+import { Send, PlusCircle } from 'lucide-react-native';
 import { useAuthStore } from '@/store/auth-store';
 import { useGroupsStore } from '@/store/groups-store';
 import { ChatMessage, Group } from '@/types';
 import { supabase } from '@/services/supabaseClient';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+import { decode, encode } from 'base64-arraybuffer';
+import { Dimensions } from 'react-native';
+
 
 interface GroupChatProps {
   group: Group;
@@ -30,6 +36,8 @@ export function GroupChat({ group }: GroupChatProps) {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const flatListRef = useRef<FlatList>(null);
+  const screenWidth = Dimensions.get('window').width;
+  const desiredWidth = screenWidth * 0.7; // 70% del ancho del dispositivo
 
   // Cargar mensajes reales desde Supabase al montar el componente
   useEffect(() => {
@@ -95,9 +103,6 @@ export function GroupChat({ group }: GroupChatProps) {
             <Text style={[styles.dateHeader, { color: colors.textSecondary }]}>
               {formatDate(item.timestamp)}
             </Text>
-            <Text style={{ color: colors.primary }}>
-                (We Just save last 50 messages)
-              </Text>
           </View>
         )}
         <View
@@ -122,17 +127,31 @@ export function GroupChat({ group }: GroupChatProps) {
               },
             ]}
           >
-            {item.image && (
-              <Image source={{ uri: item.image }} style={styles.messageImage} />
-            )}
-            <Text
-              style={[
-                styles.messageText,
-                { color: isCurrentUser ? '#FFFFFF' : colors.text },
-              ]}
-            >
-              {item.message}
-            </Text>
+          {item.image && (
+            <>
+              {console.log('DEBUG - IMAGE URL =>', item.image)}
+              <Image
+                source={{ uri: item.image }}
+                style={{
+                  width: desiredWidth,
+                  height: 300, // o la altura que quieras
+                  borderRadius: 8,
+                  marginBottom: 8,
+                  resizeMode: 'contain',
+                }}
+              />
+            </>
+          )}
+            {item.message ? (
+              <Text
+                style={[
+                  styles.messageText,
+                  { color: isCurrentUser ? '#FFFFFF' : colors.text },
+                ]}
+              >
+                {item.message}
+              </Text>
+            ) : null}
             <Text
               style={[
                 styles.messageTime,
@@ -147,27 +166,23 @@ export function GroupChat({ group }: GroupChatProps) {
     );
   };
 
-  // Enviar mensaje
+  // Enviar mensaje de texto
   const handleSendMessage = async () => {
     if (message.trim() === '') return;
-  
+
     const newMessage = {
       sender: user.id,
       username: user.user_metadata?.username || 'Unknown',
       message: message.trim(),
       timestamp: new Date().toISOString(),
     };
-  
+
     try {
-      // Insertamos el mensaje en la base de datos y obtenemos el mensaje insertado
       const insertedMessage = await useGroupsStore.getState().addMessage(group.id, newMessage);
-  
-      // Actualizamos el estado local inmediatamente (evitando duplicados)
       setMessages((prev) => {
         if (prev.some((m) => m.id === insertedMessage.id)) return prev;
         return [...prev, insertedMessage];
       });
-  
       setMessage('');
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
@@ -176,11 +191,82 @@ export function GroupChat({ group }: GroupChatProps) {
       console.error('Error sending message:', error);
     }
   };
-  
 
-  const handleAttachImage = () => {
-    // Implementa la lógica para adjuntar imagen
-    console.log('Attach image');
+  const handleAttachImage = async () => {
+    try {
+      // Pedir permiso
+      const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!granted) {
+        Alert.alert('Permissions required', 'Permission to access gallery is needed to send images.');
+        return;
+      }
+  
+      // Abrir la galería
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Versión 16
+        allowsEditing: true,
+        quality: 0.7,
+      });
+      if (pickerResult.cancelled) {
+        return;
+      }
+  
+      // Obtener la URI
+      const uri = pickerResult.uri || (pickerResult.assets && pickerResult.assets[0].uri);
+      if (!uri) throw new Error('No image URI found');
+  
+      // Convertir a base64 -> ArrayBuffer
+      const base64File = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      const arrayBuffer = decode(base64File);
+  
+      // Definir nombre y MIME
+      const fileExt = uri.split('.').pop() || 'jpg';
+      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+      const mimeType = `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`;
+  
+      // Subir a Supabase
+      const { data, error } = await supabase.storage
+        .from('chat-images')
+        .upload(fileName, arrayBuffer, {
+          contentType: mimeType,
+          upsert: false,
+        });
+      if (error) throw error;
+  
+      // Obtener URL pública
+      const { data: urlData, error: urlError } = supabase
+      .storage
+      .from('chat-images')
+      .getPublicUrl(fileName);
+    
+    if (urlError) throw urlError;
+    if (!urlData?.publicUrl) throw new Error('Error obtaining public URL');
+    
+    const publicUrl = urlData.publicUrl;  // esta es la URL real
+  
+      // Insertar el mensaje en tu chat
+      const newMessage = {
+        sender: user.id,
+        username: user.user_metadata?.username || 'Unknown',
+        message: '',
+        image: publicUrl,   // <-- Asegúrate de meter aquí `publicUrl`
+        timestamp: new Date().toISOString(),
+      };
+      const insertedMessage = await useGroupsStore
+        .getState()
+        .addMessage(group.id, newMessage);
+  
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === insertedMessage.id)) return prev;
+        return [...prev, insertedMessage];
+      });
+  
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200);
+  
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      Alert.alert('Error', 'Failed to upload image.');
+    }
   };
 
   return (
@@ -196,7 +282,7 @@ export function GroupChat({ group }: GroupChatProps) {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.messagesContainer}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
       />
 
       <View style={[styles.inputContainer, { backgroundColor: colors.card }]}>
@@ -235,7 +321,8 @@ const styles = StyleSheet.create({
   },
   dateHeaderContainer: {
     alignItems: 'center',
-    marginVertical: 8,
+    marginTop: 8,
+    marginBottom: 25,
   },
   dateHeader: {
     fontSize: 14,
@@ -267,8 +354,8 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   messageImage: {
-    width: '100%',
-    height: 150,
+    width: 300, 
+    height: 300,
     borderRadius: 8,
     marginBottom: 8,
   },
