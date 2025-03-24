@@ -1,95 +1,64 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+// components/group/GroupChallenges.tsx
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
-import { Plus, Trophy, Clock, Award } from 'lucide-react-native';
-import { Card } from '@/components/Card';
-import { Group } from '@/types';
+import { Plus } from 'lucide-react-native';
+import { ChallengeCard } from '@/components/ChallengeCard';
+import { Group, Challenge } from '@/types';
+import { useChallengesStore } from '@/store/challenges-store';
+import { useAuth } from '@/store/auth-context';
 
 interface GroupChallengesProps {
   group: Group;
 }
 
-// Desafío de ejemplo para mockup UI
-interface Challenge {
-  id: string;
-  title: string;
-  description: string;
-  reward: number;
-  status: 'active' | 'completed' | 'expired';
-  dueDate: string;
-  participants: number;
-}
-
 export function GroupChallenges({ group }: GroupChallengesProps) {
   const { colors } = useTheme();
   const { t } = useLanguage();
+  const router = useRouter();
   const [tab, setTab] = useState<'all' | 'my'>('all');
+  const { challenges, loading, fetchGroupChallenges } = useChallengesStore();
+  const { user } = useAuth();
 
-  // Datos de ejemplo para mostrar UI
-  const mockChallenges: Challenge[] = [
-    {
-      id: '1',
-      title: 'Run 5km this week',
-      description: 'Complete a 5km run and share screenshot proof from your fitness app',
-      reward: 100,
-      status: 'active',
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      participants: 3
-    },
-    {
-      id: '2',
-      title: 'No sugar for 3 days',
-      description: 'Avoid all sugary foods and drinks for three consecutive days',
-      reward: 50,
-      status: 'active',
-      dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-      participants: 5
-    }
-  ];
+  // Cargar los desafíos del grupo al montar el componente
+  useEffect(() => {
+    fetchGroupChallenges(group.id);
+  }, [group.id]);
 
-  const renderChallengeCard = ({ item }: { item: Challenge }) => (
-    <Card style={styles.challengeCard}>
-      <View style={styles.challengeHeader}>
-        <Text style={[styles.challengeTitle, { color: colors.text }]}>{item.title}</Text>
-        <View style={[styles.rewardBadge, { backgroundColor: colors.primary }]}>
-          <Trophy size={14} color="#FFFFFF" />
-          <Text style={styles.rewardText}>{item.reward}</Text>
-        </View>
-      </View>
-      
-      <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
-        {item.description}
-      </Text>
-      
-      <View style={styles.challengeFooter}>
-        <View style={styles.dueDateContainer}>
-          <Clock size={14} color={colors.textSecondary} />
-          <Text style={[styles.dueDate, { color: colors.textSecondary }]}>
-            {new Date(item.dueDate).toLocaleDateString()}
-          </Text>
-        </View>
-        
-        <View style={styles.participantsContainer}>
-          <Award size={14} color={colors.textSecondary} />
-          <Text style={[styles.participants, { color: colors.textSecondary }]}>
-            {item.participants} {t('participants') || 'participants'}
-          </Text>
-        </View>
-      </View>
-      
-      <TouchableOpacity 
-        style={[styles.actionButton, { backgroundColor: colors.primary }]}
-      >
-        <Text style={styles.actionButtonText}>
-          {t('participate') || 'Participate'}
-        </Text>
-      </TouchableOpacity>
-    </Card>
-  );
+  // Filtrar desafíos según la pestaña activa
+  const filteredChallenges = tab === 'all' 
+    ? challenges.filter(challenge => challenge.group_id === group.id)
+    : challenges.filter(challenge => 
+        challenge.group_id === group.id && 
+        challenge.participants?.some(p => p.userId === user?.id)
+      );
 
   const handleCreateChallenge = () => {
-    // Implementar navegación a pantalla de creación de desafíos
+    router.push(`/groups/${group.id}/create-challenge`);
+  };
+
+  const handleParticipate = (challenge: Challenge) => {
+    const alreadyParticipates = challenge.participants?.some(p => p.userId === user?.id);
+    
+    if (alreadyParticipates) {
+      Alert.alert(
+        t('alreadyParticipating') || 'Already Participating',
+        t('alreadyParticipatingMessage') || 'You are already participating in this challenge'
+      );
+      return;
+    }
+    
+    if (challenge.status !== 'open') {
+      Alert.alert(
+        t('challengeClosed') || 'Challenge Closed',
+        t('challengeClosedMessage') || 'This challenge is no longer open for participation'
+      );
+      return;
+    }
+    
+    router.push(`/groups/${group.id}/challenge/${challenge.id}`);
   };
 
   return (
@@ -97,7 +66,7 @@ export function GroupChallenges({ group }: GroupChallengesProps) {
       {/* Tabs para filtrar desafíos */}
       <View style={styles.tabsContainer}>
         <TouchableOpacity 
-          style={[styles.tabButton, tab === 'all' && styles.activeTabButton]}
+          style={[styles.tabButton, tab === 'all' && [styles.activeTabButton, { borderBottomColor: colors.primary }]]}
           onPress={() => setTab('all')}
         >
           <Text style={[styles.tabText, { color: tab === 'all' ? colors.primary : colors.textSecondary }]}>
@@ -106,7 +75,7 @@ export function GroupChallenges({ group }: GroupChallengesProps) {
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={[styles.tabButton, tab === 'my' && styles.activeTabButton]}
+          style={[styles.tabButton, tab === 'my' && [styles.activeTabButton, { borderBottomColor: colors.primary }]]}
           onPress={() => setTab('my')}
         >
           <Text style={[styles.tabText, { color: tab === 'my' ? colors.primary : colors.textSecondary }]}>
@@ -122,10 +91,21 @@ export function GroupChallenges({ group }: GroupChallengesProps) {
       </TouchableOpacity>
 
       {/* Lista de desafíos */}
-      {mockChallenges.length > 0 ? (
+      {loading ? (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            {t('loading') || 'Loading challenges...'}
+          </Text>
+        </View>
+      ) : filteredChallenges.length > 0 ? (
         <FlatList
-          data={mockChallenges}
-          renderItem={renderChallengeCard}
+          data={filteredChallenges}
+          renderItem={({ item }) => (
+            <ChallengeCard 
+              challenge={item} 
+              onPress={() => handleParticipate(item)} 
+            />
+          )}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.challengesList}
           showsVerticalScrollIndicator={false}
@@ -185,68 +165,6 @@ const styles = StyleSheet.create({
   challengesList: {
     gap: 12,
   },
-  challengeCard: {
-    padding: 16,
-  },
-  challengeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  challengeTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    flex: 1,
-  },
-  rewardBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  rewardText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  description: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  challengeFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  dueDateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  dueDate: {
-    fontSize: 12,
-  },
-  participantsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  participants: {
-    fontSize: 12,
-  },
-  actionButton: {
-    alignItems: 'center',
-    padding: 8,
-    borderRadius: 4,
-  },
-  actionButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -262,5 +180,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
-  }
-}); 
+  },
+});

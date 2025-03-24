@@ -56,18 +56,49 @@ export interface ChallengeCompleted {
   avatar: string;
 }
 
+export interface ChallengeParticipation {
+  id: string;
+  challengeId: string;
+  userId: string;
+  username?: string;
+  avatar?: string;
+  blindAmount: number; // Entre 50-100 monedas
+  createdAt: string;
+}
+
+export interface ChallengeJustification {
+  id: string;
+  challengeId: string;
+  userId: string;
+  type: 'text' | 'image' | 'video';
+  content: string; // Texto o URL del archivo
+  createdAt: string;
+  votes?: ChallengeVote[]; // Votos de los miembros
+}
+
+export interface ChallengeVote {
+  userId: string;
+  justificationId: string;
+  approved: boolean; // true = aprobado, false = rechazado
+  createdAt: string;
+}
+
 export interface Challenge {
   id: string;
+  groupId: string; // Importante para filtrar por grupo
   title: string;
   description: string;
-  reward: string;
-  progress: number;
+  initialPrize: number;
+  status: 'open' | 'completed' | 'expired';
+  winner?: string; // ID del usuario ganador
   endDate: string;
   createdBy: string;
   createdAt: string;
+  participants?: ChallengeParticipation[];
+  justifications?: ChallengeJustification[];
+  totalPrize?: number; // Campo calculado (initial + suma de blinds)
   tasks: ChallengeTask[];
   leaderboard?: ChallengeLeaderboard[];
-  participants?: ChallengeParticipant[];
   completedBy?: ChallengeCompleted[];
 }
 

@@ -183,7 +183,6 @@ const styles = StyleSheet.create({
   },
   filtersContainer: {
     marginVertical: 10,
-    paddingHorizontal: 10,
   },
   filterButton: {
     flexDirection: 'row',
@@ -223,6 +222,7 @@ const styles = StyleSheet.create({
   },
   betsList: {
     paddingBottom: 20,
+    paddingHorizontal: 10,
   },
   emptyContainer: {
     flex: 1,

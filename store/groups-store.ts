@@ -409,35 +409,39 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     }
   },
 
-  createChallenge: async (groupId, newChallenge) => {
+  createChallenge: async (groupId: string, newChallenge: Omit<Challenge, 'id'>) => {
     try {
-      // Aquí podrías hacer un insert en tu tabla de 'challenges' en Supabase,
-      // relacionándolo con el groupId, por ejemplo:
+      // Realizamos el insert en la tabla challenges
       const { data, error } = await supabase
         .from('challenges')
         .insert([{ 
           group_id: groupId,
           title: newChallenge.title,
           description: newChallenge.description,
-          reward: newChallenge.reward,
-          progress: 0,
+          initial_prize: newChallenge.initialPrize,
           end_date: newChallenge.endDate,
           created_by: newChallenge.createdBy,
           created_at: newChallenge.createdAt,
-          // etc. Agrega lo que necesites
+          // Puedes agregar otras columnas según tu necesidad
         }])
         .select();
       if (error) throw error;
-
+  
       const insertedChallenge = data?.[0];
-      // Si tuvieras una tabla 'challenge_tasks', insertarías también las tasks con challenge_id = insertedChallenge.id
-      // ...
-      // Por simplicidad, lo omitimos aquí.
-
       console.log('Challenge creado:', insertedChallenge);
+  
+      // Si lo deseas, puedes actualizar el estado local agregándolo al array de challenges del grupo:
+      const groups = get().groups.map(group => {
+        if (group.id === groupId) {
+          return { ...group, challenges: [...group.challenges, insertedChallenge] };
+        }
+        return group;
+      });
+      set({ groups });
     } catch (err: any) {
       console.error('Error creando challenge:', err);
       throw err;
     }
   }
+
 }));

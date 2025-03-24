@@ -173,6 +173,15 @@ type TranslationKey =
   | 'allChallenges'
   | 'myChallenges'
   | 'newChallenge'
+  | 'viewChallenge'
+  | 'daysLeft'
+  | 'createFirstChallenge'
+  | 'challengeClosed'
+  | 'challengeClosedMessage'
+  | 'challengeCompleted'
+  | 'challengeCompletedMessage'
+  | 'noSubmissions'
+  | 'joinChallenge'
 
   // Chat
   | 'typeAMessage'
@@ -417,7 +426,13 @@ export const translations: Translations = {
     allChallenges: 'All Challenges',
     myChallenges: 'My Challenges',
     newChallenge: 'New Challenge',
-
+    viewChallenge: 'View Challenge',
+    daysLeft: 'Days Left',
+    createFirstChallenge: 'Create your first challenge!',
+    challengeClosed: 'Challenge Closed',
+    challengeClosedMessage: 'This challenge is no longer open for participation',
+    noSubmissions: 'No submissions',
+    joinChallenge: 'Join Challenge',
 
     // Chat
     typeAMessage: 'Type a message...',
@@ -552,7 +567,7 @@ export const translations: Translations = {
     inviteCode: 'Código de Invitación',
     enterInviteCode: 'Ingresa el Código de Invitación',
     members: 'Miembros',
-    challenges: 'Desafíos',
+    challenges: 'Retos',
     chat: 'Chat',
     createChallenge: 'Crear Desafío',
     createBet: 'Crear Apuesta',
@@ -652,6 +667,13 @@ export const translations: Translations = {
     allChallenges: 'Todos los retos',
     myChallenges: 'Mis Retos',
     newChallenge: 'Nuevo Reto',
+    viewChallenge: 'Ver Reto',
+    daysLeft: 'Días Restantes',
+    createFirstChallenge: 'Crea tu primer reto!',
+    challengeClosed: 'Reto Cerrado',
+    challengeClosedMessage: 'Este reto ya no está abierto para participar',
+    noSubmissions: 'No hay envíos',
+    joinChallenge: 'Unirse al Reto',
 
     // Chat
     typeAMessage: 'Escribe un mensaje...',  
