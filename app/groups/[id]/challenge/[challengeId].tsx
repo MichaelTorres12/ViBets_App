@@ -36,7 +36,7 @@ export default function ChallengeDetailScreen() {
 
   // Para la justificación
   const [justificationContent, setJustificationContent] = useState('');
-  const [justificationType, setJustificationType] = useState<'text' | 'image' | 'video'>('text');
+  const [justificationType, setJustificationType] = useState<'text' | 'image' >('text');
 
   // Para tabs (submissions vs participants)
   const [activeTab, setActiveTab] = useState<TabType>('submissions');
@@ -71,7 +71,8 @@ export default function ChallengeDetailScreen() {
 
   // Estado del challenge
   const isChallengeOpen = challenge.status === 'open';
-  const userAlreadyParticipates = challenge.participants?.some((p) => p.userId === user?.id);
+  const userAlreadyParticipates = challenge.participants?.some((p) => p.user_id === user?.id);
+
 
   // Fechas
   const createdDate = formatDate(challenge.created_at);
@@ -88,9 +89,20 @@ export default function ChallengeDetailScreen() {
       Alert.alert('Challenge Closed', 'This challenge is not open to participate.');
       return;
     }
-    // Ejemplo: blind de 75 coins
-    await participateInChallenge(challengeId as string, 75);
-  };
+    if (userAlreadyParticipates) {
+      Alert.alert('Already Participating', 'You are already participating in this challenge.');
+      return;
+    }
+    try {
+      // Llamamos pasando user.id
+      await participateInChallenge(challengeId as string, 75, user.id);
+      Alert.alert('Joined!', 'You have successfully joined the challenge.');
+      fetchGroupChallenges(groupId as string);
+    } catch (error) {
+      console.error('Error joining challenge:', error);
+      Alert.alert('Error', 'There was an error joining the challenge.');
+    }
+  };  
 
   // Manejar envío de justificación
   const handleSubmitJustification = async () => {
@@ -175,7 +187,6 @@ export default function ChallengeDetailScreen() {
     });
   };
 
-  // Renderizar participantes
   const renderParticipants = () => {
     const participants = challenge.participants || [];
     if (participants.length === 0) {
@@ -185,16 +196,41 @@ export default function ChallengeDetailScreen() {
         </Text>
       );
     }
-    return participants.map((p) => {
-      const username = getUsernameById(p.userId);
-      return (
-        <View key={p.id} style={styles.participantItem}>
-          <Text style={{ color: colors.text }}>{username}</Text>
-        </View>
-      );
-    });
+  
+    return (
+      <View>
+        {participants.map((p) => {
+          // Usamos la propiedad "profile" que viene del JOIN a profiles
+          const username = p.profile?.username || 'Unknown';
+          const initials = getInitials(username);
+  
+          return (
+            <View key={p.id} style={styles.participantRow}>
+              <View style={styles.avatarContainer}>
+                <Text style={styles.avatarText}>{initials}</Text>
+              </View>
+              <Text style={[styles.participantName, { color: colors.text }]}>
+                {username}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    );
   };
-
+  
+  
+  // Helper para obtener iniciales (p.ej. "Jamie" -> "J", "Taylor Swift" -> "TS")
+  function getInitials(name: string): string {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) {
+      // Un solo nombre, tomamos la primera letra
+      return parts[0].charAt(0).toUpperCase();
+    }
+    // Tomamos la primera letra de los dos primeros 'words'
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  }
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ title: challenge.title || 'Challenge Detail' }} />
@@ -243,8 +279,7 @@ export default function ChallengeDetailScreen() {
             onPress={handleParticipate}
           >
             <Text style={styles.joinButtonText}>
-              {t('joinChallenge') || 'Join Challenge'} ({totalPrize}{' '}
-              {t('coins') || 'coins'})
+              {t('joinChallenge') || 'Join Challenge'} ({totalPrize} {t('coins') || 'coins'})
             </Text>
           </TouchableOpacity>
         )}
@@ -256,7 +291,7 @@ export default function ChallengeDetailScreen() {
             {t('submitProof') || 'Submissions'}
           </Text>
           <View style={styles.typeRow}>
-            {(['text', 'image', 'video'] as const).map((type) => (
+            {(['text', 'image', ] as const).map((type) => (
               <TouchableOpacity
                 key={type}
                 style={[
@@ -279,7 +314,7 @@ export default function ChallengeDetailScreen() {
               placeholder={
                 justificationType === 'text'
                   ? 'Describe your achievement...'
-                  : 'Paste image/video URL...'
+                  : 'Upload image'
               }
               placeholderTextColor={colors.textTertiary}
               value={justificationContent}
@@ -469,6 +504,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 6,
     marginBottom: 6,
+  }, 
+  participantRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  avatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#3A3A3A', // o el color que prefieras
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  participantName: {
+    fontSize: 16,
   },
   votesText: {
     fontSize: 12,

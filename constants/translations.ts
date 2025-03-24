@@ -181,7 +181,10 @@ type TranslationKey =
   | 'challengeCompleted'
   | 'challengeCompletedMessage'
   | 'noSubmissions'
+  | 'submissions'
   | 'joinChallenge'
+  | 'submitProof'
+  | 'submit'
 
   // Chat
   | 'typeAMessage'
@@ -431,8 +434,12 @@ export const translations: Translations = {
     createFirstChallenge: 'Create your first challenge!',
     challengeClosed: 'Challenge Closed',
     challengeClosedMessage: 'This challenge is no longer open for participation',
+    submissions: 'Submissions',
     noSubmissions: 'No submissions',
     joinChallenge: 'Join Challenge',
+    submitProof: 'Submit Proof',
+    submit: 'Submit',
+
 
     // Chat
     typeAMessage: 'Type a message...',
@@ -673,7 +680,11 @@ export const translations: Translations = {
     challengeClosed: 'Reto Cerrado',
     challengeClosedMessage: 'Este reto ya no está abierto para participar',
     noSubmissions: 'No hay envíos',
-    joinChallenge: 'Unirse al Reto',
+    submissions: 'Completados',
+    joinChallenge: 'Unirse al Reto',  
+    submitProof: 'Enviar Prueba',
+    submit: 'Enviar',
+
 
     // Chat
     typeAMessage: 'Escribe un mensaje...',  

@@ -70,7 +70,7 @@ export interface ChallengeJustification {
   id: string;
   challengeId: string;
   userId: string;
-  type: 'text' | 'image' | 'video';
+  type: 'text' | 'image' ;
   content: string; // Texto o URL del archivo
   createdAt: string;
   votes?: ChallengeVote[]; // Votos de los miembros
