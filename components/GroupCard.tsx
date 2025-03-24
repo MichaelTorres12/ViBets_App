@@ -1,4 +1,4 @@
-//components/GroupCard.tsx
+// components/GroupCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors } from '@/constants/colors';
@@ -8,7 +8,9 @@ import { Users, ArrowRight, TrendingUp, Trophy, Calendar, Key, Coins } from 'luc
 import { formatDate } from '@/utils/helpers';
 import { Card } from './Card';
 import { useLanguage } from './LanguageContext';
-import { useAuthStore } from '@/store/auth-store';
+
+// import { useAuthStore } from '@/store/auth-store'; // <-- ELIMINAR
+import { useAuth } from '@/store/auth-context';         // <-- AÑADIR
 
 interface GroupCardProps {
   group: Group;
@@ -16,21 +18,22 @@ interface GroupCardProps {
   compact?: boolean;
 }
 
-export const GroupCard: React.FC<GroupCardProps> = ({ 
-  group, 
+export const GroupCard: React.FC<GroupCardProps> = ({
+  group,
   onPress,
   compact = false
 }) => {
   const { t } = useLanguage();
-  const { user } = useAuthStore();
-  
+  // const { user } = useAuthStore();  // <-- BORRAR
+  const { user } = useAuth();         // <-- USAR AuthContext
+
   // Obtener las monedas del usuario actual en este grupo
   const currentUserMember = group.members.find(m => m.userId === user?.id);
   const userCoins = currentUserMember?.groupCoins || 0;
-  
+
   // Contar apuestas en este grupo (si están disponibles)
   const betsCount = group.bets?.length || 0;
-  
+
   // Contar desafíos en este grupo
   const challengesCount = group.challenges?.length || 0;
 
@@ -40,15 +43,6 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   // Código de invitación
   const inviteCode = group.inviteCode;
 
-  /*console.log('Datos del grupo en GroupCard:', {
-    groupId: group.id,
-    groupName: group.name,
-    userCoins,
-    creationDate,
-    inviteCode,
-    members: group.members
-  }); */
-
   if (compact) {
     return (
       <TouchableOpacity
@@ -56,10 +50,10 @@ export const GroupCard: React.FC<GroupCardProps> = ({
         onPress={() => onPress(group)}
         activeOpacity={0.7}
       >
-        <Avatar 
-          uri={group.avatar} 
-          name={group.name} 
-          size={40} 
+        <Avatar
+          uri={group.avatar}
+          name={group.name}
+          size={40}
         />
         <View style={styles.compactInfo}>
           <Text style={styles.compactName}>{group.name}</Text>
@@ -80,10 +74,10 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     >
       <Card style={styles.container} variant="elevated">
         <View style={styles.header}>
-          <Avatar 
-            uri={group.avatar} 
-            name={group.name} 
-            size={50} 
+          <Avatar
+            uri={group.avatar}
+            name={group.name}
+            size={50}
           />
           <View style={styles.headerInfo}>
             <Text style={styles.name}>{group.name}</Text>
@@ -95,31 +89,31 @@ export const GroupCard: React.FC<GroupCardProps> = ({
             </View>
           </View>
         </View>
-        
+
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{group.members.length}</Text>
             <Text style={styles.statLabel}>{t('members')}</Text>
             <Users size={16} color={colors.primary} style={styles.statIcon} />
           </View>
-          
+
           <View style={styles.statDivider} />
-          
+
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{betsCount}</Text>
             <Text style={styles.statLabel}>{t('bets')}</Text>
             <TrendingUp size={16} color={colors.primary} style={styles.statIcon} />
           </View>
-          
+
           <View style={styles.statDivider} />
-          
+
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{challengesCount}</Text>
             <Text style={styles.statLabel}>{t('challenges')}</Text>
             <Trophy size={16} color={colors.primary} style={styles.statIcon} />
           </View>
         </View>
-        
+
         <View style={styles.footer}>
           <View style={styles.footerItem}>
             <View style={styles.footerRow}>
@@ -127,7 +121,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
               <Text style={styles.footerValue}>{creationDate}</Text>
             </View>
           </View>
-          
+
           <View style={styles.inviteCodeContainer}>
             <Key size={14} color={colors.primary} style={styles.inviteIcon} />
             <Text style={styles.inviteCodeText}>{inviteCode}</Text>
@@ -237,7 +231,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.primary,
   },
-  // Compact styles
   compactContainer: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -13,9 +13,9 @@ export default function OnboardingStep3() {
   const router = useRouter();
 
   const handleFinishOnboarding = async () => {
-    // Guardar que el usuario ya completó el onboarding
+    // Marcar que el usuario ya completó el onboarding
     await AsyncStorage.setItem('hasSeenOnboarding', 'true');
-    // Luego redirigir a la pantalla de login (o donde prefieras)
+    // Redirigir a la pantalla de login (u otra ruta según tu flujo)
     router.replace('/auth/login');
   };
 

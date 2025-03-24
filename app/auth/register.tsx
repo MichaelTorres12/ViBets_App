@@ -8,13 +8,16 @@ import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/components/LanguageContext';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react-native';
-import { useAuthStore } from '@/store/auth-store';
+
+import { useAuth } from '@/store/auth-context';  // <-- Usa AuthContext
 import { supabase } from '@/services/supabaseClient';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-  const { signUp, loading } = useAuthStore();
+
+  // Reemplazamos { signUp, loading } de la store por { signUp, isLoading } del AuthContext
+  const { signUp, isLoading } = useAuth();
 
   // Estados para registro
   const [username, setUsername] = useState('');
@@ -49,7 +52,7 @@ export default function RegisterScreen() {
       return;
     }
 
-    // Verificar que el username sea único en la tabla "profiles"
+    // Verificar que el username sea único
     const { data: existingProfiles, error: profileError } = await supabase
       .from('profiles')
       .select('*')
@@ -66,10 +69,10 @@ export default function RegisterScreen() {
     }
 
     try {
-      // Registra en Supabase Auth
+      // Registra en Supabase Auth usando *AuthContext* signUp
       await signUp(email, password, username);
-      
-      // Obtén el usuario actual desde Supabase
+
+      // Obtener usuario actual
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData.user) {
         throw userError || new Error('Error al obtener el usuario');
@@ -88,6 +91,7 @@ export default function RegisterScreen() {
       
       // Redirige a la app principal
       router.replace('/(tabs)');
+
     } catch (error: any) {
       console.error("Error al registrarse:", error);
       Alert.alert(t('error'), error.message || t('registrationFailed'));
@@ -96,7 +100,7 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen 
+      <Stack.Screen
         options={{
           title: t('register'),
           headerBackTitle: t('back'),
@@ -110,7 +114,6 @@ export default function RegisterScreen() {
         </View>
         
         <View style={styles.form}>
-          {/* Campo para username */}
           <Input
             label="Username"
             placeholder="Tu nombre de usuario"
@@ -135,7 +138,7 @@ export default function RegisterScreen() {
             placeholder="••••••••"
             value={password}
             onChangeText={setPassword}
-            isPassword={true}
+            isPassword
             leftIcon={<Lock size={20} color={colors.textSecondary} />}
           />
 
@@ -144,14 +147,14 @@ export default function RegisterScreen() {
             placeholder="••••••••"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
-            isPassword={true}
+            isPassword
             leftIcon={<Lock size={20} color={colors.textSecondary} />}
           />
           
           <Button
             title={t('register')}
             onPress={handleRegister}
-            isLoading={loading}
+            isLoading={isLoading}  // <-- Reemplaza loading por isLoading
             style={styles.registerButton}
             rightIcon={<ArrowRight size={20} color="#000000" />}
           />

@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 
-import { useAuthStore } from '@/store/auth-store';
+import { useAuth } from '@/store/auth-context';  
 import { useGroupsStore } from '@/store/groups-store';
 import { useBetsStore } from '@/store/bets-store';
 import { useTheme } from '@/components/ThemeContext';
@@ -23,7 +23,7 @@ import { GroupTabNavigator } from '@/components/group/GroupTabNavigator';
 export default function GroupScreen() {
   const router = useRouter();
   const { id, tab: initialTab } = useLocalSearchParams<{ id: string; tab?: string }>();
-  const { user } = useAuthStore();
+  const { user } = useAuth();  
   const { colors } = useTheme();
   
   const { getGroupById, fetchGroups } = useGroupsStore();

@@ -1,10 +1,12 @@
 // app/bets/[id].tsx
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '@/components/ThemeContext';
+// import { useAuthStore } from '@/store/auth-store';  // <-- ELIMINAR
+import { useAuth } from '@/store/auth-context';       // <-- AGREGAR
 import { useBetsStore } from '@/store/bets-store';
-import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { supabase } from '@/services/supabaseClient';
@@ -14,20 +16,23 @@ export default function BetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { user } = useAuthStore();
-  const { 
-    getBetById, 
-    getBetParticipations, 
+
+  // const { user } = useAuthStore(); // <-- BORRAR
+  const { user } = useAuth();        // <-- USAR AuthContext en su lugar
+
+  const {
+    getBetById,
+    getBetParticipations,
     getUserParticipationInBet,
     participateInBet,
     settleBet,
-    loading 
+    loading
   } = useBetsStore();
   
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [betAmount, setBetAmount] = useState('100');
   const [error, setError] = useState('');
-  
+
   const bet = getBetById(id);
   const participations = getBetParticipations(id);
   const userParticipation = user ? getUserParticipationInBet(id, user.id) : undefined;

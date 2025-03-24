@@ -317,13 +317,10 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
    */
   addMessage: async (groupId, message) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('chat_messages')
-        .insert([{ group_id: groupId, ...message }])
-        .select(); // Para obtener el mensaje insertado
+        .insert([{ group_id: groupId, ...message }]);
       if (error) throw error;
-      // Retornamos el primer mensaje insertado
-      return data[0];
     } catch (error: any) {
       set({ error: error.message });
       throw error;
@@ -347,7 +344,7 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
       return [];
     }
   },
-
+  
   /**
    * Obtiene los miembros de un grupo (consulta individual) y actualiza el store.
    */

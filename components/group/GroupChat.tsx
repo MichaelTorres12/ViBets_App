@@ -1,45 +1,43 @@
 // components/group/GroupChat.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TextInput, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Image,
-  Alert
+  Alert,
+  Dimensions
 } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
-import { Send, PlusCircle } from 'lucide-react-native';
-import { useAuthStore } from '@/store/auth-store';
+import { Send, PlusCircle, XCircle } from 'lucide-react-native';
+import { useAuth } from '@/store/auth-context';
 import { useGroupsStore } from '@/store/groups-store';
 import { ChatMessage, Group } from '@/types';
 import { supabase } from '@/services/supabaseClient';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { decode, encode } from 'base64-arraybuffer';
-import { Dimensions } from 'react-native';
+import { decode } from 'base64-arraybuffer';
 
-
-interface GroupChatProps {
-  group: Group;
-}
-
-export function GroupChat({ group }: GroupChatProps) {
+export function GroupChat({ group }: { group: Group }) {
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  
+  // URI local de la imagen (NO subimos a Supabase aún)
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+
   const flatListRef = useRef<FlatList>(null);
   const screenWidth = Dimensions.get('window').width;
   const desiredWidth = screenWidth * 0.7; // 70% del ancho del dispositivo
 
-  // Cargar mensajes reales desde Supabase al montar el componente
   useEffect(() => {
     async function fetchMessages() {
       const fetched = await useGroupsStore.getState().getChatMessages(group.id);
@@ -48,7 +46,6 @@ export function GroupChat({ group }: GroupChatProps) {
     fetchMessages();
   }, [group.id]);
 
-  // Suscripción en tiempo real: solo para el grupo actual
   useEffect(() => {
     const channel = supabase
       .channel(`groups:${group.id}:chat`)
@@ -66,13 +63,11 @@ export function GroupChat({ group }: GroupChatProps) {
     };
   }, [group.id]);
 
-  // Función para formatear la hora
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Función para formatear la fecha
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -80,7 +75,7 @@ export function GroupChat({ group }: GroupChatProps) {
     const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const diffTime = Math.abs(today.getTime() - messageDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return t('today') || 'Today';
     } else if (diffDays === 1) {
@@ -90,10 +85,10 @@ export function GroupChat({ group }: GroupChatProps) {
     }
   };
 
-  // Renderiza cada mensaje
   const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
     const isCurrentUser = item.sender === user?.id;
-    const showDateHeader = index === 0 || 
+    const showDateHeader =
+      index === 0 ||
       formatDate(messages[index - 1].timestamp) !== formatDate(item.timestamp);
 
     return (
@@ -127,21 +122,18 @@ export function GroupChat({ group }: GroupChatProps) {
               },
             ]}
           >
-          {item.image && (
-            <>
-              {console.log('DEBUG - IMAGE URL =>', item.image)}
+            {item.image && (
               <Image
                 source={{ uri: item.image }}
                 style={{
                   width: desiredWidth,
-                  height: 300, // o la altura que quieras
+                  height: 300,
                   borderRadius: 8,
                   marginBottom: 8,
-                  resizeMode: 'contain',
+                  resizeMode: 'contain'
                 }}
               />
-            </>
-          )}
+            )}
             {item.message ? (
               <Text
                 style={[
@@ -166,24 +158,70 @@ export function GroupChat({ group }: GroupChatProps) {
     );
   };
 
-  // Enviar mensaje de texto
   const handleSendMessage = async () => {
-    if (message.trim() === '') return;
+    // si no hay texto ni imagen, no hacemos nada
+    if (!message.trim() && !localImageUri) return;
 
+    // Subimos la imagen a Supabase SOLO si hay localImageUri
+    let finalImageUrl: string | null = null;
+    if (localImageUri) {
+      try {
+        // Convertir la imagen a base64 -> ArrayBuffer
+        const base64File = await FileSystem.readAsStringAsync(localImageUri, {
+          encoding: 'base64',
+        });
+        const arrayBuffer = decode(base64File);
+
+        // Definir nombre y MIME
+        const fileExt = localImageUri.split('.').pop() || 'jpg';
+        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+        const mimeType = `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`;
+
+        // Subir a Supabase
+        const { data, error } = await supabase.storage
+          .from('chat-images')
+          .upload(fileName, arrayBuffer, {
+            contentType: mimeType,
+            upsert: false,
+          });
+        if (error) throw error;
+
+        // Obtener URL pública
+        const { data: urlData, error: urlError } = supabase
+          .storage
+          .from('chat-images')
+          .getPublicUrl(fileName);
+
+        if (urlError) throw urlError;
+        if (!urlData?.publicUrl) throw new Error('Error obtaining public URL');
+
+        finalImageUrl = urlData.publicUrl;
+      } catch (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        Alert.alert('Error', 'Failed to upload image.');
+        return; // Podemos retornar para que no se envíe el mensaje sin imagen
+      }
+    }
+
+    // Ahora construimos el objeto del mensaje
     const newMessage = {
       sender: user.id,
       username: user.user_metadata?.username || 'Unknown',
-      message: message.trim(),
+      message: message.trim() || '',
+      image: finalImageUrl, // <-- si localImageUri era nulo, esto será null
       timestamp: new Date().toISOString(),
     };
 
     try {
-      const insertedMessage = await useGroupsStore.getState().addMessage(group.id, newMessage);
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === insertedMessage.id)) return prev;
-        return [...prev, insertedMessage];
-      });
+      const insertedMessage = await useGroupsStore
+        .getState()
+        .addMessage(group.id, newMessage);
+
+
+      // Limpiamos el input y la imagen local
       setMessage('');
+      setLocalImageUri(null);
+
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 200);
@@ -194,78 +232,30 @@ export function GroupChat({ group }: GroupChatProps) {
 
   const handleAttachImage = async () => {
     try {
-      // Pedir permiso
       const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!granted) {
         Alert.alert('Permissions required', 'Permission to access gallery is needed to send images.');
         return;
       }
-  
-      // Abrir la galería
+
       const pickerResult = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Versión 16
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 0.7,
       });
       if (pickerResult.cancelled) {
         return;
       }
-  
-      // Obtener la URI
+
+      // Obtenemos la URI local (file://...)
       const uri = pickerResult.uri || (pickerResult.assets && pickerResult.assets[0].uri);
       if (!uri) throw new Error('No image URI found');
-  
-      // Convertir a base64 -> ArrayBuffer
-      const base64File = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      const arrayBuffer = decode(base64File);
-  
-      // Definir nombre y MIME
-      const fileExt = uri.split('.').pop() || 'jpg';
-      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-      const mimeType = `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`;
-  
-      // Subir a Supabase
-      const { data, error } = await supabase.storage
-        .from('chat-images')
-        .upload(fileName, arrayBuffer, {
-          contentType: mimeType,
-          upsert: false,
-        });
-      if (error) throw error;
-  
-      // Obtener URL pública
-      const { data: urlData, error: urlError } = supabase
-      .storage
-      .from('chat-images')
-      .getPublicUrl(fileName);
-    
-    if (urlError) throw urlError;
-    if (!urlData?.publicUrl) throw new Error('Error obtaining public URL');
-    
-    const publicUrl = urlData.publicUrl;  // esta es la URL real
-  
-      // Insertar el mensaje en tu chat
-      const newMessage = {
-        sender: user.id,
-        username: user.user_metadata?.username || 'Unknown',
-        message: '',
-        image: publicUrl,   // <-- Asegúrate de meter aquí `publicUrl`
-        timestamp: new Date().toISOString(),
-      };
-      const insertedMessage = await useGroupsStore
-        .getState()
-        .addMessage(group.id, newMessage);
-  
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === insertedMessage.id)) return prev;
-        return [...prev, insertedMessage];
-      });
-  
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200);
-  
+
+      // Simplemente guardamos la URI local sin subir aún
+      setLocalImageUri(uri);
     } catch (error) {
-      console.error('Error uploading image:', error);
-      Alert.alert('Error', 'Failed to upload image.');
+      console.error(error);
+      Alert.alert('Error', 'Failed to pick image.');
     }
   };
 
@@ -285,6 +275,28 @@ export function GroupChat({ group }: GroupChatProps) {
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
       />
 
+      {/* Si tenemos una imagen local, la previsualizamos */}
+      {localImageUri && (
+        <View style={styles.previewContainer}>
+          <Text style={{ color: colors.textSecondary, marginBottom: 4 }}>
+            {t('selectedImage') || 'Selected Image:'}
+          </Text>
+          <View style={styles.previewImageWrapper}>
+            <Image
+              source={{ uri: localImageUri }}  // <-- Vista previa local
+              style={styles.previewImage}
+              resizeMode="contain"
+            />
+            <TouchableOpacity
+              style={styles.removeImageButton}
+              onPress={() => setLocalImageUri(null)}
+            >
+              <XCircle size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       <View style={[styles.inputContainer, { backgroundColor: colors.card }]}>
         <TouchableOpacity style={styles.attachButton} onPress={handleAttachImage}>
           <PlusCircle size={24} color={colors.primary} />
@@ -302,7 +314,7 @@ export function GroupChat({ group }: GroupChatProps) {
         <TouchableOpacity
           style={[styles.sendButton, { backgroundColor: colors.primary }]}
           onPress={handleSendMessage}
-          disabled={message.trim() === ''}
+          disabled={!message.trim() && !localImageUri}
         >
           <Send size={20} color="#000000" />
         </TouchableOpacity>
@@ -353,12 +365,6 @@ const styles = StyleSheet.create({
     padding: 12,
     paddingBottom: 24,
   },
-  messageImage: {
-    width: 300, 
-    height: 300,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
   messageText: {
     fontSize: 14,
   },
@@ -368,6 +374,33 @@ const styles = StyleSheet.create({
     right: 12,
     bottom: 8,
   },
+
+  // Preview
+  previewContainer: {
+    alignItems: 'center',
+    paddingBottom: 8,
+    paddingHorizontal: 10,
+  },
+  previewImageWrapper: {
+    position: 'relative',
+    width: 200,
+    height: 200,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    padding: 2,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+  },
+
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',

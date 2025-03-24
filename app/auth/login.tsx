@@ -1,6 +1,6 @@
 // app/auth/login.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
@@ -8,14 +8,15 @@ import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/components/LanguageContext';
 import { Mail, Lock, ArrowRight } from 'lucide-react-native';
-import { useAuthStore } from '@/store/auth-store';
-import { Image } from 'react-native';
+
+import { useAuth } from '@/store/auth-context';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { t } = useLanguage();
 
-  const { signIn, isAuthenticated, loading } = useAuthStore();
+  // El AuthContext con signIn()
+  const { signIn, isLoading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,34 +26,33 @@ export default function LoginScreen() {
       Alert.alert(t('error'), t('fillAllFields'));
       return;
     }
-    try {
-      await signIn(email, password); // si no hay error, ya se logueó
-      router.replace('/(tabs)');
-    } catch (error: any) {
+    const { data, error } = await signIn(email, password);
+    if (error) {
       Alert.alert(t('error'), error.message || t('loginFailed'));
+    } else {
+      // Login ok => a la pantalla principal
+      router.replace('/(tabs)');
     }
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen 
-        options={{ 
+      <Stack.Screen
+        options={{
           title: t('login'),
           headerBackTitle: t('back'),
         }}
       />
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          {/* Logo a la izquierda */}
           <Image
-            source={require('../../assets/images/ghostIcon.png')} // Ajusta la ruta a tu imagen
+            source={require('../../assets/images/ghostIcon.png')}
             style={styles.logoImage}
           />
-          {/* Nombre de la app */}
           <Text style={styles.logoText}>Vi</Text>
           <Text style={styles.logoText}>Bets</Text>
         </View>
-      
+
         <View style={styles.header}>
           <Text style={styles.title}>{t('welcome')}</Text>
           <Text style={styles.subtitle}>{t('signIn')}</Text>
@@ -74,14 +74,14 @@ export default function LoginScreen() {
             placeholder="••••••••"
             value={password}
             onChangeText={setPassword}
-            isPassword={true}  // Se encarga de la visibilidad de la contraseña
+            isPassword
             leftIcon={<Lock size={20} color={colors.textSecondary} />}
           />
           
           <Button
             title={t('login')}
             onPress={handleLogin}
-            isLoading={loading}
+            isLoading={isLoading}
             style={styles.loginButton}
             rightIcon={<ArrowRight size={20} color="#000000" />}
           />

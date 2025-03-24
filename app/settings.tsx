@@ -1,22 +1,23 @@
+// app/settings.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuth } from '@/store/auth-context';
 import { useLanguage } from '@/components/LanguageContext';
 import { colors } from '@/constants/colors';
 import { useTheme } from '@/components/ThemeContext';
-import { useLanguageStore, Language } from '@/store/language-store';
-import { useThemeStore, Theme } from '@/store/theme-store';
-import { 
-  LogOut, 
-  Moon, 
-  Sun, 
-  Bell, 
-  Volume2, 
-  Vibrate, 
-  Info, 
-  FileText, 
+import { useLanguageStore } from '@/store/language-store';
+import { useThemeStore } from '@/store/theme-store';
+import {
+  LogOut,
+  Moon,
+  Sun,
+  Bell,
+  Volume2,
+  Vibrate,
+  Info,
+  FileText,
   Mail,
   Globe,
   ChevronRight
@@ -24,12 +25,13 @@ import {
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { logout } = useAuthStore();
+  const { signOut } = useAuth(); // <-- del AuthContext
   const { t } = useLanguage();
   const { colors } = useTheme();
   const { language, setLanguage } = useLanguageStore();
   const { theme, setTheme } = useThemeStore();
   
+  // Al hacer logout, llamamos signOut()
   const handleLogout = () => {
     Alert.alert(
       t('logoutConfirmation'),
@@ -41,32 +43,26 @@ export default function SettingsScreen() {
         },
         {
           text: t('yes'),
-          onPress: () => {
-            logout();
-            router.replace('/auth/login');
+          onPress: async () => {
+            await signOut();
+            // NO navegamos aquí. El Root Layout o un useEffect se encargará
           },
         },
       ]
     );
   };
+  
+  
+  
 
   const handleLanguageChange = () => {
     Alert.alert(
       t('changeLanguage'),
       '',
       [
-        {
-          text: t('english'),
-          onPress: () => setLanguage('en'),
-        },
-        {
-          text: t('spanish'),
-          onPress: () => setLanguage('es'),
-        },
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
+        { text: t('english'), onPress: () => setLanguage('en') },
+        { text: t('spanish'), onPress: () => setLanguage('es') },
+        { text: t('cancel'), style: 'cancel' },
       ]
     );
   };
@@ -85,12 +81,10 @@ export default function SettingsScreen() {
       />
 
       <View style={styles.logoContainer}>
-        {/* Logo a la izquierda */}
         <Image
-          source={require('../assets/images/ghostIcon.png')} // Ajusta la ruta a tu imagen
+          source={require('../assets/images/ghostIcon.png')}
           style={styles.logoImage}
         />
-        {/* Nombre de la app */}
         <Text style={styles.logoText}>Vi</Text>
         <Text style={styles.logoText}>Bets</Text>
       </View>
@@ -203,8 +197,9 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
         
-        <TouchableOpacity 
-          style={[styles.logoutButton, { backgroundColor: colors.card }]} 
+        {/* Botón de logout */}
+        <TouchableOpacity
+          style={[styles.logoutButton, { backgroundColor: colors.card }]}
           onPress={handleLogout}
         >
           <LogOut size={22} color={colors.error} />

@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuth } from '@/store/auth-context';
 import { useGroupsStore } from '@/store/groups-store';
 import { GroupCard } from '@/components/GroupCard';
 import { Button } from '@/components/Button';
@@ -14,7 +14,7 @@ import { Plus, Search, Users, UserPlus } from 'lucide-react-native';
 
 export default function GroupsScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user } = useAuth(); 
   const { groups, getUserGroups } = useGroupsStore();
   const [searchQuery, setSearchQuery] = useState('');
   

@@ -12,10 +12,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuth } from '@/store/auth-context';  // <--- Usa AuthContext
+import { useLanguage } from '@/components/LanguageContext';
 import { useGroupsStore } from '@/store/groups-store';
 import { useBetsStore } from '@/store/bets-store';
-import { useLanguage } from '@/components/LanguageContext';
 import { GroupCard } from '@/components/GroupCard';
 import { BetCard } from '@/components/BetCard';
 import { Button } from '@/components/Button';
@@ -25,29 +25,42 @@ import { Plus, Search, Bell, ArrowRight } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
-  const { getUserGroups } = useGroupsStore();
-  const { participations, fetchUserBets, getBetById, bets } = useBetsStore();
   const { t } = useLanguage();
-  const { getGroupById } = useGroupsStore(); 
 
-  if (!user) return null;
+  // En vez de user de useAuthStore
+  const { user } = useAuth(); // <-- user del AuthContext
 
-  // Llamamos a fetchUserBets al montar y cada vez que la pantalla obtiene foco.
+  const { fetchUserBets, bets } = useBetsStore();
+  const { getUserGroups, getGroupById } = useGroupsStore();
+
+  // Cuando tengas user, llamas a fetchUserBets
   useEffect(() => {
-    fetchUserBets(user.id);
+    if (user) {
+      fetchUserBets(user.id);
+    }
   }, [user, fetchUserBets]);
 
   useFocusEffect(
     useCallback(() => {
-      // Cada vez que la pantalla se enfoque, se refrescan las apuestas del usuario.
-      fetchUserBets(user.id);
-    }, [user.id, fetchUserBets])
+      if (user) {
+        fetchUserBets(user.id);
+      }
+    }, [user, fetchUserBets])
   );
 
+  // Si NO hay user => muestro algo o redirijo
+  if (!user) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: colors.text }}>Cargando / No hay usuario...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // Si hay user => calculamos userGroups
   const userGroups = getUserGroups(user.id);
 
-  // Calculamos las apuestas del usuario directamente desde el store "bets".
+  // Filtras las bets con participations
   const userBets = bets
     .map((bet: any) => {
       const participation = bet.participations?.find(
@@ -57,7 +70,7 @@ export default function HomeScreen() {
     })
     .filter(({ bet, participation }) => participation && bet.status === 'open');
 
-  // Ordenamos las apuestas por fecha descendente y tomamos solo las 5 más recientes.
+  // Ordenas y tomas 5
   const recentBets = userBets
     .sort(
       (a, b) =>
@@ -71,7 +84,6 @@ export default function HomeScreen() {
     router.push(`/groups/${groupId}`);
   };
 
-  // Navega a /groups/[groupId]/bet/[betId]
   const navigateToBet = (betId: string, groupId: string) => {
     router.push(`/groups/${groupId}/bet/${betId}`);
   };
@@ -99,13 +111,10 @@ export default function HomeScreen() {
     </View>
   );
 
-  // Sección "Your Open Bets" en horizontal (limitada a 5 apuestas recientes)
   const renderYourOpenBetsSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>
-          {t('yourOpenBets') || 'Your Open Bets'}
-        </Text>
+        <Text style={styles.sectionTitle}>{t('yourOpenBets') || 'Your Open Bets'}</Text>
         <TouchableOpacity onPress={() => router.push('/bets')}>
           <Text style={styles.viewAll}>{t('viewAll')}</Text>
         </TouchableOpacity>
@@ -124,7 +133,7 @@ export default function HomeScreen() {
               <YourOpenBetCard
                 bet={item.bet}
                 userParticipation={item.participation}
-                groupName={groupName}      // <<----  Aquí pasamos el nombre
+                groupName={groupName}
                 onPress={() => navigateToBet(item.bet.id, item.bet.group_id)}
               />
             );
@@ -140,9 +149,7 @@ export default function HomeScreen() {
           {userGroups.length > 0 && (
             <Button
               title={t('createBet') || 'Create Bet'}
-              onPress={() =>
-                router.push(`/groups/${userGroups[0]?.id}/create-bet`)
-              }
+              onPress={() => router.push(`/groups/${userGroups[0]?.id}/create-bet`)}
             />
           )}
         </Card>

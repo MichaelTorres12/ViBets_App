@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '@/components/ThemeContext';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuth } from '@/store/auth-context'
 import { useGroupsStore } from '@/store/groups-store';
 import { useBetsStore } from '@/store/bets-store';
 import { Button } from '@/components/Button';
@@ -28,7 +28,7 @@ export default function CreateBetScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors } = useTheme();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { getGroupById } = useGroupsStore();
   const { createBet } = useBetsStore();
 

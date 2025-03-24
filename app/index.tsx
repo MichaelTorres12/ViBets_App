@@ -1,25 +1,19 @@
 // app/index.tsx
 import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuth } from '@/store/auth-context'; // <-- Importas tu AuthContext
 
 export default function Index() {
-  const { isAuthenticated, checkSession } = useAuthStore();
-  const [loadingSession, setLoadingSession] = useState(true);
+  // Leemos user, isLoading (o lo que desees) del AuthContext
+  const { user, isLoading } = useAuth();
 
-  useEffect(() => {
-    const init = async () => {
-      await checkSession();
-      setLoadingSession(false);
-    };
-    init();
-  }, []);
-
-  if (loadingSession) {
-    // Puedes mostrar un spinner o un placeholder mientras se recupera la sesión.
-    return null;
+  // Mientras se inicializa la sesión (isLoading) mostramos null o un loader
+  if (isLoading) {
+    return null; // o un spinner
   }
 
-  // Si hay sesión, se redirige a la app principal; si no, a login.
-  return isAuthenticated ? <Redirect href="/(tabs)" /> : <Redirect href="/auth/login" />;
+  // Si hay un usuario logueado => redirigimos a (tabs)
+  // Si no => a /auth/login
+  return user
+    ? <Redirect href="/(tabs)" />
+    : <Redirect href="/auth/login" />;
 }

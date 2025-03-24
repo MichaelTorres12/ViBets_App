@@ -1,4 +1,5 @@
 // store/auth-store.ts
+/*
 import { create } from 'zustand';
 import { supabase } from '@/services/supabaseClient';
 
@@ -87,3 +88,5 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 }));
+
+*/

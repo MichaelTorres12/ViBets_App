@@ -1,4 +1,5 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+// store/auth-context.tsx
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { supabase } from '@/services/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
@@ -8,35 +9,46 @@ const AUTH_TOKEN_KEY = 'auth-token';
 const HAS_SEEN_ONBOARDING_KEY = 'has-seen-onboarding';
 
 type AuthContextType = {
-  session: Session | null;
+  // Estados
   user: User | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
   hasSeenOnboarding: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: any }>;
-  signUp: (email: string, password: string, username: string) => Promise<{ error?: any, data?: any }>;
+
+  // Métodos de autenticación
+  signUp: (email: string, password: string, username?: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  checkSession: () => Promise<void>;
+
+  // Onboarding
   setHasSeenOnboarding: (value: boolean) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboardingState] = useState(false);
 
-  // Guardar el token de sesión de forma segura
-  const saveSessionToken = async (session: Session) => {
+  // --------------------------------
+  // Métodos para SecureStore
+  // --------------------------------
+
+  const saveSessionToken = useCallback(async (sessionObj: any) => {
     try {
-      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, JSON.stringify(session));
+      // Se guarda la sesión en SecureStore (si deseas guardar todo sessionObj)
+      console.log('Saving Session => token:', sessionObj.access_token);
+      
+      await SecureStore.setItemAsync(AUTH_TOKEN_KEY, JSON.stringify(sessionObj));
     } catch (error) {
       console.error('Error saving session token:', error);
     }
-  };
+  }, []);
 
-  // Recuperar el token de sesión
-  const getSessionToken = async (): Promise<Session | null> => {
+  const getSessionToken = useCallback(async () => {
     try {
       const sessionData = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
       if (sessionData) {
@@ -47,60 +59,170 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error getting session token:', error);
       return null;
     }
-  };
+  }, []);
 
-  // Eliminar el token de sesión
-  const removeSessionToken = async () => {
+  const removeSessionToken = useCallback(async () => {
     try {
       await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
     } catch (error) {
       console.error('Error removing session token:', error);
     }
-  };
+  }, []);
 
-  // Guardar estado de onboarding
-  const setHasSeenOnboarding = async (value: boolean) => {
-    try {
-      await SecureStore.setItemAsync(HAS_SEEN_ONBOARDING_KEY, String(value));
-      setHasSeenOnboardingState(value);
-    } catch (error) {
-      console.error('Error saving onboarding state:', error);
-    }
-  };
-
-  // Verificar si el usuario ha visto el onboarding
-  const checkOnboardingStatus = async () => {
+  // --------------------------------
+  // Manejo de Onboarding
+  // --------------------------------
+  const checkOnboardingStatus = useCallback(async () => {
     try {
       const value = await SecureStore.getItemAsync(HAS_SEEN_ONBOARDING_KEY);
       setHasSeenOnboardingState(value === 'true');
     } catch (error) {
       console.error('Error checking onboarding status:', error);
     }
-  };
+  }, []);
 
-  // Inicializar la autenticación
+  const setHasSeenOnboarding = useCallback(async (value: boolean) => {
+    try {
+      await SecureStore.setItemAsync(HAS_SEEN_ONBOARDING_KEY, String(value));
+      setHasSeenOnboardingState(value);
+    } catch (error) {
+      console.error('Error saving onboarding state:', error);
+    }
+  }, []);
+
+  // --------------------------------
+  // Lógica para signUp, signIn, signOut, checkSession
+  // (Adaptada de tu antigua auth-store, unida con la persistencia)
+  // --------------------------------
+
+  // Registrarse
+  const signUp = useCallback(
+    async (email: string, password: string, username?: string) => {
+      setIsLoading(true);
+      try {
+        // 1) signUp en Supabase
+        let { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { username } },
+        });
+        if (error) {
+          console.error('Error en signUp:', error);
+          throw error;
+        }
+
+        // 2) Si no hay session inmediata, forzamos signIn
+        if (!data.session) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (signInError) {
+            console.error('Error en signIn (post signUp):', signInError);
+            throw signInError;
+          }
+          data = signInData;
+        }
+
+        // 3) Actualizamos estado interno
+        setUser(data.user ?? null);
+        setIsAuthenticated(!!data.user);
+
+        // 4) Guardar la sesión en SecureStore (opcional: data.session)
+        if (data.session) {
+          await saveSessionToken(data.session);
+        }
+
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [saveSessionToken]
+  );
+
+  // Iniciar sesión
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          console.error('Error en signIn:', error);
+          throw error;
+        }
+        setUser(data.user ?? null);
+        setIsAuthenticated(!!data.user);
+
+        // Guardamos la session en SecureStore
+        if (data.session) {
+          await saveSessionToken(data.session);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [saveSessionToken]
+  );
+
+  // Cerrar sesión
+  const signOut = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await supabase.auth.signOut();
+      await removeSessionToken();
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [removeSessionToken]);
+
+  // Revisar si hay sesión activa
+  const checkSession = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const newUser = data.session?.user ?? null;
+      setUser(newUser);
+      setIsAuthenticated(!!newUser);
+      // En teoría, podrías re-guardar la session en SecureStore si lo deseas
+      if (data.session) {
+        await saveSessionToken(data.session);
+      } else {
+        await removeSessionToken();
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [saveSessionToken, removeSessionToken]);
+
+  // --------------------------------
+  // initAuth: restaurar sesión + onboarding
+  // --------------------------------
   useEffect(() => {
     const initAuth = async () => {
       setIsLoading(true);
       try {
-        // Verificar estado de onboarding
         await checkOnboardingStatus();
 
-        // Restaurar sesión desde el almacenamiento seguro
+        // 1) Ver si hay algo en SecureStore
         const savedSession = await getSessionToken();
-        
         if (savedSession) {
-          // Verificar si la sesión es válida con Supabase
+          // 2) Verificamos con supabase si sigue válida
           const { data: { session }, error } = await supabase.auth.getSession();
-          
           if (session && !error) {
-            setSession(session);
             setUser(session.user);
-            // Actualizar el token almacenado con el más reciente
+            setIsAuthenticated(true);
+            // Re-guardar la session
             await saveSessionToken(session);
           } else {
-            // Si la sesión no es válida, limpiar el almacenamiento
+            // No válida => limpiar
             await removeSessionToken();
+            setUser(null);
+            setIsAuthenticated(false);
           }
         }
       } catch (error) {
@@ -115,9 +237,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Escuchar cambios en la autenticación
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
         setUser(session?.user ?? null);
-        
+        setIsAuthenticated(!!session?.user);
+
         if (session) {
           await saveSessionToken(session);
         } else {
@@ -129,40 +251,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [
+    checkOnboardingStatus,
+    getSessionToken,
+    removeSessionToken,
+    saveSessionToken,
+  ]);
 
-  // Métodos de autenticación
-  const signIn = async (email: string, password: string) => {
-    return supabase.auth.signInWithPassword({ email, password });
-  };
-
-  const signUp = async (email: string, password: string, username: string) => {
-    const result = await supabase.auth.signUp({ 
-      email, 
-      password, 
-      options: {
-        data: { username }
-      }
-    });
-    
-    return result;
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    await removeSessionToken();
-  };
-
+  // --------------------------------
+  // Retornar el AuthContext
+  // --------------------------------
   return (
     <AuthContext.Provider
       value={{
-        session,
         user,
+        isAuthenticated,
         isLoading,
         hasSeenOnboarding,
-        signIn,
         signUp,
+        signIn,
         signOut,
+        checkSession,
         setHasSeenOnboarding,
       }}
     >
@@ -171,10 +280,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+// Hook para consumir el contexto
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};

@@ -1,10 +1,11 @@
 // app/(tabs)/profile.tsx
+
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuth } from '@/store/auth-context';    // <-- USAR AuthContext
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
@@ -26,7 +27,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  // const { user, logout } = useAuthStore(); // <-- BORRAR
+  const { user, signOut } = useAuth();           // <-- SUSTITUIR con AuthContext
   const { t } = useLanguage();
   
   if (!user) {
@@ -39,6 +41,7 @@ export default function ProfileScreen() {
     );
   }
   
+  // Logout
   const handleLogout = () => {
     Alert.alert(
       t('logoutConfirmation'),
@@ -49,23 +52,18 @@ export default function ProfileScreen() {
           style: 'cancel',
         },
         {
-          text: t('logout'),
+          text: t('yes'),
           onPress: async () => {
-            try {
-              await logout();
-              // Retrasamos la navegación para asegurarnos de que el Root Layout esté montado
-              setTimeout(() => {
-                router.replace('/auth/login');
-              }, 0);
-            } catch (err) {
-              console.error("Error en logout:", err);
-            }
+            await signOut();
+            // NO navegamos aquí. El Root Layout o un useEffect se encargará
           },
-          style: 'destructive',
         },
       ]
     );
   };
+  
+  
+  
 
   const navigateToSettings = () => {
     router.push('/settings');
@@ -84,6 +82,7 @@ export default function ProfileScreen() {
       </View>
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Sección del Avatar y datos */}
         <View style={styles.profileSection}>
           <Avatar
             uri={undefined} // Aquí podrías usar user.user_metadata?.avatar si lo tienes
@@ -98,6 +97,7 @@ export default function ProfileScreen() {
           </View>
         </View>
         
+        {/* Sección de balance (ejemplo de linear gradient) */}
         <View style={styles.balanceCard}>
           <LinearGradient
             colors={['#1A1A1A', '#2A2A2A']}
@@ -127,6 +127,7 @@ export default function ProfileScreen() {
           </LinearGradient>
         </View>
         
+        {/* Tarjeta con stats (ganadas, perdidas, etc.) */}
         <Card style={styles.statsCard}>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
@@ -146,6 +147,7 @@ export default function ProfileScreen() {
           </View>
         </Card>
         
+        {/* Sección de items de menú, con un botón de logout */}
         <View style={styles.menuSection}>
           <Text style={styles.menuTitle}>{t('account')}</Text>
           <Card style={styles.menuCard}>
@@ -177,6 +179,7 @@ export default function ProfileScreen() {
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
