@@ -124,10 +124,16 @@ export const useBetsStore = create<BetsState>((set, get) => ({
   fetchUserBets: async (userId: string) => {
     set({ loading: true });
     try {
+      // Quitar filtro de status:'open' para traer todas las apuestas
       const { data, error } = await supabase
         .from('bets')
         .select(`
           *,
+          bet_options (
+            id,
+            option_text,
+            odds
+          ),
           bet_participations (
             id,
             user_id,
@@ -136,8 +142,7 @@ export const useBetsStore = create<BetsState>((set, get) => ({
             created_at,
             status
           )
-        `)
-        .eq('status', 'open');
+        `);
       
       if (error) {
         console.error("Error fetching user bets:", error);
@@ -145,15 +150,22 @@ export const useBetsStore = create<BetsState>((set, get) => ({
         return;
       }
       
-      // Filtrar apuestas donde el usuario aparece en las participaciones
+      // Dos tipos de apuestas relevantes para el usuario:
+      // 1. Apuestas donde el usuario es el ganador (winner === userId)
+      // 2. Apuestas donde el usuario ha participado
       const userBets = data.filter((bet: any) =>
-        bet.bet_participations.some((p: any) => p.user_id === userId)
+        bet.winner === userId || 
+        (bet.bet_participations && bet.bet_participations.some((p: any) => p.user_id === userId))
       ).map((bet: any) => ({
         ...bet,
         participations: bet.bet_participations || [],
+        options: bet.bet_options || []
       }));
       
       console.log("fetchUserBets result:", userBets);
+      console.log("Total bets:", userBets.length);
+      console.log("Won bets:", userBets.filter(bet => bet.winner === userId).length);
+      
       set({ bets: userBets, loading: false });
     } catch (err) {
       console.error("fetchUserBets exception:", err);

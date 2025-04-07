@@ -144,6 +144,33 @@ type TranslationKey =
   | 'alreadyVoted'
   | 'option'
 
+// ------
+  | 'myBets'
+  | 'statistics'
+  | 'performance'
+  | 'totalBets'
+  | 'totalWins'
+  | 'totalLosses'
+  | 'totalProfit'
+  | 'totalROI'
+  | 'recentBets'
+  | 'all'
+  | 'won'
+  | 'lost'
+  | 'active'
+  | 'winRate'
+  | 'totalProfit'
+  | 'noBetsFound'
+  | 'noBetsDescription'
+  | 'searchBets'
+
+// Bets Statistics
+  | 'winRate'
+  | 'totalProfit'
+  | 'roi'
+  | 'winRateTrend'
+  | 'profitLoss'
+
   // Challenges
   | 'challengeTitle'
   | 'challengeDescription'
@@ -400,7 +427,29 @@ export const translations: Translations = {
     betPlaceError: 'Bet placement failed',
     alreadyVoted: 'You have already voted',
     option: 'Option',
+
+  // -----
+  myBets: 'My Bets',
+  statistics: 'Statistics',
+  performance: 'Performance',
+  totalBets: 'Total Bets',
+  totalWins: 'Total Wins',
+  totalLosses: 'Total Losses',
+  totalProfit: 'Total Profit',
+  totalROI: 'Total ROI',
+  won: 'Won',
+  lost: 'Lost',
+  active: 'Active',
+  winRate: 'Win Rate',
+  roi: 'ROI',
+  winRateTrend: 'Win Rate Trend',
+  profitLoss: 'Profit/Loss',
+  all: 'All',
+  noBetsFound: 'No bets found',
+  noBetsDescription: 'No bets done yet',
+  searchBets: 'Search Bets',
     
+
     // Challenges
     challengeTitle: 'Challenge Title',
     challengeDescription: 'Challenge Description',
@@ -646,7 +695,27 @@ export const translations: Translations = {
     betPlaceError: 'Error al realizar la apuesta',
     alreadyVoted: 'Ya has votado en esta apuesta',
     option: 'Opción',
-    
+
+    // -----
+    myBets: 'Mis Apuestas',
+    statistics: 'Estadísticas',
+    performance: 'Rendimiento',
+    totalBets: 'Total de Apuestas',
+    totalWins: 'Total de Victorias',
+    totalLosses: 'Total de Derrotas',
+    won: 'Ganadas',
+    lost: 'Perdidas',
+    active: 'Activas',
+    winRate: 'Tasa de Victoria',
+    totalProfit: 'Ganancia Total',
+    roi: 'ROI',
+    winRateTrend: 'Tendencia de Victoria',
+    all: 'Todas',
+    profitLoss: 'Ganancia/Pérdida',
+    noBetsFound: 'No se encontraron apuestas',
+    noBetsDescription: 'Aún no has realizado ninguna apuesta',
+    searchBets: 'Buscar Apuestas',
+
     // Challenges
     challengeTitle: 'Título del Desafío',
     challengeDescription: 'Descripción del Desafío',

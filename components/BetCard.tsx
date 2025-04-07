@@ -120,7 +120,7 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
             <View key={option.id}>
               <View style={styles.optionRow}>
                 <Text style={[styles.optionLabel, { color: colors.text }]}>{option.label}</Text>
-                <Text style={[styles.optionOdd, { color: '#FFD60A' }]}>{option.odd.toFixed(2)}</Text>
+                <Text style={[styles.optionOdd, { color: '#FFD60A' }]}>{(option.odd || 0).toFixed(2)}</Text>
               </View>
               {idx < options.length - 1 && (
                 <View style={[styles.divider, { backgroundColor: 'rgba(255,255,255,0.1)' }]} />
