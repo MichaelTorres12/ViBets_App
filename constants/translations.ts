@@ -218,6 +218,7 @@ type TranslationKey =
   | 'totalCoins'
   | 'thisMonth'
   | 'allTime'
+  | 'daysToGo'
   
   // Profile
   | 'profile'
@@ -471,7 +472,8 @@ export const translations: Translations = {
     topEarner: 'Top Earner',
     totalCoins: 'Total Coins',
     thisMonth: 'This Month',
-    allTime: 'All Time',
+    allTime: 'All Time', 
+    daysToGo: 'days to reset',
     
     // Profile
     profile: 'Profile',
@@ -717,7 +719,7 @@ export const translations: Translations = {
     totalCoins: 'Total de Monedas',
     thisMonth: 'Este Mes',
     allTime: 'Desde siempre',
-    
+    daysToGo: 'días para reiniciar',
     // Profile
     profile: 'Perfil',
     yourBalance: 'Tu Saldo',

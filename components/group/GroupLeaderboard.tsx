@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
+//components/group/GroupLeaderboard.tsx
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, Pressable } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
-import { Medal } from 'lucide-react-native';
+import { Medal, Clock, Crown } from 'lucide-react-native';
 import { Card } from '@/components/Card';
 import { Group } from '@/types';
 
@@ -23,6 +24,34 @@ export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const [period, setPeriod] = useState<'month' | 'allTime'>('month');
+  const [daysToMonthEnd, setDaysToMonthEnd] = useState<number>(0);
+  const [daysToYearEnd, setDaysToYearEnd] = useState<number>(0);
+
+  // Calcular los días restantes hasta el fin de mes y año
+  useEffect(() => {
+    const calculateDaysRemaining = () => {
+      const today = new Date();
+      
+      // Para el último día del mes actual
+      const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      const monthDiffTime = lastDayOfMonth.getTime() - today.getTime();
+      const monthDiffDays = Math.ceil(monthDiffTime / (1000 * 60 * 60 * 24));
+      setDaysToMonthEnd(monthDiffDays);
+      
+      // Para el último día del año actual
+      const lastDayOfYear = new Date(today.getFullYear(), 11, 31);
+      const yearDiffTime = lastDayOfYear.getTime() - today.getTime();
+      const yearDiffDays = Math.ceil(yearDiffTime / (1000 * 60 * 60 * 24));
+      setDaysToYearEnd(yearDiffDays);
+    };
+
+    calculateDaysRemaining();
+    
+    // Actualizar cada día
+    const dayInterval = setInterval(calculateDaysRemaining, 86400000);
+    
+    return () => clearInterval(dayInterval);
+  }, []);
 
   // Ordenamos los miembros por cantidad de monedas para el leaderboard
   const leaderboardData: LeaderboardUser[] = group.members
@@ -31,7 +60,7 @@ export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
       username: member.username || `User ${member.userId.substring(0, 4)}`,
       coins: member.groupCoins,
       rank: index + 1,
-      avatar: undefined // Podrías agregar avatares si tienes esta información
+      avatar: undefined
     }))
     .sort((a, b) => b.coins - a.coins)
     .map((user, index) => ({ ...user, rank: index + 1 }));
@@ -47,108 +76,99 @@ export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
     // Ordenamos para que el 1er lugar esté en el medio, 2do a la izquierda y 3ro a la derecha
     const [second, first, third] = [top3[1], top3[0], top3[2]];
 
+    const podiumColors = {
+      first: '#FFDD65', // Gold/Yellow
+      second: '#A8E0FF', // Light Blue
+      third: '#FFE5CC', // Light Orange/Peach
+    };
+
     return (
       <View style={styles.podiumContainer}>
         {/* Segundo Lugar */}
         <View style={styles.podiumPosition}>
-          <View style={[styles.avatar, { backgroundColor: colors.card }]}>
-            {second.username ? (
-              second.avatar ? (
-                <Image source={{ uri: second.avatar }} style={styles.avatarImage} />
-              ) : (
-                <Text style={[styles.avatarText, { color: colors.text }]}>
-                  {second.username.charAt(0).toUpperCase()}
-                </Text>
-              )
-            ) : (
-              <Text style={[styles.avatarText, { color: colors.text }]}>?</Text>
-            )}
-            <View style={[styles.medalBadge, { backgroundColor: '#C0C0C0' }]}>
-              <Text style={styles.medalText}>2</Text>
+          <View style={[styles.podiumBlock, { height: 175, backgroundColor: podiumColors.second }]}>
+            <Text style={styles.rankNumber}>2</Text>
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                {second.username ? (
+                  second.avatar ? (
+                    <Image source={{ uri: second.avatar }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={styles.avatarText}>
+                      {second.username.charAt(0).toUpperCase()}
+                    </Text>
+                  )
+                ) : (
+                  <Text style={styles.avatarText}>?</Text>
+                )}
+              </View>
             </View>
+            <Text style={styles.podiumName} numberOfLines={1}>
+              {second.username || '-'}
+            </Text>
+            <Text style={styles.podiumCoins}>
+              {second.coins}
+            </Text>
           </View>
-          {second.username && (
-            <>
-              <Text style={[styles.podiumName, { color: colors.text }]} numberOfLines={1}>
-                {second.username}
-              </Text>
-              <Text style={[styles.podiumCoins, { color: colors.textSecondary }]}>
-                {second.coins}
-              </Text>
-            </>
-          )}
-          <View style={[styles.podiumBar, { 
-            backgroundColor: colors.card, 
-            height: 60,
-          }]} />
         </View>
 
         {/* Primer Lugar */}
         <View style={styles.podiumPosition}>
-          <View style={[styles.avatar, { backgroundColor: colors.card }]}>
-            {first.username ? (
-              first.avatar ? (
-                <Image source={{ uri: first.avatar }} style={styles.avatarImage} />
-              ) : (
-                <Text style={[styles.avatarText, { color: colors.text }]}>
-                  {first.username.charAt(0).toUpperCase()}
-                </Text>
-              )
-            ) : (
-              <Text style={[styles.avatarText, { color: colors.text }]}>?</Text>
-            )}
-            <View style={[styles.medalBadge, { backgroundColor: '#FFD700' }]}>
-              <Text style={styles.medalText}>1</Text>
+          <View style={[styles.podiumBlock, { height: 200, backgroundColor: podiumColors.first }]}>
+            <Text style={styles.rankNumber}>1</Text>
+            <View style={styles.avatarContainer}>
+              <View style={styles.crownContainer}>
+                <Crown size={35} color="#000" style={styles.crownIcon} />
+              </View>
+              <View style={styles.avatar}>
+                {first.username ? (
+                  first.avatar ? (
+                    <Image source={{ uri: first.avatar }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={styles.avatarText}>
+                      {first.username.charAt(0).toUpperCase()}
+                    </Text>
+                  )
+                ) : (
+                  <Text style={styles.avatarText}>?</Text>
+                )}
+              </View>
             </View>
+            <Text style={styles.podiumName} numberOfLines={1}>
+              {first.username || '-'}
+            </Text>
+            <Text style={styles.podiumCoins}>
+              {first.coins}
+            </Text>
           </View>
-          {first.username && (
-            <>
-              <Text style={[styles.podiumName, { color: colors.text }]} numberOfLines={1}>
-                {first.username}
-              </Text>
-              <Text style={[styles.podiumCoins, { color: colors.textSecondary }]}>
-                {first.coins}
-              </Text>
-            </>
-          )}
-          <View style={[styles.podiumBar, { 
-            backgroundColor: colors.card, 
-            height: 80
-          }]} />
         </View>
 
         {/* Tercer Lugar */}
         <View style={styles.podiumPosition}>
-          <View style={[styles.avatar, { backgroundColor: colors.card }]}>
-            {third.username ? (
-              third.avatar ? (
-                <Image source={{ uri: third.avatar }} style={styles.avatarImage} />
-              ) : (
-                <Text style={[styles.avatarText, { color: colors.text }]}>
-                  {third.username.charAt(0).toUpperCase()}
-                </Text>
-              )
-            ) : (
-              <Text style={[styles.avatarText, { color: colors.text }]}>?</Text>
-            )}
-            <View style={[styles.medalBadge, { backgroundColor: '#CD7F32' }]}>
-              <Text style={styles.medalText}>3</Text>
+          <View style={[styles.podiumBlock, { height: 150, backgroundColor: podiumColors.third }]}>
+            <Text style={styles.rankNumber}>3</Text>
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                {third.username ? (
+                  third.avatar ? (
+                    <Image source={{ uri: third.avatar }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={styles.avatarText}>
+                      {third.username.charAt(0).toUpperCase()}
+                    </Text>
+                  )
+                ) : (
+                  <Text style={styles.avatarText}>?</Text>
+                )}
+              </View>
             </View>
+            <Text style={styles.podiumName} numberOfLines={1}>
+              {third.username || '-'}
+            </Text>
+            <Text style={styles.podiumCoins}>
+              {third.coins}
+            </Text>
           </View>
-          {third.username && (
-            <>
-              <Text style={[styles.podiumName, { color: colors.text }]} numberOfLines={1}>
-                {third.username}
-              </Text>
-              <Text style={[styles.podiumCoins, { color: colors.textSecondary }]}>
-                {third.coins}
-              </Text>
-            </>
-          )}
-          <View style={[styles.podiumBar, { 
-            backgroundColor: colors.card, 
-            height: 40
-          }]} />
         </View>
       </View>
     );
@@ -160,12 +180,25 @@ export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
 
     return (
       <Card style={styles.rankCard}>
-        <Text style={[styles.rankNumber, { color: colors.text }]}>
-          {item.rank}
-        </Text>
+        <View style={styles.rankNumberContainer}>
+          <Text style={[styles.listRankNumber, { color: colors.text }]}>
+            {item.rank}
+          </Text>
+          {item.rank <= 3 && (
+            <View style={[styles.medalIcon, { 
+              backgroundColor: item.rank === 1 
+                ? '#FFD700' 
+                : item.rank === 2 
+                ? '#C0C0C0' 
+                : '#CD7F32' 
+            }]}>
+              <Medal size={12} color="#FFFFFF" />
+            </View>
+          )}
+        </View>
         
         <View style={styles.userInfo}>
-          <View style={[styles.smallAvatar, { backgroundColor: colors.card }]}>
+          <View style={[styles.smallAvatar, { backgroundColor: colors.background }]}>
             {item.avatar ? (
               <Image source={{ uri: item.avatar }} style={styles.avatarImage} />
             ) : (
@@ -187,49 +220,56 @@ export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Periodo del leaderboard */}
-      <View style={styles.periodContainer}>
-        <View style={styles.periodToggle}>
-          <Text 
-            style={[
-              styles.periodText, 
-              { color: period === 'month' ? colors.primary : colors.textSecondary },
-              period === 'month' && styles.activePeriod
-            ]}
-            onPress={() => setPeriod('month')}
-          >
-            {t('thisMonth') || 'This Month'}
-          </Text>
-          <Text 
-            style={[
-              styles.periodText, 
-              { color: period === 'allTime' ? colors.primary : colors.textSecondary },
-              period === 'allTime' && styles.activePeriod
-            ]}
-            onPress={() => setPeriod('allTime')}
-          >
-            {t('allTime') || 'All Time'}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header */}
+      <View style={styles.headerContainer}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          {t('leaderboard') || 'Leaderboard'}
+        </Text>
+        <View style={styles.timeLeftContainer}>
+          <Clock size={16} color={colors.primary} />
+          <Text style={[styles.timeLeftText, { color: colors.primary }]}>
+            {period === 'month' ? daysToMonthEnd : daysToYearEnd} {t('daysToGo') || 'days to go'}
           </Text>
         </View>
       </View>
 
-      {/* Título con icono */}
-      <View style={styles.titleContainer}>
-        <Medal size={20} color={colors.primary} />
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('leaderboard') || 'Leaderboard'}
-        </Text>
+      {/* Periodo del leaderboard */}
+      <View style={styles.periodContainer}>
+        <Pressable 
+          style={[
+            styles.periodButton, 
+            period === 'month' && { backgroundColor: colors.primaryLight }
+          ]}
+          onPress={() => setPeriod('month')}
+        >
+          <Text style={[
+            styles.periodText, 
+            { color: period === 'month' ? colors.textInverted : colors.textSecondary }
+          ]}>
+            {t('thisMonth') || 'This Month'}
+          </Text>
+        </Pressable>
+        <Pressable 
+          style={[
+            styles.periodButton, 
+            period === 'allTime' && { backgroundColor: colors.primaryLight }
+          ]}
+          onPress={() => setPeriod('allTime')}
+        >
+          <Text style={[
+            styles.periodText, 
+            { color: period === 'allTime' ? colors.textInverted : colors.textSecondary }
+          ]}>
+            {t('allTime') || 'All Time'}
+          </Text>
+        </Pressable>
       </View>
 
       {/* Podio con los 3 primeros */}
       {renderPodium()}
 
       {/* Lista del resto de usuarios */}
-      <Text style={[styles.rankingsTitle, { color: colors.text }]}>
-        {t('rankings') || 'Rankings'}
-      </Text>
-
       <FlatList
         data={leaderboardData}
         renderItem={renderUserRank}
@@ -244,123 +284,167 @@ export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    marginBottom: 16,
+    marginTop: 16,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  timeLeftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  timeLeftText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   periodContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  periodToggle: {
     flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 24,
+    paddingHorizontal: 10,
+  },
+  periodButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
   },
   periodText: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    fontWeight: '600',
-  },
-  activePeriod: {
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    gap: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
   podiumContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'flex-end',
-    marginBottom: 24,
-    height: 150,
+    paddingHorizontal: 10,
+    marginBottom: 0,
   },
   podiumPosition: {
+    flex: 1,
     alignItems: 'center',
-    width: '30%',
+    paddingHorizontal: 4,
+  },
+  podiumBlock: {
+    width: '100%',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  rankNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    opacity: 0.7,
+  },
+  avatarContainer: {
+    marginVertical: 8,
+  },
+  crownContainer: {
+    position: 'absolute',
+    top: -20,
+    zIndex: 10,
+    width: 55,
+    height: 55,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crownIcon: {
+    shadowColor: '#e0f542',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.8,
+    shadowRadius: 3,
+    elevation: 5,
+    marginBottom: 20,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   avatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 25,
+    borderRadius: 28,
   },
   avatarText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-  },
-  medalBadge: {
-    position: 'absolute',
-    bottom: -5,
-    right: -5,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  medalText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: '#555',
   },
   podiumName: {
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 4,
+    color: '#000',
+    opacity: 0.8,
+    width: '100%',
   },
   podiumCoins: {
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  podiumBar: {
-    width: '100%',
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-  },
-  rankingsTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 12,
+    color: '#000',
+    opacity: 0.7,
   },
   rankingsList: {
+    padding: 10,
     gap: 8,
   },
   rankCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
+    borderRadius: 12,
   },
-  rankNumber: {
-    width: 32,
+  rankNumberContainer: {
+    width: 30,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  listRankNumber: {
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'center',
+  },
+  medalIcon: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   userInfo: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    marginLeft: 8,
   },
   smallAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },

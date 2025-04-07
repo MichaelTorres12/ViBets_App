@@ -10,6 +10,7 @@ export type ColorTheme = {
   card: string;
   cardLight: string;
   text: string;
+  textInverted: string;
   textSecondary: string;
   textTertiary: string;
   border: string;
@@ -43,6 +44,7 @@ export const darkColors: ColorTheme = {
   card: '#1A1A1A',
   cardLight: '#2A2A2A',
   text: '#FFFFFF',
+  textInverted: '#000000',
   textSecondary: '#AAAAAA',
   textTertiary: '#666666',
   border: '#333333',
@@ -73,6 +75,7 @@ export const lightColors: ColorTheme = {
   card: '#F5F5F5',
   cardLight: '#EEEEEE',
   text: '#000000',
+  textInverted: '#FFFFFF',
   textSecondary: '#555555',
   textTertiary: '#999999',
   border: '#E0E0E0',
