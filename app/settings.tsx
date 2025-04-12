@@ -82,7 +82,7 @@ export default function SettingsScreen() {
 
       <View style={styles.logoContainer}>
         <Image
-          source={require('../assets/images/ghostIcon.png')}
+          source={require('../assets/images/vibets-icon.png')}
           style={styles.logoImage}
         />
         <Text style={styles.logoText}>Vi</Text>
@@ -224,10 +224,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
     marginBottom: 10,
+    marginTop: 10,
   },
   logoImage: {
     width: 55,
-    height: 50,
+    height: 53,
     marginRight: 6,
   },
   logoText: {

@@ -279,6 +279,29 @@ export default function BetsScreen() {
       );
     }
     
+    // Ordenar de la más reciente a la más antigua
+    filtered.sort((a, b) => {
+      // Primero intentamos usar created_at
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      
+      // Si ambas tienen created_at, ordenamos por esa fecha
+      if (dateA && dateB) {
+        return dateB - dateA; // Orden descendente (más reciente primero)
+      }
+      
+      // Si no tienen created_at, intentamos con end_date
+      const endDateA = a.end_date ? new Date(a.end_date).getTime() : 0;
+      const endDateB = b.end_date ? new Date(b.end_date).getTime() : 0;
+      
+      if (endDateA && endDateB) {
+        return dateB - dateA; // Orden descendente
+      }
+      
+      // Si no tienen ninguna fecha, mantenemos el orden actual
+      return 0;
+    });
+    
     return filtered;
   }, [bets, activeTab, user, searchQuery]);
 
@@ -416,7 +439,7 @@ export default function BetsScreen() {
         }
         renderItem={({ item }) => {
           const userParticipation = item.participations?.find(p => p.userId === user?.id || p.user_id === user?.id);
-          return (
+  return (
             <BetCard
               bet={item}
               userParticipation={userParticipation}

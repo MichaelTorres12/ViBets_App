@@ -93,7 +93,7 @@ export default function HomeScreen() {
       <View style={styles.headerTop}>
         <View style={styles.logoContainer}>
           <Image
-            source={require('../../assets/images/ghostIcon.png')}
+            source={require('../../assets/images/vibets-icon.png')}
             style={styles.logoImage}
           />
           <Text style={styles.logoText}>Vi</Text>
@@ -114,10 +114,20 @@ export default function HomeScreen() {
   const renderYourOpenBetsSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{t('yourOpenBets') || 'Your Open Bets'}</Text>
-        <TouchableOpacity onPress={() => router.push('/bets')}>
-          <Text style={styles.viewAll}>{t('viewAll')}</Text>
-        </TouchableOpacity>
+        <View style={styles.sectionTitleContainer}>
+          <Text style={styles.sectionTitle}>{t('yourOpenBets') || 'Your Open Bets'}</Text>
+          <TouchableOpacity 
+            style={styles.gradientPill} 
+            onPress={() => router.push('/bets?filter=active')}
+          >
+            <Text style={styles.gradientPillText}>{t('yourOpenBetsActive') || 'Active'}</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => router.push('/bets')}>
+            <Text style={styles.viewAll}>{t('viewAll')}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {recentBets.length > 0 ? (
@@ -251,7 +261,7 @@ const styles = StyleSheet.create({
   },
   logoImage: {
     width: 45,
-    height: 40,
+    height: 43,
     marginRight: 5,
   },
   logoText: {
@@ -261,7 +271,8 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 16,
+    alignItems: 'center',
+    gap: 12,
   },
   iconButton: {
     width: 40,
@@ -280,6 +291,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   sectionTitle: {
     fontSize: 24,
@@ -327,5 +343,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
+  },
+  gradientPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(138, 43, 226, 0.2)', // Light purple background
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  gradientPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary, // Purple text color
   },
 });

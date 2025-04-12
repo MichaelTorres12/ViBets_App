@@ -46,7 +46,7 @@ export default function LoginScreen() {
       <View style={styles.content}>
         <View style={styles.logoContainer}>
           <Image
-            source={require('../../assets/images/ghostIcon.png')}
+            source={require('../../assets/images/vibets-icon.png')}
             style={styles.logoImage}
           />
           <Text style={styles.logoText}>Vi</Text>
@@ -119,9 +119,9 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   logoImage: {
-    width: 80,
-    height: 70,
-    marginRight: 2,
+    width: 65,
+    height: 63,
+    marginRight: 10,
   },
   logoText: {
     fontSize: 36,

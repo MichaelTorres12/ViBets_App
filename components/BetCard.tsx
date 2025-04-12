@@ -83,11 +83,33 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
   const computedPot = bet.participations
     ? bet.participations.reduce((total, part) => total + part.amount, 0)
     : 0;
-  const options = bet.options ?? [];
+    
+  // Make sure we properly map the options array - this is the key change
+  const options = useMemo(() => {
+    if (!bet.options) return [];
+    
+    // If options are already in the correct format, return them
+    if (bet.options.length > 0 && 'label' in bet.options[0] && 'odd' in bet.options[0]) {
+      return bet.options;
+    }
+    
+    // If options are in the raw database format (bet_options), map them
+    if (bet.bet_options && Array.isArray(bet.bet_options)) {
+      return bet.bet_options.map(opt => ({
+        id: opt.id,
+        label: opt.option_text,
+        odd: parseFloat(opt.odds || 0)
+      }));
+    }
+    
+    // Log the issue for debugging
+    console.log("BetCard - Could not parse options:", bet.options);
+    return [];
+  }, [bet.options, bet.bet_options]);
 
   // Consola para revisar las opciones obtenidas
   useEffect(() => {
-    console.log("BetCard - Opciones de la apuesta:", options);
+    console.log("BetCard - Opciones de la apuesta procesadas:", options);
   }, [options]);
 
   return (
@@ -117,7 +139,7 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
       {options.length > 0 && (
         <View style={styles.optionsContainer}>
           {options.map((option, idx) => (
-            <View key={option.id}>
+            <View key={option.id || idx}>
               <View style={styles.optionRow}>
                 <Text style={[styles.optionLabel, { color: colors.text }]}>{option.label}</Text>
                 <Text style={[styles.optionOdd, { color: '#FFD60A' }]}>{(option.odd || 0).toFixed(2)}</Text>
@@ -216,6 +238,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 8,
   },
   optionLabel: {
     fontSize: 15,
@@ -226,7 +249,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   divider: {
-    height: 2,
+    height: 1,
     marginVertical: 4,
   },
   footerRow: {

@@ -60,7 +60,7 @@ type TranslationKey =
   | 'unknown'
   | 'yourCoins'
   | 'yourOpenBets'
-  
+  | 'yourOpenBetsActive'
   // Groups
   | 'groups'
   | 'myGroups'
@@ -343,6 +343,7 @@ export const translations: Translations = {
     unknown: 'Unknown',
     yourCoins: 'Coins',
     yourOpenBets: 'Your Bets',
+    yourOpenBetsActive: 'Open',
     
     // Groups
     groups: 'Groups',
@@ -613,6 +614,7 @@ export const translations: Translations = {
     unknown: 'Desconocida',
     yourCoins: 'Monedas',
     yourOpenBets: 'Tus Apuestas',
+    yourOpenBetsActive: 'Abiertas',
 
     // Groups
     groups: 'Grupos',
