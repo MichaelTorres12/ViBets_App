@@ -8,7 +8,6 @@ import {
   TouchableOpacity, 
   FlatList, 
   TextInput,
-  SafeAreaView
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/components/ThemeContext';
@@ -17,52 +16,56 @@ import { useBetsStore } from '@/store/bets-store';
 import { useAuth } from '@/store/auth-context';
 import { useGroupsStore } from '@/store/groups-store';
 import { BetCard } from '@/components/BetCard';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock, TrendingUp, Award, Ban, Search, DollarSign, Percent, Trophy, LineChart, ArrowUpRight } from 'lucide-react-native';
-import { colors as constantColors } from '@/constants/colors';
 
 // Componente para gráfico lineal simple (mock)
-const LineChartMock = ({ color, data = [62, 58, 80, 82, 55, 70] }) => (
-  <View style={styles.chartContainer}>
-    <View style={styles.gridLines}>
-      {[0, 1, 2, 3].map((_, i) => (
-        <View key={i} style={styles.gridLine} />
-      ))}
-    </View>
-    <View style={styles.lineContainer}>
-      {data.map((value, index) => (
-        <React.Fragment key={index}>
-          {index > 0 && (
+const LineChartMock = ({ color, data = [62, 58, 80, 82, 55, 70] }) => {
+  const { colors } = useTheme();
+  
+  return (
+    <View style={styles.chartContainer}>
+      <View style={styles.gridLines}>
+        {[0, 1, 2, 3].map((_, i) => (
+          <View key={i} style={[styles.gridLine, { backgroundColor: `${colors.text}15` }]} />
+        ))}
+      </View>
+      <View style={styles.lineContainer}>
+        {data.map((value, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && (
+              <View
+                style={[
+                  styles.lineSegment,
+                  {
+                    left: `${(index - 1) * (100 / (data.length - 1))}%`,
+                    width: `${100 / (data.length - 1)}%`,
+                    bottom: `${data[index - 1]}%`,
+                    height: `${Math.abs(data[index] - data[index - 1])}%`,
+                    backgroundColor: 'transparent',
+                    borderTopWidth: data[index] > data[index - 1] ? 2 : 0,
+                    borderBottomWidth: data[index] < data[index - 1] ? 2 : 0,
+                    borderColor: color,
+                  },
+                ]}
+              />
+            )}
             <View
               style={[
-                styles.lineSegment,
+                styles.dataPoint,
                 {
-                  left: `${(index - 1) * (100 / (data.length - 1))}%`,
-                  width: `${100 / (data.length - 1)}%`,
-                  bottom: `${data[index - 1]}%`,
-                  height: `${Math.abs(data[index] - data[index - 1])}%`,
-                  backgroundColor: 'transparent',
-                  borderTopWidth: data[index] > data[index - 1] ? 2 : 0,
-                  borderBottomWidth: data[index] < data[index - 1] ? 2 : 0,
-                  borderColor: color,
+                  left: `${index * (100 / (data.length - 1))}%`,
+                  bottom: `${value}%`,
+                  backgroundColor: color,
                 },
               ]}
             />
-          )}
-          <View
-            style={[
-              styles.dataPoint,
-              {
-                left: `${index * (100 / (data.length - 1))}%`,
-                bottom: `${value}%`,
-                backgroundColor: color,
-              },
-            ]}
-          />
-        </React.Fragment>
-      ))}
+          </React.Fragment>
+        ))}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 // Componente mejorado para gráfico de barras
 const BarChartMock = ({ wins, losses, winColor = '#4CAF50', lossColor = '#F44336' }) => {
@@ -70,90 +73,59 @@ const BarChartMock = ({ wins, losses, winColor = '#4CAF50', lossColor = '#F44336
   const winBarHeight = (wins / maxValue) * 100;
   const lossBarHeight = (losses / maxValue) * 100;
   const { t } = useLanguage();
+  const { colors } = useTheme();
 
   return (
     <View style={{ 
       flexDirection: 'row', 
-      height: 220, // Reducir la altura total para evitar sobreposición
+      height: 140, // Altura reducida para evitar sobreposición
       alignItems: 'flex-end', 
       justifyContent: 'space-around',
-      marginTop: 10, // Añadir margen superior para separar del título
-      paddingBottom: 24 // Espacio para las etiquetas inferiores
+      marginTop: 16, // Margen superior para separar del título
+      maxHeight: 120, // Limitar altura máxima
+      paddingBottom: 24, // Espacio para las etiquetas
+      position: 'relative'
     }}>
       <View style={{ alignItems: 'center' }}>
         <View 
           style={{ 
             height: `${winBarHeight}%`, 
-            width: 100, 
+            width: 80, 
             backgroundColor: winColor, 
             borderRadius: 4,
-            maxHeight: 220 // Limitar altura máxima
+            maxHeight: 120 // Limitar altura máxima
           }} 
         />
-        <Text style={{ marginTop: 8, color: winColor, fontWeight: 'bold', position: 'absolute', bottom: -24 }}>
-        {t('wins') || 'Wins'} ({wins})
+        <Text style={{ 
+          marginTop: 8, 
+          color: winColor, 
+          fontWeight: 'bold', 
+          position: 'absolute', 
+          bottom: -24,
+          fontSize: 12 
+        }}>
+          {t('wins') || 'Wins'} ({wins})
         </Text>
       </View>
       <View style={{ alignItems: 'center' }}>
         <View 
           style={{ 
             height: `${lossBarHeight}%`, 
-            width: 100, 
+            width: 80, 
             backgroundColor: lossColor, 
             borderRadius: 4,
-            maxHeight: 220 // Limitar altura máxima
+            maxHeight: 120 // Limitar altura máxima
           }} 
         />
-        <Text style={{ marginTop: 8, color: lossColor, fontWeight: 'bold', position: 'absolute', bottom: -24 }}>
-        {t('lost') || 'Lost'} ({losses})
-        </Text>
-      </View>
-    </View>
-  );
-};
-
-
-// Componente para tarjeta de apuesta reciente
-const RecentBetCard = ({ match, result, odds, stake, profit, status }) => {
-  const { colors } = useTheme();
-  
-  return (
-    <View style={[styles.recentBetCard, { backgroundColor: colors.card }]}>
-      <View style={styles.recentBetHeader}>
-        <Text style={[styles.recentBetDate, { color: colors.textSecondary }]}>Today</Text>
-        <View style={[
-          styles.statusPill, 
-          { backgroundColor: status === 'Win' ? '#4CAF50' : status === 'Loss' ? '#F44336' : colors.card }
-        ]}>
-          <Text style={styles.statusPillText}>{status}</Text>
-        </View>
-      </View>
-      
-      <View style={styles.matchContainer}>
-        <Text style={[styles.teamName, { color: colors.text }]}>{match.teamA}</Text>
-        <View style={styles.scoreContainer}>
-          <Text style={[styles.scoreText, { color: colors.text }]}>{result}</Text>
-          <Text style={[styles.resultType, { color: colors.textSecondary }]}>FT</Text>
-        </View>
-        <Text style={[styles.teamName, { color: colors.text }]}>{match.teamB}</Text>
-      </View>
-      
-      <View style={styles.betDetailsContainer}>
-        <View style={styles.betDetailItem}>
-          <Text style={[styles.betDetailLabel, { color: colors.textSecondary }]}>Odds</Text>
-          <Text style={[styles.betDetailValue, { color: colors.text }]}>{odds}</Text>
-        </View>
-        
-        <View style={styles.betDetailItem}>
-          <Text style={[styles.betDetailLabel, { color: colors.textSecondary }]}>Stake</Text>
-          <Text style={[styles.betDetailValue, { color: colors.text }]}>${stake}</Text>
-        </View>
-        
-        <Text style={[
-          styles.profitText, 
-          { color: profit > 0 ? '#4CAF50' : '#F44336' }
-        ]}>
-          {profit > 0 ? '+' : ''}{profit}
+        <Text style={{ 
+          marginTop: 8, 
+          color: lossColor, 
+          fontWeight: 'bold', 
+          position: 'absolute', 
+          bottom: -24,
+          fontSize: 12 
+        }}>
+          {t('lost') || 'Lost'} ({losses})
         </Text>
       </View>
     </View>
@@ -175,12 +147,11 @@ export default function BetsScreen() {
   // Cargar apuestas al iniciar y cuando cambie el usuario
   useEffect(() => {
     if (user) {
-      console.log("Cargando apuestas para usuario:", user.id);
       fetchUserBets(user.id);
     }
   }, [user, fetchUserBets]);
 
-  // Calcular estadísticas basadas en el campo winner
+  // Calcular estadísticas
   const stats = useMemo(() => {
     if (!bets || !user) return { 
       total: 0, 
@@ -192,8 +163,6 @@ export default function BetsScreen() {
       winRateByMonth: [62, 58, 80, 82, 55, 70],
       profitByMonth: [100, 200, -50, 300, 150, 250],
     };
-    
-    console.log("Calculando estadísticas con", bets.length, "apuestas");
     
     // Filtrar apuestas en las que el usuario participó
     const userBets = bets.filter(bet => 
@@ -218,10 +187,8 @@ export default function BetsScreen() {
     // Calcular estadísticas
     const total = userBets.length;
     
-    // NUEVA FÓRMULA: (Ganadas / Total) * 100 en lugar de (Ganadas / Completadas) * 100
+    // (Ganadas / Total) * 100
     const winRate = total > 0 ? (won / total * 100) : 0;
-    
-    console.log(`Estadísticas: Total: ${total}, Won: ${won}, Lost: ${lost}, Active: ${active}, WinRate: ${winRate}%`);
     
     return { 
       total, 
@@ -239,8 +206,6 @@ export default function BetsScreen() {
   const filteredBets = useMemo(() => {
     if (!bets || !user) return [];
     
-    console.log(`Filtrando ${bets.length} apuestas para tab: ${activeTab}`);
-    
     let filtered = [...bets];
     
     switch (activeTab) {
@@ -248,11 +213,9 @@ export default function BetsScreen() {
         filtered = filtered.filter(bet => bet.status === 'open');
         break;
       case 'won':
-        // Apuestas donde el usuario es explícitamente el ganador
         filtered = filtered.filter(bet => bet.status === 'settled' && bet.winner === user.id);
         break;
       case 'lost':
-        // Apuestas donde el usuario participó pero no ganó
         filtered = filtered.filter(bet => 
           bet.status === 'settled' && 
           bet.winner && 
@@ -265,10 +228,7 @@ export default function BetsScreen() {
           bet.participations?.some(p => p.userId === user.id || p.user_id === user.id)
         );
         break;
-      // La pestaña 'all' no necesita filtrado adicional
     }
-    
-    console.log(`Después de filtrar por tab: ${filtered.length} apuestas`);
     
     // Filtrar por búsqueda
     if (searchQuery.trim()) {
@@ -281,24 +241,20 @@ export default function BetsScreen() {
     
     // Ordenar de la más reciente a la más antigua
     filtered.sort((a, b) => {
-      // Primero intentamos usar created_at
       const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
       const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
       
-      // Si ambas tienen created_at, ordenamos por esa fecha
       if (dateA && dateB) {
-        return dateB - dateA; // Orden descendente (más reciente primero)
+        return dateB - dateA;
       }
       
-      // Si no tienen created_at, intentamos con end_date
       const endDateA = a.end_date ? new Date(a.end_date).getTime() : 0;
       const endDateB = b.end_date ? new Date(b.end_date).getTime() : 0;
       
       if (endDateA && endDateB) {
-        return dateB - dateA; // Orden descendente
+        return dateB - dateA;
       }
       
-      // Si no tienen ninguna fecha, mantenemos el orden actual
       return 0;
     });
     
@@ -319,13 +275,16 @@ export default function BetsScreen() {
     <TouchableOpacity
       style={[
         styles.filterButton,
-        active && { backgroundColor: '#DDFF00', borderColor: '#DDFF00' }
+        { 
+          backgroundColor: active ? colors.primary : 'transparent',
+          borderColor: active ? colors.primary : colors.border
+        }
       ]}
       onPress={onPress}
     >
       <Text style={[
         styles.filterButtonText,
-        { color: active ? '#000' : colors.text }
+        { color: active ? colors.textInverted : colors.text }
       ]}>
         {title}
       </Text>
@@ -337,7 +296,7 @@ export default function BetsScreen() {
     <TouchableOpacity
       style={[
         styles.mainTabButton,
-        active && { backgroundColor: colors.primary }
+        { backgroundColor: active ? colors.primary : 'transparent' }
       ]}
       onPress={onPress}
     >
@@ -354,31 +313,66 @@ export default function BetsScreen() {
   const renderStatisticsView = () => (
     <ScrollView contentContainerStyle={styles.statisticsContainer}>
       <View style={styles.statsGrid}>
-        <View style={[styles.statCardLarge, { backgroundColor: colors.card }]}>
-          <TrendingUp size={20} color="#DDFF00" style={styles.statIcon} />
+        <View style={[styles.statCardLarge, { 
+          backgroundColor: colors.card,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3
+        }]}>
+          <View style={[styles.statIconContainer, { backgroundColor: `${colors.primary}15` }]}>
+            <TrendingUp size={20} color={colors.primary} />
+          </View>
           <Text style={[styles.statValue, { color: colors.text }]}>{stats.winRate.toFixed(1)}%</Text>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('winRate') || 'Win Rate'}</Text>
         </View>
-        <View style={[styles.statCardLarge, { backgroundColor: colors.card }]}>
-          <Trophy size={20} color="#DDFF00" style={styles.statIcon} />
+        
+        <View style={[styles.statCardLarge, { 
+          backgroundColor: colors.card,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3
+        }]}>
+          <View style={[styles.statIconContainer, { backgroundColor: `${colors.primary}15` }]}>
+            <Trophy size={20} color={colors.primary} />
+          </View>
           <Text style={[styles.statValue, { color: colors.text }]}>{stats.won}</Text>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('won') || 'Wins'}</Text>
         </View>
-        <View style={[styles.statCardLarge, { backgroundColor: colors.card }]}>
-          <DollarSign size={20} color="#DDFF00" style={styles.statIcon} />
+        
+        <View style={[styles.statCardLarge, { 
+          backgroundColor: colors.card,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3
+        }]}>
+          <View style={[styles.statIconContainer, { backgroundColor: `${colors.primary}15` }]}>
+            <DollarSign size={20} color={colors.primary} />
+          </View>
           <Text style={[styles.statValue, { color: colors.text }]}>${stats.totalProfit}</Text>
           <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('totalProfit') || 'Total Profit'}</Text>
         </View>
       </View>
       
-      <View style={[styles.chartCard, { backgroundColor: colors.card }]}>
-      <View style={styles.chartHeader}>
-        <Text style={[styles.chartTitle, { color: colors.text }]}>{t('profitLoss') || 'Profit/Loss'}</Text>
-        <ArrowUpRight size={18} color="#DDFF00" />
+      <View style={[styles.chartCard, { 
+        backgroundColor: colors.card,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3
+      }]}>
+        <View style={styles.chartHeader}>
+          <Text style={[styles.chartTitle, { color: colors.text }]}>{t('profitLoss') || 'Profit/Loss'}</Text>
+          <ArrowUpRight size={18} color={colors.primary} />
+        </View>
+        <BarChartMock wins={stats.won} losses={stats.lost} />
       </View>
-      <BarChartMock wins={stats.won} losses={stats.lost} />
-    </View>
-
     </ScrollView>
   );
 
@@ -386,26 +380,63 @@ export default function BetsScreen() {
   const renderMyBetsView = () => (
     <View>
       <View style={styles.statsRow}>
-        <View style={[styles.smallStatCard, { backgroundColor: colors.card }]}>
+        <View style={[styles.smallStatCard, { 
+          backgroundColor: colors.card,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3
+        }]}>
           <Text style={[styles.smallStatValue, { color: colors.text }]}>{stats.total}</Text>
           <Text style={[styles.smallStatLabel, { color: colors.textSecondary }]}>{t('totalBets') || 'Total Bets'}</Text>
         </View>
-        <View style={[styles.smallStatCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.smallStatValue, { color: '#4CAF50' }]}>{stats.won}</Text>
+        
+        <View style={[styles.smallStatCard, { 
+          backgroundColor: colors.card,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3
+        }]}>
+          <Text style={[styles.smallStatValue, { color: colors.success }]}>{stats.won}</Text>
           <Text style={[styles.smallStatLabel, { color: colors.textSecondary }]}>{t('won') || 'Won'}</Text>
         </View>
-        <View style={[styles.smallStatCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.smallStatValue, { color: '#F44336' }]}>{stats.lost}</Text>
+        
+        <View style={[styles.smallStatCard, { 
+          backgroundColor: colors.card,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3
+        }]}>
+          <Text style={[styles.smallStatValue, { color: colors.error }]}>{stats.lost}</Text>
           <Text style={[styles.smallStatLabel, { color: colors.textSecondary }]}>{t('lost') || 'Lost'}</Text>
         </View>
       </View>
       
-      <View style={[styles.winRateCard, { backgroundColor: colors.card }]}>
+      <View style={[styles.winRateCard, { 
+        backgroundColor: colors.card,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3
+      }]}>
         <Text style={[styles.winRateLabel, { color: colors.textSecondary }]}>{t('winRate') || 'Win Rate'}</Text>
         <Text style={[styles.winRateValue, { color: colors.text }]}>{stats.winRate.toFixed(1)}%</Text>
       </View>
       
-      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+      <View style={[styles.searchContainer, { 
+        backgroundColor: colors.card,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2
+      }]}>
         <Search size={16} color={colors.textSecondary} style={styles.searchIcon} />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
@@ -429,9 +460,16 @@ export default function BetsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.betsList}
         ListEmptyComponent={
-          <View style={[styles.emptyContainer, { backgroundColor: colors.card }]}>
-            <View style={styles.trophyIconContainer}>
-              <Trophy size={32} color="#DDFF00" />
+          <View style={[styles.emptyContainer, { 
+            backgroundColor: colors.card,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3
+          }]}>
+            <View style={[styles.trophyIconContainer, { backgroundColor: `${colors.primary}15` }]}>
+              <Trophy size={32} color={colors.primary} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('noBetsFound') || 'No bets found'}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>{t('noBetsDescription') || "You haven't placed any bets yet. Join a group and start betting!"}</Text>
@@ -439,7 +477,7 @@ export default function BetsScreen() {
         }
         renderItem={({ item }) => {
           const userParticipation = item.participations?.find(p => p.userId === user?.id || p.user_id === user?.id);
-  return (
+          return (
             <BetCard
               bet={item}
               userParticipation={userParticipation}
@@ -452,14 +490,14 @@ export default function BetsScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: constantColors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Fixed header section */}
-      <View style={[styles.fixedHeaderContainer, { backgroundColor: constantColors.background }]}>
+      <View style={[styles.fixedHeaderContainer, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>{t('performance') || 'Performance'}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{t('performance') || 'Performance'}</Text>
         </View> 
         
-        <View style={styles.mainTabsContainer}>
+        <View style={[styles.mainTabsContainer, { backgroundColor: colors.cardLight }]}>
           <MainTabButton title={t('myBets') || 'My Bets'} active={activeView === 'myBets'} onPress={() => setActiveView('myBets')} />
           <MainTabButton title={t('statistics') || 'Statistics'} active={activeView === 'statistics'} onPress={() => setActiveView('statistics')} />
         </View>
@@ -469,6 +507,7 @@ export default function BetsScreen() {
       <ScrollView 
         style={styles.scrollableContent}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
       >
         {activeView === 'myBets' ? renderMyBetsView() : renderStatisticsView()}
       </ScrollView>
@@ -476,20 +515,12 @@ export default function BetsScreen() {
   );
 }
 
-// Helpers
-function formatDate(dateStr?: string) {
-  if (!dateStr) return 'N/A';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString();
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   fixedHeaderContainer: {
-    backgroundColor: constantColors.background,
-    paddingTop: 20,
+    paddingTop: 8,
     zIndex: 1,
   },
   header: {
@@ -497,27 +528,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 28,
-    paddingBottom: 16,
+    paddingVertical: 16,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    // Usa colors.text del theme; si no está disponible, reemplaza con un valor fijo
-    color: constantColors.text,
-  },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    paddingHorizontal: 16,
   },
   mainTabsContainer: {
     flexDirection: 'row',
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 8,
-    backgroundColor: '#1E1E1E',
     padding: 4,
   },
   mainTabButton: {
@@ -537,6 +558,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: 16,
+    marginTop: 8,
   },
   statCardLarge: {
     width: '31%',
@@ -544,7 +566,12 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
   },
-  statIcon: {
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 8,
   },
   statValue: {
@@ -583,7 +610,6 @@ const styles = StyleSheet.create({
   gridLine: {
     height: 1,
     width: '100%',
-    backgroundColor: 'rgba(255,255,255,0.1)',
     position: 'absolute',
   },
   lineContainer: {
@@ -601,93 +627,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     transform: [{ translateX: -4 }, { translateY: 4 }],
   },
-  chartMonths: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  monthLabel: {
-    fontSize: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  recentBetCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  recentBetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  recentBetDate: {
-    fontSize: 14,
-  },
-  statusPill: {
-    borderRadius: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-  },
-  statusPillText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  matchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  teamName: {
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-  },
-  scoreContainer: {
-    alignItems: 'center',
-    marginHorizontal: 10,
-  },
-  scoreText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  resultType: {
-    fontSize: 12,
-  },
-  betDetailsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  betDetailItem: {
-    marginRight: 16,
-  },
-  betDetailLabel: {
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  betDetailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  profitText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 'auto',
-  },
   // Estilos para la vista de Mis Apuestas
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginVertical: 12,
   },
   smallStatCard: {
-    width: '32%',
+    width: '31%',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -703,14 +651,15 @@ const styles = StyleSheet.create({
   winRateCard: {
     marginHorizontal: 16,
     borderRadius: 12,
-    padding: 12,
+    padding: 16,
     marginBottom: 16,
   },
   winRateLabel: {
     fontSize: 14,
+    marginBottom: 4,
   },
   winRateValue: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
   },
   searchContainer: {
@@ -726,7 +675,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    height: 60,
+    height: 50,
   },
   filtersContainer: {
     flexDirection: 'row',
@@ -739,10 +688,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
   },
   filterButtonText: {
     fontWeight: '600',
+    fontSize: 13,
   },
   betsList: {
     padding: 16,
@@ -753,12 +702,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
     borderRadius: 12,
+    marginVertical: 8,
   },
   trophyIconContainer: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(221, 255, 0, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -771,6 +720,8 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     textAlign: 'center',
+    maxWidth: '80%',
+    lineHeight: 20,
   },
   scrollableContent: {
     flex: 1,

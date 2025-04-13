@@ -85,11 +85,33 @@ export function GroupChat({ group }: { group: Group }) {
     }
   };
 
+  const getBubbleColors = (isCurrentUser: boolean) => {
+    // Modo claro se detecta verificando si el fondo es claro
+    const isLightMode = colors.background === '#FFFFFF' || colors.background === '#F6F8FA';
+    
+    return isCurrentUser 
+      ? {
+          // Para mensajes propios
+          background: isLightMode ? '#2388FC' : colors.chatBubbleSender, // Azul en claro, color normal en oscuro
+          text: '#FFFFFF', // Siempre texto blanco para mensajes propios
+          time: 'rgba(255,255,255,0.8)', // Hora semitransparente
+        }
+      : {
+          // Para mensajes de otros
+          background: isLightMode ? '#dbe1ff' : colors.chatBubbleReceiver, // Azul muy claro en modo claro
+          text: isLightMode ? '#1A1F36' : colors.text, // Texto oscuro en modo claro
+          time: isLightMode ? '#8C93A4' : colors.textSecondary, // Gris azulado para la hora
+        };
+  };
+
   const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
     const isCurrentUser = item.sender === user?.id;
     const showDateHeader =
       index === 0 ||
       formatDate(messages[index - 1].timestamp) !== formatDate(item.timestamp);
+    
+    const bubbleColors = getBubbleColors(isCurrentUser);
+    const isLightMode = colors.background === '#FFFFFF' || colors.background === '#F6F8FA';
 
     return (
       <>
@@ -117,8 +139,14 @@ export function GroupChat({ group }: { group: Group }) {
             style={[
               styles.messageBubble,
               {
-                backgroundColor: isCurrentUser ? colors.chatBubbleSender : colors.card,
+                backgroundColor: bubbleColors.background,
                 alignSelf: isCurrentUser ? 'flex-end' : 'flex-start',
+                // Añadir sombra sutil para el modo claro
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: isLightMode ? 0.1 : 0,
+                shadowRadius: 2,
+                elevation: isLightMode ? 1 : 0
               },
             ]}
           >
@@ -138,7 +166,7 @@ export function GroupChat({ group }: { group: Group }) {
               <Text
                 style={[
                   styles.messageText,
-                  { color: isCurrentUser ? '#FFFFFF' : colors.text },
+                  { color: bubbleColors.text },
                 ]}
               >
                 {item.message}
@@ -147,7 +175,7 @@ export function GroupChat({ group }: { group: Group }) {
             <Text
               style={[
                 styles.messageTime,
-                { color: isCurrentUser ? 'rgba(255,255,255,0.7)' : colors.textSecondary },
+                { color: bubbleColors.time },
               ]}
             >
               {formatTime(item.timestamp)}

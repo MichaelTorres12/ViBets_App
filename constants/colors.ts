@@ -16,11 +16,12 @@ export type ColorTheme = {
   border: string;
   filter: string;
   chatBubbleSender: string;
+  chatBubbleReceiver: string;
   
   // Status colors
   success: string;
-  error: string;
   warning: string;
+  error: string;
   
   // Special
   coin: string;
@@ -54,7 +55,8 @@ export const darkColors: ColorTheme = {
   error: '#FF3D71',
   warning: '#FFAA00',
   chatBubbleSender: '#1A1A1A',
-  
+  chatBubbleReceiver: '#242424',
+
   // Special
   coin: '#DDFF00',
   
@@ -66,34 +68,35 @@ export const darkColors: ColorTheme = {
 
 export const lightColors: ColorTheme = {
   // Main colors
-  primary: '#DDFF00', // Keeping the same accent color
-  primaryLight: '#E5FF4D',
-  primaryDark: '#B8D600',
+  primary: '#2388FC', // Azul brillante como en la imagen
+  primaryLight: '#50A1FC',
+  primaryDark: '#0D6EE0',
   
   // UI colors
-  background: '#FFFFFF',
-  card: '#F5F5F5',
-  cardLight: '#EEEEEE',
-  text: '#000000',
+  background: '#F6F8FA', // Fondo ligeramente grisáceo como en la imagen
+  card: '#FFFFFF', // Tarjetas blancas puras como en la imagen
+  cardLight: '#F0F7FF', // Azul muy claro para cards secundarias
+  text: '#1A1F36', // Casi negro para mejor legibilidad
   textInverted: '#FFFFFF',
-  textSecondary: '#555555',
-  textTertiary: '#999999',
-  border: '#E0E0E0',
-  filter: '#2388fc',
-  chatBubbleSender: '#000000',
+  textSecondary: '#5A6376', // Gris azulado para texto secundario
+  textTertiary: '#8C93A4', // Gris más claro para texto terciario
+  border: '#E1E8F5', // Borde azulado claro
+  filter: '#2388FC',
+  chatBubbleSender: '#E9F4FF', // Azul muy claro para burbujas de chat
+  chatBubbleReceiver: '#07a8e3', // Azul muy claro para burbujas de chat
 
   // Status colors
-  success: '#00C853',
-  error: '#D50000',
-  warning: '#FF9100',
+  success: '#17C964', // Verde brillante como en los badges "Win"
+  error: '#F31260', // Rojo para errores y badges "Lose"
+  warning: '#F5A524', // Naranja para advertencias
   
   // Special
-  coin: '#DDFF00',
+  coin: '#F5A524', // Dorado/amarillo para monedas
   
   // Gradients
-  gradientStart: '#F5F5F5',
-  gradientEnd: '#FFFFFF',
-  secondary: '#FFAA00', // o el color que prefieras
+  gradientStart: '#2388FC', // Inicio de gradiente azul
+  gradientEnd: '#50A1FC', // Fin de gradiente azul más claro
+  secondary: '#F31260', // Rojo como color secundario (como LaLiga en la imagen)
 };
 
 // This will be replaced by the theme context

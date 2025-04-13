@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { colors } from '@/constants/colors';
-import { useAuth } from '@/store/auth-context';  // <--- Usa AuthContext
+import { useAuth } from '@/store/auth-context';
 import { useLanguage } from '@/components/LanguageContext';
 import { useGroupsStore } from '@/store/groups-store';
 import { useBetsStore } from '@/store/bets-store';
@@ -22,18 +22,17 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { YourOpenBetCard } from '@/components/YourOpenBetCard';
 import { Plus, Search, Bell, ArrowRight } from 'lucide-react-native';
+import { useTheme } from '@/components/ThemeContext';  // Asegúrate de importar useTheme si no existe, añádelo
 
 export default function HomeScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-
-  // En vez de user de useAuthStore
-  const { user } = useAuth(); // <-- user del AuthContext
+  const { user } = useAuth();
+  const { colors } = useTheme(); // Usa el hook de tema para obtener los colores actuales
 
   const { fetchUserBets, bets } = useBetsStore();
   const { getUserGroups, getGroupById } = useGroupsStore();
 
-  // Cuando tengas user, llamas a fetchUserBets
   useEffect(() => {
     if (user) {
       fetchUserBets(user.id);
@@ -48,19 +47,16 @@ export default function HomeScreen() {
     }, [user, fetchUserBets])
   );
 
-  // Si NO hay user => muestro algo o redirijo
   if (!user) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <Text style={{ color: colors.text }}>Cargando / No hay usuario...</Text>
       </SafeAreaView>
     );
   }
 
-  // Si hay user => calculamos userGroups
   const userGroups = getUserGroups(user.id);
 
-  // Filtras las bets con participations
   const userBets = bets
     .map((bet: any) => {
       const participation = bet.participations?.find(
@@ -70,7 +66,6 @@ export default function HomeScreen() {
     })
     .filter(({ bet, participation }) => participation && bet.status === 'open');
 
-  // Ordenas y tomas 5
   const recentBets = userBets
     .sort(
       (a, b) =>
@@ -78,7 +73,6 @@ export default function HomeScreen() {
         new Date(a.bet.createdAt || a.bet.created_at).getTime()
     )
     .slice(0, 5);
-  console.log('Your Open Bets:', recentBets);
 
   const navigateToGroup = (groupId: string) => {
     router.push(`/groups/${groupId}`);
@@ -89,21 +83,21 @@ export default function HomeScreen() {
   };
 
   const renderHeader = () => (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor: colors.background }]}>
       <View style={styles.headerTop}>
         <View style={styles.logoContainer}>
           <Image
             source={require('../../assets/images/vibets-icon.png')}
             style={styles.logoImage}
           />
-          <Text style={styles.logoText}>Vi</Text>
-          <Text style={styles.logoText}>Bets</Text>
+          <Text style={[styles.logoText, { color: colors.text }]}>Vi</Text>
+          <Text style={[styles.logoTextSecondary, { color: colors.primary }]}>Bets</Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.card }]}>
             <Search size={24} color={colors.text} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.card }]}>
             <Bell size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -115,17 +109,26 @@ export default function HomeScreen() {
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleContainer}>
-          <Text style={styles.sectionTitle}>{t('yourOpenBets') || 'Your Open Bets'}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            {t('yourOpenBets') || 'Your Open Bets'}
+          </Text>
           <TouchableOpacity 
-            style={styles.gradientPill} 
+            style={[styles.gradientPill, { 
+              backgroundColor: `${colors.primary}15`, // 15% opacidad 
+              borderColor: colors.primary 
+            }]}
             onPress={() => router.push('/bets?filter=active')}
           >
-            <Text style={styles.gradientPillText}>{t('yourOpenBetsActive') || 'Active'}</Text>
+            <Text style={[styles.gradientPillText, { color: colors.primary }]}>
+              {t('yourOpenBetsActive') || 'Active'}
+            </Text>
           </TouchableOpacity>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={() => router.push('/bets')}>
-            <Text style={styles.viewAll}>{t('viewAll')}</Text>
+            <Text style={[styles.viewAll, { color: colors.primary }]}>
+              {t('viewAll')}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -152,8 +155,8 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
         />
       ) : (
-        <Card style={styles.emptyCard}>
-          <Text style={styles.emptyText}>
+        <Card style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             {t('noYourOpenBets') || 'You have no open bets yet.'}
           </Text>
           {userGroups.length > 0 && (
@@ -170,9 +173,13 @@ export default function HomeScreen() {
   const renderYourGroupsSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{t('yourGroups')}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          {t('yourGroups')}
+        </Text>
         <TouchableOpacity onPress={() => router.push('/groups')}>
-          <Text style={styles.viewAll}>{t('viewAll')}</Text>
+          <Text style={[styles.viewAll, { color: colors.primary }]}>
+            {t('viewAll')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -190,7 +197,7 @@ export default function HomeScreen() {
               style={styles.moreButton}
               onPress={() => router.push('/groups')}
             >
-              <Text style={styles.moreButtonText}>
+              <Text style={[styles.moreButtonText, { color: colors.primary }]}>
                 {t('viewMoreGroups')} ({userGroups.length - 2})
               </Text>
               <ArrowRight size={16} color={colors.primary} />
@@ -198,8 +205,10 @@ export default function HomeScreen() {
           )}
         </View>
       ) : (
-        <Card style={styles.emptyCard}>
-          <Text style={styles.emptyText}>{t('notInGroups')}</Text>
+        <Card style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            {t('notInGroups')}
+          </Text>
           <View style={styles.emptyActions}>
             <Button
               title={t('createGroup')}
@@ -219,7 +228,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {renderHeader()}
       <ScrollView
         style={styles.scrollView}
@@ -236,7 +245,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
@@ -247,6 +255,8 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'transparent', // Efecto sutil de separación
   },
   headerTop: {
     flexDirection: 'row',
@@ -267,7 +277,10 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text,
+  },
+  logoTextSecondary: {
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   headerActions: {
     flexDirection: 'row',
@@ -278,9 +291,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   section: {
     marginBottom: 24,
@@ -300,23 +320,30 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text,
   },
   viewAll: {
     fontSize: 14,
-    color: colors.primary,
     fontWeight: '600',
   },
   betsListHorizontal: {
+    paddingVertical: 4, // Espacio para la sombra
     gap: 12,
   },
   emptyCard: {
     alignItems: 'center',
     padding: 24,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   emptyText: {
     fontSize: 16,
-    color: colors.textSecondary,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -337,24 +364,15 @@ const styles = StyleSheet.create({
   moreButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
-  },
-  seeAll: {
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '600',
   },
   gradientPill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: 'rgba(138, 43, 226, 0.2)', // Light purple background
     borderWidth: 1,
-    borderColor: colors.primary,
   },
   gradientPillText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.primary, // Purple text color
   },
 });

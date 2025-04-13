@@ -24,6 +24,7 @@ type TranslationKey =
   | 'loginFailed'
   | 'registrationFailed'
   | 'ok'
+  | 'thankYou'
   
   // Auth
   | 'login'
@@ -61,8 +62,13 @@ type TranslationKey =
   | 'yourCoins'
   | 'yourOpenBets'
   | 'yourOpenBetsActive'
+
   // Groups
   | 'groups'
+  | 'enterGroupName'
+  | 'groupDescriptionPlaceholder'
+  | 'howToGetInviteCode'
+  | 'inviteCodeInstructions'
   | 'myGroups'
   | 'joinedGroups'
   | 'createNewGroup'
@@ -205,13 +211,22 @@ type TranslationKey =
   | 'createFirstChallenge'
   | 'challengeClosed'
   | 'challengeClosedMessage'
-  | 'challengeCompleted'
-  | 'challengeCompletedMessage'
   | 'noSubmissions'
   | 'submissions'
   | 'joinChallenge'
   | 'submitProof'
   | 'submit'
+  | 'voteOnThisSubmission'
+  | 'describeProof'
+  | 'attachImage'
+  | 'imagePlaceholder'
+  | 'text'
+  | 'image'
+  | 'youVoted'
+  | 'youSubmitted'
+  | 'proofSubmitted'
+  | 'youAlreadySubmitted'
+  | 'voteRecorded'
 
   // Chat
   | 'typeAMessage'
@@ -275,7 +290,18 @@ type TranslationKey =
   | 'version'
   | 'termsOfService'
   | 'contactUs'
-  | 'changeLanguage';
+  | 'changeLanguage'
+
+  // Onboarding
+  | 'onboardingTitle1'
+  | 'onboardingSubtitle1'
+  | 'onboardingTitle2'
+  | 'onboardingSubtitle2'
+  | 'onboardingTitle3'
+  | 'onboardingSubtitle3'
+  | 'onboardingNext'
+  | 'onboardingStart'
+  | 'viewTutorial'
 
 type Translations = {
   [key in Language]: {
@@ -307,7 +333,7 @@ export const translations: Translations = {
     loginFailed: 'Login failed. Please try again.',
     registrationFailed: 'Registration failed. Please try again.',
     ok: 'OK',
-    
+    thankYou: 'Thank you!',
     // Auth
     login: 'Login',
     register: 'Register',
@@ -334,8 +360,8 @@ export const translations: Translations = {
     noActiveBets: "You haven't placed any bets yet",
     exploreBets: 'Explore Bets',
     notInGroups: "You're not in any groups yet",
-    createGroup: 'Create Group',
-    joinGroup: 'Join Group',
+    createGroup: 'Create',
+    joinGroup: 'Join',
     viewMoreGroups: 'View more groups',
     open: 'Open',
     closed: 'Closed',
@@ -347,6 +373,10 @@ export const translations: Translations = {
     
     // Groups
     groups: 'Groups',
+    enterGroupName: 'Enter Group Name',
+    groupDescriptionPlaceholder: 'What\'s this group about?',
+    howToGetInviteCode: 'How to get an invite code?',
+    inviteCodeInstructions: 'Ask your friend to share their group\'s invite code with you. They can find it in the group details screen.',
     myGroups: 'My Groups',
     joinedGroups: 'Joined Groups',
     createNewGroup: 'Create New Group',
@@ -490,7 +520,17 @@ export const translations: Translations = {
     joinChallenge: 'Join Challenge',
     submitProof: 'Submit Proof',
     submit: 'Submit',
-
+    voteOnThisSubmission: 'Vote on this Submission',
+    describeProof: 'Describe your proof',
+    attachImage: 'Attach Image',
+    imagePlaceholder: 'Image',
+    text: 'Text',
+    image: 'Image',
+    youVoted: 'You voted on this submission',
+    youSubmitted: 'You submitted a proof',
+    proofSubmitted: 'Proof submitted',
+    youAlreadySubmitted: 'You have already submitted your proof',
+    voteRecorded: 'Vote recorded',
 
     // Chat
     typeAMessage: 'Type a message...',
@@ -553,7 +593,18 @@ export const translations: Translations = {
     version: 'Version',
     termsOfService: 'Terms of Service',
     contactUs: 'Contact Us',
-    changeLanguage: 'Change Language'
+    changeLanguage: 'Change Language',
+
+    // Onboarding
+    onboardingTitle1: 'Friendly Betting',
+    onboardingSubtitle1: 'ViBets allows you to create and participate in friendly bets of any kind. From sporting events to personal predictions, everything is recorded without using real money (for now 😉)',
+    onboardingTitle2: 'Create Groups and Compete',
+    onboardingSubtitle2: 'Form groups with your friends, family or colleagues. Create custom bets and launch fun challenges on any event. From sports matches to personal predictions, everything goes in the competition to be the best!',
+    onboardingTitle3: 'Track Your Stats',
+    onboardingSubtitle3: 'Keep track of your wins, losses and successful predictions. Communicate with your group through the integrated chat to discuss results, show off your victories and share fun moments. Become the GOAT of GOATs among your friends!',
+    onboardingNext: 'Next',
+    onboardingStart: 'Get Started!',
+    viewTutorial: 'View Tutorial'
   },
   es: {
     // Common
@@ -578,6 +629,7 @@ export const translations: Translations = {
     loginFailed: 'Error al iniciar sesión. Por favor, inténtelo de nuevo.',
     registrationFailed: 'Error al registrarse. Por favor, inténtelo de nuevo.',
     ok: 'OK',
+    thankYou: '¡Gracias!',
     
     // Auth
     login: 'Iniciar Sesión',
@@ -605,8 +657,8 @@ export const translations: Translations = {
     noActiveBets: 'Aún no has realizado ninguna apuesta',
     exploreBets: 'Explorar Apuestas',
     notInGroups: 'Aún no estás en ningún grupo',
-    createGroup: 'Crear Grupo',
-    joinGroup: 'Unirse a Grupo',
+    createGroup: 'Crear',
+    joinGroup: 'Unirme',
     viewMoreGroups: 'Ver más grupos',
     open: 'Abierta',
     closed: 'Cerrada',
@@ -618,6 +670,10 @@ export const translations: Translations = {
 
     // Groups
     groups: 'Grupos',
+    enterGroupName: 'Ingresa el Nombre del Grupo',
+    groupDescriptionPlaceholder: '¿Qué es este grupo?',
+    howToGetInviteCode: '¿Cómo obtener un código de invitación?',
+    inviteCodeInstructions: 'Pide a tu amigo que comparta su código de invitación con tu grupo. Puedes encontrarlo en la pantalla de detalles del grupo.',
     myGroups: 'Mis Grupos',
     joinedGroups: 'Grupos Unidos',
     createNewGroup: 'Crear Nuevo Grupo',
@@ -757,7 +813,17 @@ export const translations: Translations = {
     joinChallenge: 'Unirse al Reto',  
     submitProof: 'Enviar Prueba',
     submit: 'Enviar',
-
+    voteOnThisSubmission: 'Votar en esta Prueba',
+    describeProof: 'Describe tu prueba',  
+    attachImage: 'Añadir Imagen',
+    imagePlaceholder: 'Imagen',
+    text: 'Texto',
+    image: 'Imagen',
+    youVoted: 'Has votado en esta prueba',
+    youSubmitted: 'Has enviado una prueba',
+    proofSubmitted: 'Prueba enviada',
+    youAlreadySubmitted: 'Ya has enviado una prueba',
+    voteRecorded: 'Voto registrado',
 
     // Chat
     typeAMessage: 'Escribe un mensaje...',  
@@ -820,7 +886,18 @@ export const translations: Translations = {
     version: 'Versión',
     termsOfService: 'Términos de Servicio',
     contactUs: 'Contáctanos',
-    changeLanguage: 'Cambiar Idioma'
+    changeLanguage: 'Cambiar Idioma',
+
+    // Onboarding
+    onboardingTitle1: 'Apuestas Entre Amigos',
+    onboardingSubtitle1: 'ViBets te permite crear y participar en apuestas amistosas de cualquier tipo. Desde eventos deportivos hasta predicciones personales, todo queda registrado sin usar dinero real (Por el momento 😉)',
+    onboardingTitle2: 'Crea Grupos y Compite',
+    onboardingSubtitle2: 'Forma grupos con tus amigos, familiares o colegas. Crea apuestas personalizadas y lanza retos divertidos sobre cualquier evento. Desde partidos deportivos hasta predicciones personales, ¡todo vale en la competencia por ser el mejor!',
+    onboardingTitle3: 'Sigue tus Estadísticas',
+    onboardingSubtitle3: 'Lleva un registro de tus victorias, derrotas y predicciones acertadas. Comunícate con tu grupo a través del chat integrado para comentar resultados, presumir tus victorias y compartir momentos divertidos. ¡Conviértete en el GOAT de GOATs entre tus amigos!',
+    onboardingNext: 'Siguiente',
+    onboardingStart: '¡Comenzar!',
+    viewTutorial: 'Ver Tutorial'
   }
 };
 

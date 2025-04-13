@@ -60,7 +60,16 @@ export function GroupBets({ group }: GroupBetsProps) {
     <>
       {/* Contenedor de filtros: Orden y Estado */}
       <View style={styles.filtersContainer}>
-        <TouchableOpacity style={styles.filterButton} onPress={toggleSortOrder}>
+        <TouchableOpacity 
+          style={[
+            styles.filterButton, 
+            { 
+              borderColor: colors.border,
+              backgroundColor: colors.cardLight
+            }
+          ]} 
+          onPress={toggleSortOrder}
+        >
           {sortOrder === 'desc' ? (
             <ArrowDown size={16} color={colors.text} style={styles.sortIcon} />
           ) : (
@@ -74,16 +83,24 @@ export function GroupBets({ group }: GroupBetsProps) {
         </TouchableOpacity>
 
         {/* Filtros horizontales */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.statusFiltersContainer}
+        >
           <View style={styles.statusFilters}>
             {statuses.map(status => {
               const IconComponent = status.icon;
+              const isActive = statusFilter === status.value;
               return (
                 <TouchableOpacity
                   key={status.value}
                   style={[
                     styles.statusButton,
-                    statusFilter === status.value && { backgroundColor: colors.filter },
+                    { 
+                      backgroundColor: isActive ? colors.primary : colors.cardLight,
+                      borderColor: isActive ? colors.primary : colors.border,
+                    }
                   ]}
                   onPress={() =>
                     setStatusFilter(status.value as 'all' | 'open' | 'closed' | 'settled')
@@ -91,13 +108,16 @@ export function GroupBets({ group }: GroupBetsProps) {
                 >
                   <IconComponent
                     size={16}
-                    color={statusFilter === status.value ? '#fff' : '#fff'}
+                    color={isActive ? colors.textInverted : colors.text}
                     style={styles.statusIcon}
                   />
                   <Text
                     style={[
                       styles.statusButtonText,
-                      statusFilter === status.value && { color: '#fff', fontWeight: 'bold' },
+                      { 
+                        color: isActive ? colors.textInverted : colors.text,
+                        fontWeight: isActive ? 'bold' : 'normal'
+                      }
                     ]}
                   >
                     {status.label}
@@ -111,16 +131,43 @@ export function GroupBets({ group }: GroupBetsProps) {
     </>
   );
 
+  // Estado vacío para cuando no hay apuestas
+  const EmptyState = () => (
+    <View style={[styles.emptyContainer, { marginTop: 40 }]}>
+      <View style={[styles.emptyIconContainer, { backgroundColor: `${colors.primary}15` }]}>
+        <Trophy size={40} color={colors.primary} />
+      </View>
+      <Text style={[styles.emptyText, { color: colors.text }]}>
+        {t('noBets') || 'No hay apuestas'}
+      </Text>
+      <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+        {t('createFirstBetMessage') || 'Crea la primera apuesta en este grupo'}
+      </Text>
+      <TouchableOpacity 
+        style={[styles.emptyButton, { backgroundColor: colors.primary }]} 
+        onPress={handleCreateBet}
+      >
+        <Plus size={18} color={colors.textInverted} />
+        <Text style={[styles.emptyButtonText, { color: colors.textInverted }]}>
+          {t('createBet') || 'Crear Apuesta'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Encabezado fijo: Título y botón de crear apuesta */}
-      <View style={styles.fixedHeader}>
+      <View style={[styles.fixedHeader, { backgroundColor: colors.background }]}>
         <Text style={[styles.fixedTitle, { color: colors.text }]}>
           {t('allBets') || 'All Bets'}
         </Text>
-        <TouchableOpacity style={styles.newBetButton} onPress={handleCreateBet}>
-          <Plus size={16} color="#000" />
-          <Text style={styles.newBetButtonText}>
+        <TouchableOpacity 
+          style={[styles.newBetButton, { backgroundColor: colors.primary }]} 
+          onPress={handleCreateBet}
+        >
+          <Plus size={16} color={colors.textInverted} />
+          <Text style={[styles.newBetButtonText, { color: colors.textInverted }]}>
             {t('newBet') || 'New Bet'}
           </Text>
         </TouchableOpacity>
@@ -131,6 +178,7 @@ export function GroupBets({ group }: GroupBetsProps) {
         data={sortedBets}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={listHeader}
+        ListEmptyComponent={EmptyState}
         renderItem={({ item }) => (
           <BetCard
             key={item.id}
@@ -139,7 +187,10 @@ export function GroupBets({ group }: GroupBetsProps) {
             onPress={() => router.push(`/groups/${group.id}/bet/${item.id}`)}
           />
         )}
-        contentContainerStyle={styles.betsList}
+        contentContainerStyle={[
+          styles.betsList,
+          sortedBets.length === 0 && { flex: 1 }
+        ]}
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -152,17 +203,12 @@ const styles = StyleSheet.create({
   },
   fixedHeader: {
     paddingVertical: 15,
-    paddingHorizontal: 10,
-    backgroundColor: '#000', // O el color que uses para el header
+    paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // Puedes agregar sombra si lo deseas
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   fixedTitle: {
     fontSize: 20,
@@ -171,58 +217,68 @@ const styles = StyleSheet.create({
   newBetButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFD60A',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   newBetButtonText: {
     marginLeft: 6,
-    color: '#000',
     fontWeight: '600',
   },
   filtersContainer: {
-    marginVertical: 10,
+    marginVertical: 16,
+    paddingHorizontal: 4,
   },
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
     padding: 8,
     borderWidth: 1,
-    borderRadius: 4,
+    borderRadius: 8,
     alignSelf: 'flex-start',
   },
   sortIcon: {
-    marginRight: 4,
+    marginRight: 6,
   },
   filterButtonText: {
     fontSize: 14,
   },
+  statusFiltersContainer: {
+    marginBottom: 4,
+  },
   statusFilters: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
+    paddingVertical: 4,
   },
   statusButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ccc',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
   },
   statusIcon: {
-    marginRight: 4,
+    marginRight: 6,
   },
   statusButtonText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 14,
   },
   betsList: {
-    paddingBottom: 20,
-    paddingHorizontal: 10,
+    paddingBottom: 40,
+    paddingHorizontal: 16,
   },
   emptyContainer: {
     flex: 1,
@@ -230,14 +286,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 32,
   },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+    marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
     textAlign: 'center',
-    marginTop: 8,
+    marginHorizontal: 32,
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  emptyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  emptyButtonText: {
+    marginLeft: 8,
+    fontWeight: '600',
+    fontSize: 16,
   },
 });

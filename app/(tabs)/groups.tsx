@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { colors } from '@/constants/colors';
 import { useAuth } from '@/store/auth-context';
 import { useGroupsStore } from '@/store/groups-store';
 import { GroupCard } from '@/components/GroupCard';
@@ -11,12 +10,16 @@ import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Card } from '@/components/Card';
 import { Plus, Search, Users, UserPlus } from 'lucide-react-native';
+import { useTheme } from '@/components/ThemeContext';
+import { useLanguage } from '@/components/LanguageContext';
 
 export default function GroupsScreen() {
   const router = useRouter();
   const { user } = useAuth(); 
   const { groups, getUserGroups } = useGroupsStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const { colors } = useTheme();
+  const { t } = useLanguage();
   
   if (!user) {
     return null;
@@ -36,12 +39,14 @@ export default function GroupsScreen() {
   };
   
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Groups</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {t('groups') || 'Groups'}
+        </Text>
         <View style={styles.headerActions}>
           <Button
-            title="Join"
+            title={t('joinGroup') || "Join"}
             variant="outline"
             size="small"
             leftIcon={<UserPlus size={16} color={colors.text} />}
@@ -49,9 +54,9 @@ export default function GroupsScreen() {
             style={styles.headerButton}
           />
           <Button
-            title="Create"
+            title={t('createGroup') || "Create"}
             size="small"
-            leftIcon={<Plus size={16} color="#000000" />}
+            leftIcon={<Plus size={16} color={colors.textInverted} />}
             onPress={() => router.push('/groups/create')}
             style={styles.headerButton}
           />
@@ -60,7 +65,7 @@ export default function GroupsScreen() {
       
       <View style={styles.searchContainer}>
         <Input
-          placeholder="Search groups..."
+          placeholder={t('search') + " " + t('groups').toLowerCase() + "..."}
           value={searchQuery}
           onChangeText={setSearchQuery}
           leftIcon={<Search size={20} color={colors.textSecondary} />}
@@ -70,20 +75,27 @@ export default function GroupsScreen() {
       
       {filteredGroups.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Card style={styles.emptyCard} gradient>
-            <Users size={48} color={colors.primary} />
-            <Text style={styles.emptyTitle}>No groups yet</Text>
-            <Text style={styles.emptyText}>
-              Create a group or join one with your friends to start betting together.
+          <Card 
+            style={[styles.emptyCard, { backgroundColor: colors.card }]} 
+            gradient={false}
+          >
+            <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+              <Users size={36} color={colors.primary} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {t('noGroups') || 'No groups yet'}
+            </Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              {t('noGroupsJoined') || 'Create a group or join one with your friends to start betting together.'}
             </Text>
             <View style={styles.emptyActions}>
               <Button
-                title="Create Group"
+                title={t('createGroup')}
                 onPress={() => router.push('/groups/create')}
                 style={styles.emptyButton}
               />
               <Button
-                title="Join Group"
+                title={t('joinGroup')}
                 variant="outline"
                 onPress={() => router.push('/groups/join')}
                 style={styles.emptyButton}
@@ -112,7 +124,6 @@ export default function GroupsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -124,7 +135,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.text,
   },
   headerActions: {
     flexDirection: 'row',
@@ -152,21 +162,37 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     alignItems: 'center',
-    padding: 24,
+    padding: 32,
     width: '100%',
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: colors.text,
-    marginTop: 16,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   emptyText: {
     fontSize: 16,
-    color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
+    lineHeight: 22,
+    maxWidth: '90%',
   },
   emptyActions: {
     width: '100%',

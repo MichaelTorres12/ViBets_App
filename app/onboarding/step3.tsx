@@ -1,22 +1,42 @@
 // app/onboarding/step3.tsx
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, BackHandler } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '@/constants/colors';
+import { useFocusEffect } from '@react-navigation/native';
+import { useLanguage } from '@/components/LanguageContext';
 // Si quieres usar un gradiente de fondo, descomenta lo siguiente:
 // import { LinearGradient } from 'expo-linear-gradient';
 
 export default function OnboardingStep3() {
   const router = useRouter();
+  const { t } = useLanguage();
+
+  // Prevenir navegación hacia atrás
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        return true; // Prevenir la navegación por defecto
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [])
+  );
 
   const handleFinishOnboarding = async () => {
-    // Marcar que el usuario ya completó el onboarding
-    await AsyncStorage.setItem('hasSeenOnboarding', 'true');
-    // Redirigir a la pantalla de login (u otra ruta según tu flujo)
-    router.replace('/auth/login');
+    try {
+      // Marcar que el usuario ya completó el onboarding
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+      
+      // Redirigir a la pantalla de perfil
+      router.replace('/(tabs)/profile');
+    } catch (error) {
+      console.error('Error saving onboarding state:', error);
+    }
   };
 
   return (
@@ -26,20 +46,26 @@ export default function OnboardingStep3() {
     //   style={styles.container}
     // >
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen 
+        options={{ 
+          headerShown: false,
+          // Prevenir la navegación hacia atrás con gestos
+          gestureEnabled: false 
+        }} 
+      />
 
-      {/* Imagen o ilustración en la parte superior */}
+      {/* Imagen de un grupo de amigos de diferentes colores y razas */}
       <Image 
-        source={require('../../assets/images/onboarding3.gif')}
-        style={{ width: '100%', height: 450 }}
+        source={require('../../assets/images/friends.png')}
+        style={{ width: '100%', height: 390 }}
       />
 
       {/* Título */}
-      <Text style={styles.title}>Effortless Crypto Swaps</Text>
+      <Text style={styles.title}>{t('onboardingTitle3')}</Text>
 
-      {/* Subtítulo */}
+      {/* Subtítulo actualizado para incluir el chat */}
       <Text style={styles.subtitle}>
-        Exchange cryptocurrencies quickly, easily, and securely with confidence every single time.
+        {t('onboardingSubtitle3')}
       </Text>
 
       {/* Dots de paginación */}
@@ -51,7 +77,7 @@ export default function OnboardingStep3() {
 
       {/* Botón de acción */}
       <TouchableOpacity style={styles.button} onPress={handleFinishOnboarding}>
-        <Text style={styles.buttonText}>Siguiente</Text>
+        <Text style={styles.buttonText}>{t('onboardingStart')}</Text>
       </TouchableOpacity>
 
     </View>
@@ -73,18 +99,19 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
+    lineHeight: 24,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginHorizontal: 16,
-    marginBottom: 24,
+    marginHorizontal: 24,
+    marginBottom: 32,
   },
   dotsContainer: {
     flexDirection: 'row',
@@ -100,15 +127,19 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     backgroundColor: colors.primary,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   button: {
     backgroundColor: colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 36,
     borderRadius: 12,
   },
   buttonText: {
     color: '#000',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: 16,
   },
 });

@@ -1,16 +1,16 @@
 // components/GroupCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/components/ThemeContext';
 import { Group } from '@/types';
 import { Avatar } from './Avatar';
 import { Users, ArrowRight, TrendingUp, Trophy, Calendar, Key, Coins } from 'lucide-react-native';
 import { formatDate } from '@/utils/helpers';
 import { Card } from './Card';
 import { useLanguage } from './LanguageContext';
+import { useAuth } from '@/store/auth-context';
 
 // import { useAuthStore } from '@/store/auth-store'; // <-- ELIMINAR
-import { useAuth } from '@/store/auth-context';         // <-- AÑADIR
 
 interface GroupCardProps {
   group: Group;
@@ -26,6 +26,8 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   const { t } = useLanguage();
   // const { user } = useAuthStore();  // <-- BORRAR
   const { user } = useAuth();         // <-- USAR AuthContext
+  const { colors, theme } = useTheme();
+  const isLight = theme === 'light';
 
   // Obtener las monedas del usuario actual en este grupo
   const currentUserMember = group.members.find(m => m.userId === user?.id);
@@ -46,7 +48,11 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   if (compact) {
     return (
       <TouchableOpacity
-        style={styles.compactContainer}
+        style={[styles.compactContainer, { 
+          backgroundColor: colors.card,
+          borderWidth: isLight ? 1 : 0,
+          borderColor: isLight ? colors.border : 'transparent',
+        }]}
         onPress={() => onPress(group)}
         activeOpacity={0.7}
       >
@@ -56,10 +62,12 @@ export const GroupCard: React.FC<GroupCardProps> = ({
           size={40}
         />
         <View style={styles.compactInfo}>
-          <Text style={styles.compactName}>{group.name}</Text>
+          <Text style={[styles.compactName, { color: colors.text }]}>{group.name}</Text>
           <View style={styles.compactMembers}>
             <Users size={14} color={colors.textSecondary} />
-            <Text style={styles.compactMembersText}>{group.members.length}</Text>
+            <Text style={[styles.compactMembersText, { color: colors.textSecondary }]}>
+              {group.members.length}
+            </Text>
           </View>
         </View>
         <ArrowRight size={20} color={colors.textSecondary} />
@@ -80,36 +88,40 @@ export const GroupCard: React.FC<GroupCardProps> = ({
             size={50}
           />
           <View style={styles.headerInfo}>
-            <Text style={styles.name}>{group.name}</Text>
+            <Text style={[styles.name, { color: colors.text }]}>{group.name}</Text>
             <View style={styles.coinsContainer}>
-              <Coins size={16} color={colors.warning} style={styles.coinIcon} />
-              <Text style={styles.coinsText}>
+              <Coins size={16} color={colors.coin} style={styles.coinIcon} />
+              <Text style={[styles.coinsText, { color: colors.coin }]}>
                 {t('yourCoins')}: {userCoins.toLocaleString()}
               </Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.statsContainer}>
+        <View style={[styles.statsContainer, { 
+          backgroundColor: isLight ? colors.cardLight : 'rgba(42, 42, 42, 0.5)',
+          borderWidth: isLight ? 1 : 0,
+          borderColor: isLight ? colors.border : 'transparent',
+        }]}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{group.members.length}</Text>
-            <Text style={styles.statLabel}>{t('members')}</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{group.members.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('members')}</Text>
             <Users size={16} color={colors.primary} style={styles.statIcon} />
           </View>
 
-          <View style={styles.statDivider} />
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
 
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{betsCount}</Text>
-            <Text style={styles.statLabel}>{t('bets')}</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{betsCount}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('bets')}</Text>
             <TrendingUp size={16} color={colors.primary} style={styles.statIcon} />
           </View>
 
-          <View style={styles.statDivider} />
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
 
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{challengesCount}</Text>
-            <Text style={styles.statLabel}>{t('challenges')}</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{challengesCount}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('challenges')}</Text>
             <Trophy size={16} color={colors.primary} style={styles.statIcon} />
           </View>
         </View>
@@ -118,13 +130,19 @@ export const GroupCard: React.FC<GroupCardProps> = ({
           <View style={styles.footerItem}>
             <View style={styles.footerRow}>
               <Calendar size={14} color={colors.textSecondary} style={styles.footerIcon} />
-              <Text style={styles.footerValue}>{creationDate}</Text>
+              <Text style={[styles.footerValue, { color: colors.text }]}>{creationDate}</Text>
             </View>
           </View>
 
-          <View style={styles.inviteCodeContainer}>
+          <View style={[styles.inviteCodeContainer, { 
+            backgroundColor: isLight ? 
+              `${colors.primary}10` : 
+              colors.cardLight,
+            borderWidth: isLight ? 1 : 0,
+            borderColor: isLight ? `${colors.primary}40` : 'transparent'
+          }]}>
             <Key size={14} color={colors.primary} style={styles.inviteIcon} />
-            <Text style={styles.inviteCodeText}>{inviteCode}</Text>
+            <Text style={[styles.inviteCodeText, { color: colors.primary }]}>{inviteCode}</Text>
           </View>
         </View>
       </Card>
@@ -149,7 +167,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
     marginBottom: 4,
   },
   coinsContainer: {
@@ -162,12 +179,10 @@ const styles = StyleSheet.create({
   coinsText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.warning,
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: colors.cardLight,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
@@ -179,12 +194,10 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 12,
-    color: colors.textSecondary,
     marginBottom: 4,
   },
   statIcon: {
@@ -193,7 +206,6 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: '80%',
-    backgroundColor: colors.border,
     alignSelf: 'center',
   },
   footer: {
@@ -213,10 +225,8 @@ const styles = StyleSheet.create({
   },
   footerValue: {
     fontSize: 14,
-    color: colors.text,
   },
   inviteCodeContainer: {
-    backgroundColor: colors.cardLight,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -229,12 +239,10 @@ const styles = StyleSheet.create({
   inviteCodeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.primary,
   },
   compactContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -246,7 +254,6 @@ const styles = StyleSheet.create({
   compactName: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
   },
   compactMembers: {
     flexDirection: 'row',
@@ -255,7 +262,6 @@ const styles = StyleSheet.create({
   },
   compactMembersText: {
     fontSize: 12,
-    color: colors.textSecondary,
     marginLeft: 4,
   },
 });

@@ -1,14 +1,14 @@
 // app/settings.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Image, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { useAuth } from '@/store/auth-context';
 import { useLanguage } from '@/components/LanguageContext';
-import { colors } from '@/constants/colors';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguageStore } from '@/store/language-store';
 import { useThemeStore } from '@/store/theme-store';
+import { Card } from '@/components/Card';
 import {
   LogOut,
   Moon,
@@ -20,18 +20,19 @@ import {
   FileText,
   Mail,
   Globe,
-  ChevronRight
+  ChevronRight,
+  ArrowLeft
 } from 'lucide-react-native';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { signOut } = useAuth(); // <-- del AuthContext
+  const { signOut } = useAuth();
   const { t } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
   const { language, setLanguage } = useLanguageStore();
-  const { theme, setTheme } = useThemeStore();
+  const { theme: currentTheme, setTheme } = useThemeStore();
+  const isLight = theme === 'light';
   
-  // Al hacer logout, llamamos signOut()
   const handleLogout = () => {
     Alert.alert(
       t('logoutConfirmation'),
@@ -45,15 +46,11 @@ export default function SettingsScreen() {
           text: t('yes'),
           onPress: async () => {
             await signOut();
-            // NO navegamos aquí. El Root Layout o un useEffect se encargará
           },
         },
       ]
     );
   };
-  
-  
-  
 
   const handleLanguageChange = () => {
     Alert.alert(
@@ -68,7 +65,11 @@ export default function SettingsScreen() {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleBack = () => {
+    router.back();
   };
   
   return (
@@ -77,6 +78,14 @@ export default function SettingsScreen() {
         options={{
           title: t('settings'),
           headerBackTitle: t('back'),
+          headerShown: true,
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          headerLeft: () => (
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <ArrowLeft size={24} color={colors.text} />
+            </TouchableOpacity>
+          ),
         }}
       />
 
@@ -85,17 +94,27 @@ export default function SettingsScreen() {
           source={require('../assets/images/vibets-icon.png')}
           style={styles.logoImage}
         />
-        <Text style={styles.logoText}>Vi</Text>
-        <Text style={styles.logoText}>Bets</Text>
+        <Text style={[styles.logoText, { color: colors.text }]}>Vi</Text>
+        <Text style={[styles.logoTextSecondary, { color: colors.primary }]}>Bets</Text>
       </View>
       
-      <ScrollView style={styles.content}>
-        <View style={[styles.section, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Card 
+          style={styles.section} 
+          variant={isLight ? "elevated" : "default"}
+        >
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('appSettings')}</Text>
           
-          <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]} onPress={handleLanguageChange}>
+          <TouchableOpacity 
+            style={[styles.settingItem, { 
+              borderBottomColor: colors.border,
+              backgroundColor: isLight ? colors.card : colors.cardLight,
+            }]} 
+            onPress={handleLanguageChange}
+            activeOpacity={0.7}
+          >
             <View style={styles.settingLeft}>
-              <Globe size={22} color={colors.text} />
+              <Globe size={22} color={isLight ? colors.primary : colors.text} />
               <Text style={[styles.settingText, { color: colors.text }]}>{t('language')}</Text>
             </View>
             <View style={styles.settingRight}>
@@ -106,101 +125,145 @@ export default function SettingsScreen() {
             </View>
           </TouchableOpacity>
           
-          <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+          <View style={[styles.settingItem, {
+            borderBottomColor: colors.border,
+            backgroundColor: isLight ? colors.card : colors.cardLight,
+          }]}>
             <View style={styles.settingLeft}>
-              {theme === 'dark' ? (
-                <Moon size={22} color={colors.text} />
+              {currentTheme === 'dark' ? (
+                <Moon size={22} color={isLight ? colors.primary : colors.text} />
               ) : (
-                <Sun size={22} color={colors.text} />
+                <Sun size={22} color={isLight ? colors.primary : colors.text} />
               )}
               <Text style={[styles.settingText, { color: colors.text }]}>
-                {theme === 'dark' ? t('darkTheme') : t('lightTheme')}
+                {currentTheme === 'dark' ? t('darkTheme') : t('lightTheme')}
               </Text>
             </View>
             <Switch 
-              value={theme === 'dark'} 
+              value={currentTheme === 'dark'} 
               onValueChange={toggleTheme} 
               trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.background}
+              thumbColor={isLight ? '#FFFFFF' : colors.background}
+              ios_backgroundColor={isLight ? "#E9E9EA" : colors.cardLight}
             />
           </View>
-        </View>
+        </Card>
         
-        <View style={[styles.section, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Card 
+          style={styles.section} 
+          variant={isLight ? "elevated" : "default"}
+        >
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('notifications')}</Text>
           
-          <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+          <View style={[styles.settingItem, { 
+            borderBottomColor: colors.border,
+            backgroundColor: isLight ? colors.card : colors.cardLight,
+          }]}>
             <View style={styles.settingLeft}>
-              <Bell size={22} color={colors.text} />
+              <Bell size={22} color={isLight ? colors.primary : colors.text} />
               <Text style={[styles.settingText, { color: colors.text }]}>{t('notificationSettings')}</Text>
             </View>
             <Switch 
               value={true} 
               onValueChange={() => {}} 
               trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.background}
+              thumbColor={isLight ? '#FFFFFF' : colors.background}
+              ios_backgroundColor={isLight ? "#E9E9EA" : colors.cardLight}
             />
           </View>
           
-          <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+          <View style={[styles.settingItem, { 
+            borderBottomColor: colors.border,
+            backgroundColor: isLight ? colors.card : colors.cardLight,
+          }]}>
             <View style={styles.settingLeft}>
-              <Volume2 size={22} color={colors.text} />
+              <Volume2 size={22} color={isLight ? colors.primary : colors.text} />
               <Text style={[styles.settingText, { color: colors.text }]}>{t('soundEffects')}</Text>
             </View>
             <Switch 
               value={true} 
               onValueChange={() => {}} 
               trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.background}
+              thumbColor={isLight ? '#FFFFFF' : colors.background}
+              ios_backgroundColor={isLight ? "#E9E9EA" : colors.cardLight}
             />
           </View>
           
-          <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+          <View style={[styles.settingItem, { 
+            borderBottomWidth: 0,
+            backgroundColor: isLight ? colors.card : colors.cardLight,
+          }]}>
             <View style={styles.settingLeft}>
-              <Vibrate size={22} color={colors.text} />
+              <Vibrate size={22} color={isLight ? colors.primary : colors.text} />
               <Text style={[styles.settingText, { color: colors.text }]}>{t('vibration')}</Text>
             </View>
             <Switch 
               value={true} 
               onValueChange={() => {}} 
               trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.background}
+              thumbColor={isLight ? '#FFFFFF' : colors.background}
+              ios_backgroundColor={isLight ? "#E9E9EA" : colors.cardLight}
             />
           </View>
-        </View>
+        </Card>
         
-        <View style={[styles.section, { backgroundColor: colors.card }]}>
+        <Card 
+          style={styles.section} 
+          variant={isLight ? "elevated" : "default"}
+        >
           <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('about')}</Text>
           
-          <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.settingItem, { 
+              borderBottomColor: colors.border,
+              backgroundColor: isLight ? colors.card : colors.cardLight,
+            }]}
+            activeOpacity={0.7}
+          >
             <View style={styles.settingLeft}>
-              <Info size={22} color={colors.text} />
+              <Info size={22} color={isLight ? colors.primary : colors.text} />
               <Text style={[styles.settingText, { color: colors.text }]}>{t('version')}</Text>
             </View>
             <Text style={[styles.settingValue, { color: colors.textSecondary }]}>1.0.0</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.settingItem, { 
+              borderBottomColor: colors.border,
+              backgroundColor: isLight ? colors.card : colors.cardLight,
+            }]}
+            activeOpacity={0.7}
+          >
             <View style={styles.settingLeft}>
-              <FileText size={22} color={colors.text} />
+              <FileText size={22} color={isLight ? colors.primary : colors.text} />
               <Text style={[styles.settingText, { color: colors.text }]}>{t('termsOfService')}</Text>
             </View>
             <ChevronRight size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity 
+            style={[styles.settingItem, {
+              borderBottomWidth: 0,
+              backgroundColor: isLight ? colors.card : colors.cardLight,
+            }]}
+            activeOpacity={0.7}
+          >
             <View style={styles.settingLeft}>
-              <Mail size={22} color={colors.text} />
+              <Mail size={22} color={isLight ? colors.primary : colors.text} />
               <Text style={[styles.settingText, { color: colors.text }]}>{t('contactUs')}</Text>
             </View>
             <ChevronRight size={20} color={colors.textSecondary} />
           </TouchableOpacity>
-        </View>
+        </Card>
         
-        {/* Botón de logout */}
         <TouchableOpacity
-          style={[styles.logoutButton, { backgroundColor: colors.card }]}
+          style={[styles.logoutButton, { 
+            backgroundColor: isLight ? `${colors.error}10` : colors.card,
+            borderWidth: isLight ? 1 : 0,
+            borderColor: isLight ? `${colors.error}30` : 'transparent',
+          }]}
           onPress={handleLogout}
+          activeOpacity={0.7}
         >
           <LogOut size={22} color={colors.error} />
           <Text style={[styles.logoutText, { color: colors.error }]}>{t('logout')}</Text>
@@ -214,17 +277,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  backButton: {
+    marginRight: 8,
+  },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    marginBottom: 10,
-    marginTop: 10,
+    marginVertical: 20,
   },
   logoImage: {
     width: 55,
@@ -234,17 +298,21 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 30,
     fontWeight: 'bold',
-    color: colors.text,
+  },
+  logoTextSecondary: {
+    fontSize: 30,
+    fontWeight: 'bold',
   },
   section: {
     marginBottom: 24,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
+    padding: 0,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginVertical: 12,
+    marginVertical: 16,
     paddingHorizontal: 16,
   },
   settingItem: {
@@ -276,8 +344,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 12,
-    marginBottom: 24,
+    borderRadius: 16,
+    marginBottom: 32,
   },
   logoutText: {
     fontSize: 16,

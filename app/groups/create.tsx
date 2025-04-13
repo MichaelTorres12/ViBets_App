@@ -1,13 +1,15 @@
 // app/groups/create.tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
-import { colors } from '@/constants/colors';
 import { useGroupsStore } from '@/store/groups-store';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { Users, ChevronLeft } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '@/components/ThemeContext';
+import { useLanguage } from '@/components/LanguageContext';
 
 export default function CreateGroupScreen() {
   const router = useRouter();
@@ -15,35 +17,60 @@ export default function CreateGroupScreen() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const { colors, theme } = useTheme();
+  const { t } = useLanguage();
+  const isLight = theme === 'light';
+
+  // Prevenir la navegación hacia atrás con el botón físico
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        // Navegar a la página principal en lugar de volver atrás
+        router.replace('/(tabs)');
+        return true; // Prevenir la navegación por defecto
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [router])
+  );
 
   const handleCreateGroup = async () => {
     if (!name) {
-      setError('Please enter a group name');
+      setError(t('pleaseEnterGroupName') || 'Please enter a group name');
       return;
     }
     try {
       const newGroup = await createGroup(name, description);
       if (newGroup) {
-        router.push(`/groups/${newGroup.id}`);
+        router.replace(`/groups/${newGroup.id}`);
       } else {
-        setError('Failed to create group. Please try again.');
+        setError(t('failedToCreateGroup') || 'Failed to create group. Please try again.');
       }
     } catch (err) {
-      setError('Failed to create group. Please try again.');
+      setError(t('failedToCreateGroup') || 'Failed to create group. Please try again.');
     }
   };
 
+  // Modificar el manejo del botón de regresar
+  const handleBack = () => {
+    router.replace('/(tabs)');
+  };
+
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       <Stack.Screen 
         options={{ 
-          title: 'Create Group',
-          headerTitleStyle: { fontWeight: '600' },
+          title: t('createNewGroup') || 'Create Group',
+          headerTitleStyle: { fontWeight: '600', color: colors.text },
           headerLeft: () => (
-            <TouchableOpacity style={styles.headerBackButton} onPress={() => router.back()}>
+            <TouchableOpacity style={styles.headerBackButton} onPress={handleBack}>
               <ChevronLeft size={24} color={colors.text} />
             </TouchableOpacity>
           ),
+          headerStyle: { backgroundColor: colors.background },
+          // Deshabilitar gestos de navegación hacia atrás
+          gestureEnabled: false
         }} 
       />
       <KeyboardAvoidingView
@@ -51,29 +78,41 @@ export default function CreateGroupScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Users size={32} color="#FFFFFF" />
+            <View style={[styles.iconContainer, { 
+              backgroundColor: colors.primary,
+              shadowColor: colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isLight ? 0.2 : 0.4,
+              shadowRadius: 8,
+              elevation: 6
+            }]}>
+              <Users size={32} color={isLight ? colors.background : '#FFFFFF'} />
             </View>
-            <Text style={styles.title}>Create a New Group</Text>
-            <Text style={styles.subtitle}>
-              Create a group to start betting with your friends. You'll get a unique invite code to share.
+            <Text style={[styles.title, { color: colors.text }]}>
+              {t('createNewGroup') || 'Create a New Group'}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              {t('createGroupDescription') || 'Create a group to start betting with your friends. You\'ll get a unique invite code to share.'}
             </Text>
           </View>
           
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
           
           <View style={styles.formContainer}>
             <Input
-              label="Group Name"
-              placeholder="Enter a name for your group"
+              label={t('groupName') || "Group Name"}
+              placeholder={t('enterGroupName') || "Enter a name for your group"}
               value={name}
               onChangeText={setName}
             />
             <Input
-              label="Description (Optional)"
-              placeholder="What's this group about?"
+              label={t('groupDescription') || "Description (Optional)"}
+              placeholder={t('groupDescriptionPlaceholder') || "What's this group about?"}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -82,10 +121,11 @@ export default function CreateGroupScreen() {
             />
             
             <Button
-              title="Create Group"
+              title={t('createGroup') || "Create Group"}
               onPress={handleCreateGroup}
               isLoading={isLoading}
               style={styles.createButton}
+              variant="primary"
             />
           </View>
         </ScrollView>
@@ -95,23 +135,52 @@ export default function CreateGroupScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  headerBackButton: { marginRight: 8 },
-  keyboardAvoidingView: { flex: 1 },
-  scrollContent: { flexGrow: 1, padding: 24 },
-  header: { alignItems: 'center', marginBottom: 32 },
+  container: { 
+    flex: 1,
+  },
+  headerBackButton: { 
+    marginRight: 8 
+  },
+  keyboardAvoidingView: { 
+    flex: 1 
+  },
+  scrollContent: { 
+    flexGrow: 1, 
+    padding: 24 
+  },
+  header: { 
+    alignItems: 'center', 
+    marginBottom: 32 
+  },
   iconContainer: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
-  title: { fontSize: 24, fontWeight: 'bold', color: colors.text, marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontSize: 16, color: colors.textSecondary, textAlign: 'center' },
-  formContainer: { marginBottom: 24 },
-  errorText: { color: colors.error, marginBottom: 16, textAlign: 'center' },
-  createButton: { marginTop: 16 },
+  title: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    marginBottom: 8, 
+    textAlign: 'center' 
+  },
+  subtitle: { 
+    fontSize: 16, 
+    textAlign: 'center',
+    marginHorizontal: 16,
+    lineHeight: 22,
+  },
+  formContainer: { 
+    marginBottom: 24 
+  },
+  errorText: { 
+    marginBottom: 16, 
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  createButton: { 
+    marginTop: 16
+  },
 });

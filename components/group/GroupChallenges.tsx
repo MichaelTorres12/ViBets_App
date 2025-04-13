@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
-import { Plus } from 'lucide-react-native';
+import { Plus, Trophy, Award } from 'lucide-react-native';
 import { ChallengeCard } from '@/components/ChallengeCard';
 import { Group, Challenge } from '@/types';
 import { useChallengesStore } from '@/store/challenges-store';
@@ -62,33 +62,69 @@ export function GroupChallenges({ group }: GroupChallengesProps) {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Tabs para filtrar desafíos */}
-      <View style={styles.tabsContainer}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Cabecera con tabs y botón de nuevo desafío */}
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
+        {/* Tabs para filtrar desafíos */}
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity 
+            style={[
+              styles.tabButton, 
+              tab === 'all' && [
+                styles.activeTabButton, 
+                { borderBottomColor: colors.primary }
+              ]
+            ]}
+            onPress={() => setTab('all')}
+          >
+            <Text style={[
+              styles.tabText, 
+              { color: tab === 'all' ? colors.primary : colors.textSecondary }
+            ]}>
+              {t('allChallenges') || 'All Challenges'}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.tabButton, 
+              tab === 'my' && [
+                styles.activeTabButton, 
+                { borderBottomColor: colors.primary }
+              ]
+            ]}
+            onPress={() => setTab('my')}
+          >
+            <Text style={[
+              styles.tabText, 
+              { color: tab === 'my' ? colors.primary : colors.textSecondary }
+            ]}>
+              {t('myChallenges') || 'My Challenges'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Botón para crear desafío */}
         <TouchableOpacity 
-          style={[styles.tabButton, tab === 'all' && [styles.activeTabButton, { borderBottomColor: colors.primary }]]}
-          onPress={() => setTab('all')}
+          style={[
+            styles.newChallengeButton, 
+            { 
+              backgroundColor: colors.primary,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 3,
+              elevation: 3
+            }
+          ]} 
+          onPress={handleCreateChallenge}
         >
-          <Text style={[styles.tabText, { color: tab === 'all' ? colors.primary : colors.textSecondary }]}>
-            {t('allChallenges') || 'All Challenges'}
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.tabButton, tab === 'my' && [styles.activeTabButton, { borderBottomColor: colors.primary }]]}
-          onPress={() => setTab('my')}
-        >
-          <Text style={[styles.tabText, { color: tab === 'my' ? colors.primary : colors.textSecondary }]}>
-            {t('myChallenges') || 'My Challenges'}
+          <Plus size={16} color={colors.textInverted} />
+          <Text style={[styles.newChallengeText, { color: colors.textInverted }]}>
+            {t('newChallenge') || 'New Challenge'}
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Botón para crear desafío */}
-      <TouchableOpacity style={styles.newChallengeButton} onPress={handleCreateChallenge}>
-        <Plus size={16} color="#000" />
-        <Text style={styles.newChallengeText}>{t('newChallenge') || 'New Challenge'}</Text>
-      </TouchableOpacity>
 
       {/* Lista de desafíos */}
       {loading ? (
@@ -112,12 +148,24 @@ export function GroupChallenges({ group }: GroupChallengesProps) {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+          <View style={[styles.emptyIconContainer, { backgroundColor: `${colors.primary}15` }]}>
+            <Trophy size={32} color={colors.primary} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>
             {t('noChallenges') || 'No challenges yet'}
           </Text>
           <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-            {t('createFirstChallenge') || 'Create your first challenge!'}
+            {t('createFirstChallengeMessage') || 'Create the first challenge for your group members to complete and earn rewards!'}
           </Text>
+          <TouchableOpacity 
+            style={[styles.createButton, { backgroundColor: colors.primary }]} 
+            onPress={handleCreateChallenge}
+          >
+            <Plus size={16} color={colors.textInverted} />
+            <Text style={[styles.createButtonText, { color: colors.textInverted }]}>
+              {t('createChallenge') || 'Create Challenge'}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -127,7 +175,11 @@ export function GroupChallenges({ group }: GroupChallengesProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -144,14 +196,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: '600',
   },
   newChallengeButton: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-end',
-    backgroundColor: '#FFD60A',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -159,10 +210,11 @@ const styles = StyleSheet.create({
   },
   newChallengeText: {
     marginLeft: 6,
-    color: '#000',
     fontWeight: '600',
   },
   challengesList: {
+    padding: 16,
+    paddingTop: 8,
     gap: 12,
   },
   emptyContainer: {
@@ -170,15 +222,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 32,
+    paddingHorizontal: 24,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
-    fontWeight: 'bold',
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
     textAlign: 'center',
     marginTop: 8,
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  createButtonText: {
+    marginLeft: 8,
+    fontWeight: '600',
+    fontSize: 15,
   },
 });

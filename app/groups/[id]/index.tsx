@@ -2,7 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
-  ScrollView
+  ScrollView,
+  BackHandler
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 
@@ -45,6 +46,19 @@ export default function GroupScreen() {
     }, [fetchGroups])
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        // Navegar a la página principal en lugar de volver atrás
+        router.replace('/(tabs)');
+        return true; // Prevenir la navegación por defecto
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [router])
+  );
+
   const group = getGroupById(id);
   const userGroupCoins = group?.members.find(m => m.userId === user?.id)?.groupCoins ?? 0;
 
@@ -77,6 +91,7 @@ export default function GroupScreen() {
       <Stack.Screen 
         options={{ 
           title: group.name,
+          gestureEnabled: false // Deshabilitar gestos de navegación hacia atrás
         }} 
       />
 
@@ -106,6 +121,7 @@ const styles = StyleSheet.create({
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
+    marginTop: 10,
   },
   infoScrollView: {
     maxHeight: 250,
