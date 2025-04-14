@@ -104,26 +104,35 @@ export function GroupChallenges({ group }: GroupChallengesProps) {
           </TouchableOpacity>
         </View>
 
-        {/* Botón para crear desafío */}
-        <TouchableOpacity 
-          style={[
-            styles.newChallengeButton, 
-            { 
-              backgroundColor: colors.primary,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 3,
-              elevation: 3
-            }
-          ]} 
-          onPress={handleCreateChallenge}
-        >
-          <Plus size={16} color={colors.textInverted} />
-          <Text style={[styles.newChallengeText, { color: colors.textInverted }]}>
-            {t('newChallenge') || 'New Challenge'}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}> 
+
+          <Text style={[styles.fixedTitle, { color: colors.text }]}>
+            {t('allChallenges') || 'All Challenges'}
           </Text>
-        </TouchableOpacity>
+
+          {/* Botón para crear desafío */}
+          <TouchableOpacity 
+            style={[
+              styles.newChallengeButton, 
+              { 
+                backgroundColor: colors.primary,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 3,
+                elevation: 3
+              }
+            ]} 
+            onPress={handleCreateChallenge}
+          >
+            <Plus size={16} color={colors.textInverted} />
+            <Text style={[styles.newChallengeText, { color: colors.textInverted }]}>
+              {t('newChallenge') || 'New Challenge'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+
       </View>
 
       {/* Lista de desafíos */}
@@ -198,6 +207,10 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  fixedTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   newChallengeButton: {
     flexDirection: 'row',

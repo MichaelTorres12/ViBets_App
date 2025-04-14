@@ -11,7 +11,9 @@ import {
   Platform,
   Image,
   Alert,
-  Dimensions
+  Dimensions,
+  Modal,
+  StatusBar
 } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
@@ -33,10 +35,26 @@ export function GroupChat({ group }: { group: Group }) {
   
   // URI local de la imagen (NO subimos a Supabase aún)
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  
+  // Estados para el visor de imágenes a pantalla completa
+  const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const flatListRef = useRef<FlatList>(null);
   const screenWidth = Dimensions.get('window').width;
   const desiredWidth = screenWidth * 0.7; // 70% del ancho del dispositivo
+
+  // Función para abrir el visor de imágenes
+  const handleImagePress = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setImageViewerVisible(true);
+  };
+
+  // Función para cerrar el visor de imágenes
+  const closeImageViewer = () => {
+    setImageViewerVisible(false);
+    setSelectedImage(null);
+  };
 
   useEffect(() => {
     async function fetchMessages() {
@@ -151,16 +169,26 @@ export function GroupChat({ group }: { group: Group }) {
             ]}
           >
             {item.image && (
-              <Image
-                source={{ uri: item.image }}
-                style={{
-                  width: desiredWidth,
-                  height: 300,
-                  borderRadius: 8,
-                  marginBottom: 8,
-                  resizeMode: 'contain'
-                }}
-              />
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => handleImagePress(item.image!)}
+              >
+                <Image
+                  source={{ uri: item.image }}
+                  style={{
+                    width: desiredWidth,
+                    height: 300,
+                    borderRadius: 8,
+                    marginBottom: 8,
+                    resizeMode: 'contain'
+                  }}
+                />
+                <View style={[styles.imageOverlay, { backgroundColor: 'rgba(0,0,0,0.2)' }]}>
+                  <Text style={styles.imageHint}>
+                    {t('tapToEnlarge') || 'Tap to enlarge'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             )}
             {item.message ? (
               <Text
@@ -347,6 +375,39 @@ export function GroupChat({ group }: { group: Group }) {
           <Send size={20} color="#000000" />
         </TouchableOpacity>
       </View>
+      
+      {/* Modal del visor de imágenes a pantalla completa */}
+      <Modal
+        visible={imageViewerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeImageViewer}
+      >
+        <StatusBar backgroundColor="#000" barStyle="light-content" />
+        <View style={styles.modalContainer}>
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={closeImageViewer}
+            activeOpacity={0.7}
+          >
+            <XCircle size={28} color="#fff" />
+          </TouchableOpacity>
+          
+          {selectedImage && (
+            <TouchableOpacity 
+              style={styles.imageContainer}
+              activeOpacity={1}
+              onPress={closeImageViewer}
+            >
+              <Image
+                source={{ uri: selectedImage }}
+                style={styles.fullScreenImage}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -402,6 +463,20 @@ const styles = StyleSheet.create({
     right: 12,
     bottom: 8,
   },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 8, 
+    right: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
+  },
+  imageHint: {
+    fontSize: 10,
+    color: 'white',
+    fontWeight: '500',
+  },
 
   // Preview
   previewContainer: {
@@ -452,5 +527,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+  },
+  
+  // Estilos para el visor de imágenes a pantalla completa
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 10,
+    padding: 8,
+  },
+  imageContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenImage: {
+    width: '100%',
+    height: '100%',
   },
 });

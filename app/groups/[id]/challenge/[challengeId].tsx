@@ -11,6 +11,8 @@ import {
   Platform,
   Dimensions,
   KeyboardAvoidingView,
+  Modal,
+  StatusBar,
 } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/store/auth-context';
@@ -62,6 +64,10 @@ export default function ChallengeDetailScreen() {
 
   // Estado para tabs (submissions vs participants)
   const [activeTab, setActiveTab] = useState<TabType>('submissions');
+
+  // Nuevos estados para el visor de imágenes
+  const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (groupId) {
@@ -224,6 +230,18 @@ export default function ChallengeDetailScreen() {
     }
   };
 
+  // Función para abrir una imagen en pantalla completa
+  const handleImagePress = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setImageViewerVisible(true);
+  };
+
+  // Función para cerrar el visor de imágenes
+  const closeImageViewer = () => {
+    setImageViewerVisible(false);
+    setSelectedImage(null);
+  };
+
   // Renderizar las justificaciones (submissions)
   const renderSubmissions = () => {
     const justifications = challenge.justifications || [];
@@ -279,11 +297,21 @@ export default function ChallengeDetailScreen() {
             {justif.type === 'text' ? (
               <Text style={[styles.submissionText, { color: colors.text }]}>{justif.content}</Text>
             ) : (
-              <Image
-                source={{ uri: justif.content }}
-                style={{ width: '100%', height: 200, borderRadius: 8 }}
-                resizeMode="cover"
-              />
+              <TouchableOpacity 
+                activeOpacity={0.9}
+                onPress={() => handleImagePress(justif.content)}
+              >
+                <Image
+                  source={{ uri: justif.content }}
+                  style={{ width: '100%', height: 200, borderRadius: 8 }}
+                  resizeMode="cover"
+                />
+                <View style={[styles.imageOverlay, { backgroundColor: `${colors.primary}20` }]}>
+                  <Text style={[styles.imageHint, { color: colors.primary }]}>
+                    {t('tapToEnlarge') || 'Tap to enlarge'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             )}
           </View>
           
@@ -637,6 +665,35 @@ export default function ChallengeDetailScreen() {
           {activeTab === 'submissions' ? renderSubmissions() : renderParticipants()}
         </View>
       </ScrollView>
+
+      {/* Modal de visor de imágenes a pantalla completa */}
+      <Modal
+        visible={imageViewerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeImageViewer}
+      >
+        <StatusBar backgroundColor="#000" barStyle="light-content" />
+        <View style={styles.modalContainer}>
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={closeImageViewer}
+            activeOpacity={0.7}
+          >
+            <XCircle size={28} color="#fff" />
+          </TouchableOpacity>
+          
+          {selectedImage && (
+            <View style={styles.imageContainer}>
+              <Image
+                source={{ uri: selectedImage }}
+                style={styles.fullScreenImage}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -932,6 +989,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 10,
+    padding: 8,
+  },
+  imageContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderTopLeftRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+  imageHint: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 

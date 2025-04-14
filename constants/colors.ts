@@ -41,7 +41,7 @@ export const darkColors: ColorTheme = {
   primaryDark: '#B8D600',
   
   // UI colors
-  background: '#000000',
+  background: '#232324', // Antes en #000000
   card: '#1A1A1A',
   cardLight: '#2A2A2A',
   text: '#FFFFFF',
@@ -55,7 +55,7 @@ export const darkColors: ColorTheme = {
   error: '#FF3D71',
   warning: '#FFAA00',
   chatBubbleSender: '#1A1A1A',
-  chatBubbleReceiver: '#242424',
+  chatBubbleReceiver: '#424245',
 
   // Special
   coin: '#DDFF00',

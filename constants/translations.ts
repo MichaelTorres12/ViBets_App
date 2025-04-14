@@ -170,12 +170,28 @@ type TranslationKey =
   | 'noBetsDescription'
   | 'searchBets'
 
+  // Parlays
+  | 'parlays'
+  | 'newParlay'
+  | 'noParlays'
+  | 'createFirstParlayMessage'
+  | 'createParlay'
+  | 'selectBets'
+  | 'selectBetsDescription'
+  | 'parlayCreated'
+  | 'parlayCreatedSuccess'
+  | 'parlayCreatedError'
+  | 'parlayCreatedErrorDescription'
+
+
 // Bets Statistics
   | 'winRate'
   | 'totalProfit'
   | 'roi'
   | 'winRateTrend'
   | 'profitLoss'
+
+  
 
   // Challenges
   | 'challengeTitle'
@@ -458,6 +474,19 @@ export const translations: Translations = {
     betPlaceError: 'Bet placement failed',
     alreadyVoted: 'You have already voted',
     option: 'Option',
+
+    // Parlays
+    parlays: 'Parlays',
+    newParlay: 'New Parlay',
+    noParlays: 'No parlays found',
+    createFirstParlayMessage: 'Create the first parlay and invite your friends to participate!',
+    createParlay: 'Create Parlay',
+    selectBets: 'Select Bets',
+    selectBetsDescription: 'Select the bets you want to include in your parlay',
+    parlayCreated: 'Parlay Created',
+    parlayCreatedSuccess: 'Your parlay has been created successfully. Share it with your friends to start playing!',
+    parlayCreatedError: 'Error creating parlay',
+    parlayCreatedErrorDescription: 'Please try again',
 
   // -----
   myBets: 'My Bets',
@@ -773,6 +802,21 @@ export const translations: Translations = {
     noBetsFound: 'No se encontraron apuestas',
     noBetsDescription: 'Aún no has realizado ninguna apuesta',
     searchBets: 'Buscar Apuestas',
+
+    // Parlays
+    parlays: 'Combinadas',
+    newParlay: 'Nueva Combinada',
+    noParlays: 'No se encontraron combinadas',
+    createFirstParlayMessage: 'Crea la primera combinada y convida a tus amigos a participar!',
+    createParlay: 'Crear Combinada',
+    selectBets: 'Seleccionar Apuestas',
+    selectBetsDescription: 'Selecciona las apuestas que quieres incluir en tu combinada',
+    parlayCreated: 'Combinada Creada',
+    parlayCreatedSuccess: 'Tu combinada ha sido creada con éxito. Comparte con tus amigos para que igual armen las de ellos!',
+    parlayCreatedError: 'Error creando combinada',
+    parlayCreatedErrorDescription: 'Por favor, inténtelo de nuevo',
+
+
 
     // Challenges
     challengeTitle: 'Título del Desafío',

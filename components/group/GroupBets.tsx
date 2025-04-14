@@ -1,23 +1,43 @@
 // components/GroupBets.tsx
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView, Animated } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
-import { Plus, ArrowUp, ArrowDown, List, CheckCircle, XCircle, Trophy } from 'lucide-react-native';
+import { 
+  Plus, 
+  ArrowUp, 
+  ArrowDown, 
+  List, 
+  CheckCircle, 
+  XCircle, 
+  Trophy,
+  Layers, // Para el ícono de Parlays
+  Flag // Para el ícono de Retos
+} from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { BetCard } from '@/components/BetCard';
 import { Group } from '@/types';
+
+// Tipo para las pestañas
+type TabType = 'bets' | 'parlays';
 
 interface GroupBetsProps {
   group: Group;
 }
 
 export function GroupBets({ group }: GroupBetsProps) {
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
+  const isLight = theme === 'light';
   const { t } = useLanguage();
   const router = useRouter();
 
-  // Estado para orden y filtro
+  // Estado para las pestañas
+  const [activeTab, setActiveTab] = useState<TabType>('bets');
+  
+  // Animación para el indicador de pestaña activa
+  const [tabIndicatorPosition] = useState(new Animated.Value(0));
+
+  // Estados existentes para orden y filtro
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed' | 'settled'>('all');
 
@@ -53,6 +73,17 @@ export function GroupBets({ group }: GroupBetsProps) {
 
   const handleCreateBet = () => {
     router.push(`/groups/${group.id}/create-bet`);
+  };
+
+  // Cambiar la pestaña con animación
+  const switchTab = (tab: TabType) => {
+    Animated.spring(tabIndicatorPosition, {
+      toValue: tab === 'bets' ? 0 : 1,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 50
+    }).start();
+    setActiveTab(tab);
   };
 
   // Componente header para la FlatList (incluye los filtros)
@@ -157,42 +188,145 @@ export function GroupBets({ group }: GroupBetsProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Encabezado fijo: Título y botón de crear apuesta */}
-      <View style={[styles.fixedHeader, { backgroundColor: colors.background }]}>
-        <Text style={[styles.fixedTitle, { color: colors.text }]}>
-          {t('allBets') || 'All Bets'}
-        </Text>
-        <TouchableOpacity 
-          style={[styles.newBetButton, { backgroundColor: colors.primary }]} 
-          onPress={handleCreateBet}
-        >
-          <Plus size={16} color={colors.textInverted} />
-          <Text style={[styles.newBetButtonText, { color: colors.textInverted }]}>
-            {t('newBet') || 'New Bet'}
-          </Text>
-        </TouchableOpacity>
+      {/* Tabs superiores */}
+      <View style={[styles.tabsContainer, { backgroundColor: colors.background }]}>
+        <View style={styles.tabsWrapper}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'bets' && styles.activeTab]} 
+            onPress={() => switchTab('bets')}
+          >
+            <Flag 
+              size={18} 
+              color={activeTab === 'bets' ? colors.primary : colors.textSecondary}
+              style={styles.tabIcon} 
+            />
+            <Text style={[
+              styles.tabText,
+              { color: activeTab === 'bets' ? colors.primary : colors.textSecondary }
+            ]}>
+              {t('bets') || 'Apuestas'}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'parlays' && styles.activeTab]} 
+            onPress={() => switchTab('parlays')}
+          >
+            <Layers 
+              size={18} 
+              color={activeTab === 'parlays' ? colors.primary : colors.textSecondary}
+              style={styles.tabIcon} 
+            />
+            <Text style={[
+              styles.tabText,
+              { color: activeTab === 'parlays' ? colors.primary : colors.textSecondary }
+            ]}>
+              {t('parlays') || 'Combinadas'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Indicador animado de la pestaña activa */}
+          <Animated.View 
+            style={[
+              styles.tabIndicator, 
+              { 
+                backgroundColor: colors.primary,
+                transform: [{
+                  translateX: tabIndicatorPosition.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 150] // Ajusta este valor según el ancho de las pestañas
+                  })
+                }]
+              }
+            ]} 
+          />
+        </View>
       </View>
 
-      {/* FlatList con ListHeaderComponent para filtros y lista de apuestas */}
-      <FlatList
-        data={sortedBets}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={listHeader}
-        ListEmptyComponent={EmptyState}
-        renderItem={({ item }) => (
-          <BetCard
-            key={item.id}
-            bet={item}
-            userParticipation={item.userParticipation || null}
-            onPress={() => router.push(`/groups/${group.id}/bet/${item.id}`)}
+      {/* Renderizar el contenido según la pestaña activa */}
+      {activeTab === 'bets' ? (
+        <>
+          {/* Encabezado fijo: Título y botón de crear apuesta */}
+          <View style={[styles.fixedHeader, { backgroundColor: colors.background }]}>
+            <Text style={[styles.fixedTitle, { color: colors.text }]}>
+              {t('allBets') || 'All Bets'}
+            </Text>
+            <TouchableOpacity 
+              style={[styles.newBetButton, { backgroundColor: colors.primary }]} 
+              onPress={handleCreateBet}
+            >
+              <Plus size={16} color={colors.textInverted} />
+              <Text style={[styles.newBetButtonText, { color: colors.textInverted }]}>
+                {t('newBet') || 'New Bet'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* FlatList con ListHeaderComponent para filtros y lista de apuestas */}
+          <FlatList
+            data={sortedBets}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={listHeader}
+            ListEmptyComponent={EmptyState}
+            renderItem={({ item }) => (
+              <BetCard
+                key={item.id}
+                bet={item}
+                userParticipation={item.userParticipation || null}
+                onPress={() => router.push(`/groups/${group.id}/bet/${item.id}`)}
+              />
+            )}
+            contentContainerStyle={[
+              styles.betsList,
+              sortedBets.length === 0 && { flex: 1 }
+            ]}
+            showsVerticalScrollIndicator={false}
           />
-        )}
-        contentContainerStyle={[
-          styles.betsList,
-          sortedBets.length === 0 && { flex: 1 }
-        ]}
-        showsVerticalScrollIndicator={false}
-      />
+        </>
+      ) : (
+        // Contenido para la pestaña de Parlays (Combinadas)
+        <View style={styles.parlaysContainer}>
+          {/* Header para Parlays */}
+          <View style={[styles.fixedHeader, { backgroundColor: colors.background }]}>
+            <Text style={[styles.fixedTitle, { color: colors.text }]}>
+              {t('parlays') || 'Combinadas'}
+            </Text>
+            <TouchableOpacity 
+              style={[styles.newBetButton, { backgroundColor: colors.primary }]} 
+              onPress={() => router.push(`/groups/${group.id}/parlay/create-parlay`)}
+            >
+              <Plus size={16} color={colors.textInverted} />
+              <Text style={[styles.newBetButtonText, { color: colors.textInverted }]}>
+                {t('newParlay') || 'Nueva Combinada'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Estado vacío para Parlays */}
+          <View style={styles.emptyStateWrapper}>
+            <View style={[styles.emptyContainer, { marginTop: 40 }]}>
+              <View style={[styles.emptyIconContainer, { backgroundColor: `${colors.primary}15` }]}>
+                <Layers size={40} color={colors.primary} />
+              </View>
+              <Text style={[styles.emptyText, { color: colors.text }]}>
+                {t('noParlays') || 'No hay combinadas'}
+              </Text>
+              <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+                {t('createFirstParlayMessage') || 'Crea la primera apuesta combinada en este grupo'}
+              </Text>
+              <TouchableOpacity 
+                style={[styles.emptyButton, { backgroundColor: colors.primary }]} 
+                onPress={() => router.push(`/groups/${group.id}/parlay/create-parlay`)}
+              >
+                <Plus size={18} color={colors.textInverted} />
+                <Text style={[styles.emptyButtonText, { color: colors.textInverted }]}>
+                  {t('createParlay') || 'Crear Combinada'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -200,6 +334,44 @@ export function GroupBets({ group }: GroupBetsProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  tabsContainer: {
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+    zIndex: 10,
+  },
+  tabsWrapper: {
+    flexDirection: 'row',
+    position: 'relative',
+    height: 40,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 12,
+  },
+  activeTab: {
+    // Los cambios se manejan principalmente con el color del texto e ícono
+  },
+  tabIcon: {
+    marginRight: 8,
+  },
+  tabText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: '50%',
+    height: 3,
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
   fixedHeader: {
     paddingVertical: 15,
@@ -279,6 +451,12 @@ const styles = StyleSheet.create({
   betsList: {
     paddingBottom: 40,
     paddingHorizontal: 16,
+  },
+  parlaysContainer: {
+    flex: 1,
+  },
+  emptyStateWrapper: {
+    flex: 1,
   },
   emptyContainer: {
     flex: 1,
