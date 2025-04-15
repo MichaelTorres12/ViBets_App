@@ -94,9 +94,11 @@ export default function HomeScreen() {
           <Text style={[styles.logoTextSecondary, { color: colors.primary }]}>Bets</Text>
         </View>
         <View style={styles.headerActions}>
+          {/**
           <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.card }]}>
             <Search size={24} color={colors.text} />
           </TouchableOpacity>
+           */}
           <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.card }]}>
             <Bell size={24} color={colors.text} />
           </TouchableOpacity>

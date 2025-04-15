@@ -25,7 +25,7 @@ export const Card: React.FC<CardProps> = ({
           backgroundColor: colors.card,
           borderRadius: 16,
           padding: 16,
-          shadowColor: colors.primary,
+          shadowColor: colors.cardShadow,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.1,
           shadowRadius: 8,

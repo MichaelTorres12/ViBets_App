@@ -99,7 +99,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
         </View>
 
         <View style={[styles.statsContainer, { 
-          backgroundColor: isLight ? colors.cardLight : 'rgba(42, 42, 42, 0.5)',
+          backgroundColor: isLight ? colors.cardLight : '#2f3d4d',
           borderWidth: isLight ? 1 : 0,
           borderColor: isLight ? colors.border : 'transparent',
         }]}>

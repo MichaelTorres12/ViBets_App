@@ -17,6 +17,7 @@ export type ColorTheme = {
   filter: string;
   chatBubbleSender: string;
   chatBubbleReceiver: string;
+  cardShadow: string;
   
   // Status colors
   success: string;
@@ -41,21 +42,22 @@ export const darkColors: ColorTheme = {
   primaryDark: '#B8D600',
   
   // UI colors
-  background: '#232324', // Antes en #000000
-  card: '#1A1A1A',
-  cardLight: '#2A2A2A',
+  background: '#15202B', // Antes en #232324
+  card: '#212c38',
+  cardLight: '#2f3d4d',
   text: '#FFFFFF',
   textInverted: '#000000',
   textSecondary: '#AAAAAA',
   textTertiary: '#666666',
-  border: '#333333',
+  border: '#454545',
   filter: '#2388fc',
   // Status colors
   success: '#00E676',
   error: '#FF3D71',
   warning: '#FFAA00',
-  chatBubbleSender: '#1A1A1A',
+  chatBubbleSender: '#2f3d4d',
   chatBubbleReceiver: '#424245',
+  cardShadow: '#96d0ff',
 
   // Special
   coin: '#DDFF00',
@@ -84,6 +86,7 @@ export const lightColors: ColorTheme = {
   filter: '#2388FC',
   chatBubbleSender: '#E9F4FF', // Azul muy claro para burbujas de chat
   chatBubbleReceiver: '#07a8e3', // Azul muy claro para burbujas de chat
+  cardShadow: '#2388FC',
 
   // Status colors
   success: '#17C964', // Verde brillante como en los badges "Win"
