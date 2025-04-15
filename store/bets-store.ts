@@ -31,7 +31,7 @@ interface BetsState {
 export const useBetsStore = create<BetsState>((set, get) => ({
   bets: [],
   participations: [],
-  loading: false,
+  loading: false, 
 
   getBetById: (betId) => {
     return get().bets.find((bet) => bet.id === betId);
@@ -58,19 +58,9 @@ export const useBetsStore = create<BetsState>((set, get) => ({
         .from('bets')
         .select(`
           *,
-          bet_options (
-            id,
-            option_text,
-            odds
-          ),
-          bet_participations (
-            id,
-            user_id,
-            option_id,
-            amount,
-            created_at,
-            profiles:profiles(username)
-          )
+          bet_options!bet_options_bet_id_fkey(*),
+          winning_option:bet_options!bets_settled_option_fkey(*),
+          bet_participations(*)
         `)
         .eq('group_id', groupId);
   
@@ -129,19 +119,9 @@ export const useBetsStore = create<BetsState>((set, get) => ({
         .from('bets')
         .select(`
           *,
-          bet_options (
-            id,
-            option_text,
-            odds
-          ),
-          bet_participations (
-            id,
-            user_id,
-            option_id,
-            amount,
-            created_at,
-            status
-          )
+          bet_options!bet_options_bet_id_fkey(*),
+          winning_option:bet_options!bets_settled_option_fkey(*),
+          bet_participations(*)
         `);
       
       if (error) {

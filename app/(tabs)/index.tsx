@@ -58,13 +58,25 @@ export default function HomeScreen() {
   const userGroups = getUserGroups(user.id);
 
   const userBets = bets
-    .map((bet: any) => {
-      const participation = bet.participations?.find(
-        (p: any) => p.user_id === user.id && p.status === 'active'
+    .filter(bet => {
+      // Primero nos aseguramos que las participaciones existen
+      if (!bet.participations || !Array.isArray(bet.participations)) {
+        return false;
+      }
+      // Buscamos participaciones donde el userId o user_id coincida
+      return bet.participations.some(
+        (p) => (p.userId === user.id || p.user_id === user.id) && 
+        (p.status === 'active' || !p.status) // Incluir participaciones sin campo status
+      );
+    })
+    .map(bet => {
+      // Encuentra la participación del usuario actual
+      const participation = bet.participations.find(
+        (p) => p.userId === user.id || p.user_id === user.id
       );
       return { bet, participation };
     })
-    .filter(({ bet, participation }) => participation && bet.status === 'open');
+    .filter(({ bet }) => bet.status === 'open');
 
   const recentBets = userBets
     .sort(

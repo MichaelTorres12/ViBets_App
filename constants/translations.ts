@@ -169,6 +169,7 @@ type TranslationKey =
   | 'noBetsFound'
   | 'noBetsDescription'
   | 'searchBets'
+  | 'noYourOpenBets'
 
   // Parlays
   | 'parlays'
@@ -474,6 +475,7 @@ export const translations: Translations = {
     betPlaceError: 'Bet placement failed',
     alreadyVoted: 'You have already voted',
     option: 'Option',
+    noYourOpenBets: 'No open bets',
 
     // Parlays
     parlays: 'Parlays',
@@ -802,6 +804,7 @@ export const translations: Translations = {
     noBetsFound: 'No se encontraron apuestas',
     noBetsDescription: 'Aún no has realizado ninguna apuesta',
     searchBets: 'Buscar Apuestas',
+    noYourOpenBets: 'No tienes apuestas abiertas',
 
     // Parlays
     parlays: 'Combinadas',

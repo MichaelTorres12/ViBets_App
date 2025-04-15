@@ -10,10 +10,11 @@ import {
   TextInput,
   ScrollView,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Trophy, Users, Clock } from 'lucide-react-native';
+import { ArrowLeft, Trophy, Users, Clock, Check, AlertCircle } from 'lucide-react-native';
 // import { useAuthStore } from '@/store/auth-store'; // <-- ELIMINAR
 import { useAuth } from '@/store/auth-context';       // <-- AÑADIR
 import { useBetsStore } from '@/store/bets-store';
@@ -21,13 +22,14 @@ import { useGroupsStore } from '@/store/groups-store';
 import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
 import { Image } from 'react-native';
+import { Card } from '@/components/Card';
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString();
 }
 
 export default function BetDetailScreen() {
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
   const { t } = useLanguage();
   const router = useRouter();
   const { id, betId } = useLocalSearchParams<{ id: string; betId: string }>();
@@ -94,6 +96,15 @@ export default function BetDetailScreen() {
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  // Estado para confirmación
+  const [confirmationVisible, setConfirmationVisible] = useState(false);
+
+  // Verificar si el usuario es el creador de la apuesta
+  const isCreator = bet && user && bet.createdBy === user.id;
+  
+  // Verificar si la apuesta está cerrada y aún no está resuelta
+  const canSettle = bet && bet.status === 'closed' && !bet.settledOption;
+
   useEffect(() => {
     if (userParticipation) {
       setSelectedOption(userParticipation.optionId);
@@ -147,6 +158,33 @@ export default function BetDetailScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Manejar la selección de opción ganadora
+  const handleSelectWinner = (optionId: string) => {
+    setSelectedOption(optionId);
+    setConfirmationVisible(true);
+  };
+  
+  // Confirmar y establecer el ganador
+  const confirmWinningOption = async () => {
+    if (!selectedOption) return;
+    
+    try {
+      await betsStore.setWinningOption(betId, selectedOption);
+      await betsStore.distributePrize(betId);
+      Alert.alert(
+        t('success') || 'Success', 
+        t('winnerDeclared') || 'Winner has been declared and prizes distributed!'
+      );
+      setConfirmationVisible(false);
+    } catch (error) {
+      console.error('Error setting winner:', error);
+      Alert.alert(
+        t('error') || 'Error', 
+        t('couldNotDeclareWinner') || 'Could not declare the winner. Please try again.'
+      );
     }
   };
 
@@ -345,6 +383,118 @@ export default function BetDetailScreen() {
               </View>
             ))}
           </View>
+
+          {/* Sección para establecer el ganador (solo visible para el creador si la apuesta está cerrada) */}
+          {isCreator && canSettle && (
+            <Card style={styles.settleCard} variant="elevated">
+              <Text style={[styles.settleTitle, { color: colors.text }]}>
+                {t('declareWinner') || 'Declare Winner'}
+              </Text>
+              <Text style={[styles.settleDescription, { color: colors.textSecondary }]}>
+                {t('selectWinningOption') || 'Select the winning option:'}
+              </Text>
+              
+              <View style={styles.optionsList}>
+                {bet.options?.map(option => (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={[
+                      styles.optionButton,
+                      {
+                        backgroundColor: option.id === selectedOption 
+                          ? `${colors.primary}20` 
+                          : theme === 'light' ? colors.cardLight : colors.card,
+                        borderColor: option.id === selectedOption ? colors.primary : colors.border,
+                      }
+                    ]}
+                    onPress={() => handleSelectWinner(option.id)}
+                  >
+                    <Text style={[styles.optionText, { color: colors.text }]}>
+                      {option.label}
+                    </Text>
+                    <Text style={[styles.oddsText, { color: colors.primary }]}>
+                      {option.odd}x
+                    </Text>
+                    {option.id === selectedOption && (
+                      <View style={styles.checkContainer}>
+                        <Check size={16} color={colors.primary} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+              
+              {confirmationVisible && (
+                <View style={styles.confirmationBox}>
+                  <AlertCircle size={24} color={colors.warning} style={{ marginRight: 8 }} />
+                  <Text style={[styles.confirmationText, { color: colors.text }]}>
+                    {t('winnerConfirmation') || 'Are you sure? This action cannot be undone.'}
+                  </Text>
+                  <View style={styles.confirmationButtons}>
+                    <TouchableOpacity
+                      style={[styles.cancelButton, { backgroundColor: colors.cardLight }]}
+                      onPress={() => setConfirmationVisible(false)}
+                    >
+                      <Text style={{ color: colors.text }}>
+                        {t('cancel') || 'Cancel'}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.confirmButton, { backgroundColor: colors.primary }]}
+                      onPress={confirmWinningOption}
+                    >
+                      <Text style={{ color: '#fff', fontWeight: '600' }}>
+                        {t('confirm') || 'Confirm'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </Card>
+          )}
+          
+          {/* Mostrar resultado si la apuesta ya fue resuelta */}
+          {bet.settledOption && (
+            <Card style={styles.resultCard} variant="elevated">
+              <Text style={[styles.resultTitle, { color: colors.text }]}>
+                {t('betResult') || 'Bet Result'}
+              </Text>
+              
+              <View style={[styles.winnerBox, { backgroundColor: `${colors.success}15` }]}>
+                <Check size={24} color={colors.success} style={{ marginRight: 8 }} />
+                <View>
+                  <Text style={[styles.winnerLabel, { color: colors.textSecondary }]}>
+                    {t('winningOption') || 'Winning Option'}
+                  </Text>
+                  <Text style={[styles.winnerText, { color: colors.success }]}>
+                    {bet.options?.find(o => o.id === bet.settledOption)?.label || 'Unknown'}
+                  </Text>
+                </View>
+              </View>
+              
+              {/* Opcional: Mostrar tus ganancias o pérdidas */}
+              {bet.userParticipation && (
+                <View style={styles.userResultContainer}>
+                  <Text style={[styles.userResultLabel, { color: colors.textSecondary }]}>
+                    {t('yourResult') || 'Your Result'}
+                  </Text>
+                  {bet.userParticipation.optionId === bet.settledOption ? (
+                    <View style={[styles.winBox, { backgroundColor: `${colors.success}15` }]}>
+                      <Text style={[styles.winAmount, { color: colors.success }]}>
+                        +{(bet.userParticipation.amount * (bet.options?.find(o => o.id === bet.settledOption)?.odd || 0)).toFixed(0)} {t('coins') || 'coins'}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={[styles.lossBox, { backgroundColor: `${colors.error}15` }]}>
+                      <Text style={[styles.lossAmount, { color: colors.error }]}>
+                        -{bet.userParticipation.amount} {t('coins') || 'coins'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </Card>
+          )}
         </ScrollView>
       </SafeAreaView>
     </>
@@ -503,7 +653,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
-    backgroundColor: '#1B1B1B', // ejemplo
+    backgroundColor: '#2f3d4d', // ejemplo
   },
   avatar: {
     width: 40,
@@ -579,5 +729,111 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     textAlign: 'center',
     marginBottom: 10,
+  },
+  settleCard: {
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+  },
+  settleTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  settleDescription: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  optionsList: {
+    gap: 10,
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    flex: 1,
+  },
+  oddsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 12,
+  },
+  checkContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmationBox: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+  },
+  confirmationText: {
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  confirmationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  cancelButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  confirmButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  resultCard: {
+    padding: 16,
+    marginTop: 16,
+    borderRadius: 12,
+  },
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  winnerBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 8,
+  },
+  winnerLabel: {
+    fontSize: 12,
+  },
+  winnerText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  userResultContainer: {
+    marginTop: 16,
+  },
+  userResultLabel: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  winBox: {
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  winAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  lossBox: {
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  lossAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
