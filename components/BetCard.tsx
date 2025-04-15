@@ -2,7 +2,7 @@
 import React, { useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/components/ThemeContext';
-import { Clock, Users, DollarSign } from 'lucide-react-native';
+import { Clock, Users, DollarSign, Trophy } from 'lucide-react-native';
 import { useLanguage } from '@/components/LanguageContext';
 
 export interface BetOption {
@@ -22,6 +22,7 @@ export interface Bet {
   end_date?: string;     // Fecha/hora final
   // Se asume que también viene la propiedad participations
   participations?: any[];
+  settled_option?: string;
 }
 
 interface BetCardProps {
@@ -176,6 +177,14 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
           </Text>
         </View>
       </View>
+
+      {/* Añadir indicador de ganador */}
+      {bet.status === 'settled' && bet.settled_option && userParticipation?.id === bet.settled_option && (
+        <View style={[styles.winnerBadge, { backgroundColor: colors.success }]}>
+          <Trophy size={14} color="white" />
+          <Text style={styles.winnerBadgeText}>{t('winner') || 'Winner'}</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -265,5 +274,17 @@ const styles = StyleSheet.create({
   },
   footerItemText: {
     fontSize: 13,
+  },
+  winnerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  winnerBadgeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
 });

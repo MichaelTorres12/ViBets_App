@@ -170,6 +170,16 @@ type TranslationKey =
   | 'noBetsDescription'
   | 'searchBets'
   | 'noYourOpenBets'
+  | 'winningOption'
+  | 'errorSettingWinningOption'
+  | 'setWinningOption'
+  | 'selectWinningOptionDescription'
+  | 'confirmWinningOption'
+  | 'setAsWinner'
+  | 'asWinner'
+  | 'confirmWinningOption'
+  | 'confirmWinningOptionMessage'
+  | 'winningOptionSet'
 
   // Parlays
   | 'parlays'
@@ -510,7 +520,16 @@ export const translations: Translations = {
   noBetsFound: 'No bets found',
   noBetsDescription: 'No bets done yet',
   searchBets: 'Search Bets',
-    
+  winningOption: 'Winning Option',
+  errorSettingWinningOption: 'Error setting winning option',
+  setWinningOption: 'Set Winning Option',
+  selectWinningOptionDescription: 'Select the winning option for this bet',
+  confirmWinningOption: 'Confirm Winning Option',
+  setAsWinner: 'Set as Winner',
+  asWinner: 'As Winner',
+  confirmWinningOptionMessage: 'Are you sure you want to set this option as the winning option?',
+  winningOptionSet: 'Winning option set',
+
 
     // Challenges
     challengeTitle: 'Challenge Title',
@@ -784,6 +803,14 @@ export const translations: Translations = {
     betPlaceError: 'Error al realizar la apuesta',
     alreadyVoted: 'Ya has votado en esta apuesta',
     option: 'Opción',
+    winningOption: 'Opción Ganadora',
+    errorSettingWinningOption: 'Error al establecer la opción ganadora',
+    setWinningOption: 'Establecer Opción Ganadora',
+    selectWinningOptionDescription: 'Selecciona la opción ganadora para esta apuesta',
+    confirmWinningOption: 'Confirmar Opción Ganadora',
+    setAsWinner: 'Establecer como Ganadora',
+    asWinner: 'Como Ganadora',
+    confirmWinningOptionMessage: '¿Estás seguro de que quieres establecer esta opción como ganadora?',
 
     // -----
     myBets: 'Mis Apuestas',
@@ -805,6 +832,9 @@ export const translations: Translations = {
     noBetsDescription: 'Aún no has realizado ninguna apuesta',
     searchBets: 'Buscar Apuestas',
     noYourOpenBets: 'No tienes apuestas abiertas',
+    winningOption: 'Opción Ganadora',
+    errorSettingWinningOption: 'Error al establecer la opción ganadora',
+    winningOptionSet: 'Opción ganadora establecida',
 
     // Parlays
     parlays: 'Combinadas',

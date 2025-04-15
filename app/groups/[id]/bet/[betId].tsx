@@ -23,6 +23,7 @@ import { useTheme } from '@/components/ThemeContext';
 import { useLanguage } from '@/components/LanguageContext';
 import { Image } from 'react-native';
 import { Card } from '@/components/Card';
+import { supabase } from '@/services/supabaseClient';
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString();
@@ -188,6 +189,48 @@ export default function BetDetailScreen() {
     }
   };
 
+  const handleSettleBet = async (optionId: string) => {
+    try {
+      if (!user) {
+        Alert.alert(
+          t('error') || 'Error',
+          t('mustBeLoggedIn') || 'You must be logged in'
+        );
+        return;
+      }
+
+      // Usar la función SQL settle_bet en lugar de actualizar directamente
+      const { data, error } = await supabase.rpc('settle_bet', {
+        p_bet_id: betId,
+        p_winning_option: optionId,
+        p_user_id: user.id
+      });
+      
+      if (error) {
+        console.error('Error calling settle_bet:', error);
+        throw error;
+      }
+      
+      console.log('Settle bet result:', data);
+      
+      // Recargar apuesta actualizada
+      if (group?.id) {
+        betsStore.fetchBets(group.id);
+      }
+      
+      Alert.alert(
+        t('success') || 'Success',
+        t('winningOptionSet') || 'Winning option has been set'
+      );
+    } catch (error: any) {
+      console.error('Error setting winning option:', error);
+      Alert.alert(
+        t('error') || 'Error',
+        error.message || t('errorSettingWinningOption') || 'Error setting winning option'
+      );
+    }
+  };
+
   return (
     <>
       <Stack.Screen options={{ headerShown: true, headerTitle: group.name }} />
@@ -226,6 +269,20 @@ export default function BetDetailScreen() {
               </Text>
             </View>
           </View>
+
+          {bet && bet.status === 'settled' && bet.settled_option && (
+            <View style={[styles.winnerContainer, { backgroundColor: `${colors.success}20` }]}>
+              <Trophy size={24} color={colors.success} style={styles.winnerIcon} />
+              <View>
+                <Text style={[styles.winnerLabel, { color: colors.textSecondary }]}>
+                  {t('winningOption') || 'Winning option:'}
+                </Text>
+                <Text style={[styles.winnerOption, { color: colors.text }]}>
+                  {bet.options?.find(opt => opt.id === bet.settled_option)?.label || ''}
+                </Text>
+              </View>
+            </View>
+          )}
 
           {canPlaceBet ? (
             <View style={[styles.placeBetCard, { backgroundColor: colors.card }]}>
@@ -494,6 +551,44 @@ export default function BetDetailScreen() {
                 </View>
               )}
             </Card>
+          )}
+
+          {bet && bet.created_by === user?.id && bet.status === 'open' && new Date(bet.end_date) < new Date() && (
+            <View style={styles.settleSection}>
+              <Text style={[styles.settleTitle, { color: colors.text }]}>
+                {t('setWinningOption') || 'Set winning option'}
+              </Text>
+              <Text style={[styles.settleDescription, { color: colors.textSecondary }]}>
+                {t('selectWinningOptionDescription') || 'Select the winning option to settle this bet'}
+              </Text>
+              
+              {bet.options?.map(option => (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[styles.settleOptionButton, { 
+                    backgroundColor: colors.cardLight,
+                    borderColor: colors.primary
+                  }]}
+                  onPress={() => {
+                    Alert.alert(
+                      `${option.label}`,  // Título más prominente con el nombre de la opción
+                      `${t('confirmWinningOptionMessage') || '¿Estás seguro de que quieres establecer esta opción como ganadora?'}`,
+                      [
+                        { text: t('cancel') || 'Cancel', style: 'cancel' },
+                        { text: t('confirm') || 'Confirm', onPress: () => handleSettleBet(option.id) }
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={[styles.settleOptionText, { color: colors.text }]}>
+                    {option.label}
+                  </Text>
+                  <Text style={[styles.settleOptionOdd, { color: colors.primary }]}>
+                    {option.odd}x
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           )}
         </ScrollView>
       </SafeAreaView>
@@ -834,6 +929,56 @@ const styles = StyleSheet.create({
   },
   lossAmount: {
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  settleSection: {
+    marginTop: 16,
+    marginBottom: 50,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FFD54F',
+    backgroundColor: 'rgba(255, 213, 79, 0.1)',
+  },
+  settleTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  settleDescription: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  settleOptionButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+  },
+  settleOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  settleOptionOdd: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  winnerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 8,
+  },
+  winnerIcon: {
+    marginRight: 12,
+  },
+  winnerLabel: {
+    fontSize: 14,
+  },
+  winnerOption: {
+    fontSize: 20,
     fontWeight: 'bold',
   },
 });

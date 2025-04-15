@@ -143,6 +143,7 @@ export interface Bet {
 
   participations?: any[];
   userParticipation?: BetParticipation;
+  settled_option?: string;
 }
 
 export interface BetParticipation {
