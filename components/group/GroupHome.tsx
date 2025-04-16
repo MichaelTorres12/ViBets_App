@@ -10,6 +10,7 @@ import { GroupInfo } from '@/components/GroupInfo';
 import { GroupCoins } from '@/components/GroupCoins';
 import { GroupMembers } from '@/components/GroupMembers';
 import { Group, Bet, BetParticipation } from '@/types';
+import { useAuth } from '@/store/auth-context';
 
 interface GroupHomeProps {
   group: Group;
@@ -20,6 +21,7 @@ export function GroupHome({ group, userGroupCoins }: GroupHomeProps) {
   const { colors } = useTheme();
   const { t } = useLanguage();
   const router = useRouter();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'bets' | 'members'>('bets');
 
   const handleCreateBet = () => {
@@ -120,14 +122,21 @@ export function GroupHome({ group, userGroupCoins }: GroupHomeProps) {
 
             {/* Lista de apuestas recientes */}
             {recentBets.length > 0 ? (
-              recentBets.map((bet: Bet) => (
-                <BetCard 
-                  key={bet.id} 
-                  bet={bet} 
-                  userParticipation={bet.userParticipation || null} 
-                  onPress={() => router.push(`/groups/${group.id}/bet/${bet.id}`)}
-                />
-              ))
+              recentBets.map((bet: Bet) => {
+                // Buscar la participación del usuario actual en esta apuesta
+                const userParticipation = bet.participations?.find(p => 
+                  p.userId === user?.id || p.user_id === user?.id
+                );
+                
+                return (
+                  <BetCard 
+                    key={bet.id} 
+                    bet={bet} 
+                    userParticipation={userParticipation || null} 
+                    onPress={() => router.push(`/groups/${group.id}/bet/${bet.id}`)}
+                  />
+                );
+              })
             ) : (
               <View style={styles.emptyContainer}>
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>

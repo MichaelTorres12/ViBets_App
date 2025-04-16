@@ -36,7 +36,7 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const { t } = useLanguage();
   const { bets } = useBetsStore();
-  const { groups } = useGroupsStore();
+  const { groups, getUserGroups } = useGroupsStore();
   const { colors } = useTheme();
   
   if (!user) {
@@ -65,7 +65,7 @@ export default function ProfileScreen() {
     bet.participations?.some(p => p.userId === user.id || p.user_id === user.id)
   ).length;
   
-  const userGroups = groups.length;
+  const userGroups = getUserGroups(user.id).length;
   
   // Logout
   const handleLogout = () => {

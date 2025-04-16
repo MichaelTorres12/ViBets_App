@@ -10,8 +10,6 @@ import { Card } from './Card';
 import { useLanguage } from './LanguageContext';
 import { useAuth } from '@/store/auth-context';
 
-// import { useAuthStore } from '@/store/auth-store'; // <-- ELIMINAR
-
 interface GroupCardProps {
   group: Group;
   onPress: (group: Group) => void;
@@ -24,7 +22,6 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   compact = false
 }) => {
   const { t } = useLanguage();
-  // const { user } = useAuthStore();  // <-- BORRAR
   const { user } = useAuth();         // <-- USAR AuthContext
   const { colors, theme } = useTheme();
   const isLight = theme === 'light';
@@ -36,7 +33,6 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   // Contar apuestas en este grupo (si están disponibles)
   const betsCount = group.bets?.length || 0;
 
-  // Contar desafíos en este grupo
   const challengesCount = group.challenges?.length || 0;
 
   // Formatear fecha de creación

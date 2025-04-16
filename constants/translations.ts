@@ -25,7 +25,7 @@ type TranslationKey =
   | 'registrationFailed'
   | 'ok'
   | 'thankYou'
-  
+  | 'tapToEnlarge'
   // Auth
   | 'login'
   | 'register'
@@ -111,6 +111,7 @@ type TranslationKey =
   | 'ended'
   | 'left'
   | 'noEndDate'   
+  | 'joinGroupDescription'
   
   // Bets
   | 'bets'
@@ -254,6 +255,8 @@ type TranslationKey =
   | 'proofSubmitted'
   | 'youAlreadySubmitted'
   | 'voteRecorded'
+  | 'succesJoinChallenge'
+  | 'myChallengesCreated'
 
   // Chat
   | 'typeAMessage'
@@ -330,6 +333,10 @@ type TranslationKey =
   | 'onboardingStart'
   | 'viewTutorial'
 
+  // New translations
+  | 'youWon'
+  | 'youLost'
+
 type Translations = {
   [key in Language]: {
     [key in TranslationKey]: string;
@@ -361,6 +368,8 @@ export const translations: Translations = {
     registrationFailed: 'Registration failed. Please try again.',
     ok: 'OK',
     thankYou: 'Thank you!',
+    tapToEnlarge: 'Tap to enlarge',
+
     // Auth
     login: 'Login',
     register: 'Register',
@@ -446,6 +455,7 @@ export const translations: Translations = {
     ended: 'Ended',
     left: 'Left',
     noEndDate: 'No end date',
+    joinGroupDescription: 'Join a group to start betting and competing with your friends!',
 
 
     // Bets
@@ -581,6 +591,8 @@ export const translations: Translations = {
     proofSubmitted: 'Proof submitted',
     youAlreadySubmitted: 'You have already submitted your proof',
     voteRecorded: 'Vote recorded',
+    succesJoinChallenge: 'You have joined the challenge',
+    myChallengesCreated: 'Created by me',
 
     // Chat
     typeAMessage: 'Type a message...',
@@ -654,7 +666,11 @@ export const translations: Translations = {
     onboardingSubtitle3: 'Keep track of your wins, losses and successful predictions. Communicate with your group through the integrated chat to discuss results, show off your victories and share fun moments. Become the GOAT of GOATs among your friends!',
     onboardingNext: 'Next',
     onboardingStart: 'Get Started!',
-    viewTutorial: 'View Tutorial'
+    viewTutorial: 'View Tutorial',
+
+    // New translations
+    youWon: 'You Won!',
+    youLost: 'You Lost!'
   },
   es: {
     // Common
@@ -680,6 +696,7 @@ export const translations: Translations = {
     registrationFailed: 'Error al registrarse. Por favor, inténtelo de nuevo.',
     ok: 'OK',
     thankYou: '¡Gracias!',
+    tapToEnlarge: 'Toca para ampliar',
     
     // Auth
     login: 'Iniciar Sesión',
@@ -765,7 +782,7 @@ export const translations: Translations = {
     ended: 'Terminado',
     left: 'Faltan',
     noEndDate: 'No hay fecha de fin',
-    
+    joinGroupDescription: 'Únete a un grupo para empezar a apostar y competir con tus amigos!',
     // Bets
     bets: 'Apuestas',
     activeBets: 'Apuestas Activas',
@@ -901,6 +918,8 @@ export const translations: Translations = {
     proofSubmitted: 'Prueba enviada',
     youAlreadySubmitted: 'Ya has enviado una prueba',
     voteRecorded: 'Voto registrado',
+    succesJoinChallenge: 'Te has unido el desafío',
+    myChallengesCreated: 'Creados por mí',
 
     // Chat
     typeAMessage: 'Escribe un mensaje...',  
@@ -922,7 +941,7 @@ export const translations: Translations = {
     totalAmount: 'Cantidad Total',
     viewDetailsHistory: 'Ver Detalles',
     backToChallenges: 'Volver a Desafíos',
-    wins: 'victorias',
+    wins: 'Victorias',
     
     // Leaderboard
     groupLeaderboard: 'Clasificación del Grupo',
@@ -974,7 +993,11 @@ export const translations: Translations = {
     onboardingSubtitle3: 'Lleva un registro de tus victorias, derrotas y predicciones acertadas. Comunícate con tu grupo a través del chat integrado para comentar resultados, presumir tus victorias y compartir momentos divertidos. ¡Conviértete en el GOAT de GOATs entre tus amigos!',
     onboardingNext: 'Siguiente',
     onboardingStart: '¡Comenzar!',
-    viewTutorial: 'Ver Tutorial'
+    viewTutorial: 'Ver Tutorial',
+
+    // New translations
+    youWon: '¡Ganaste!',
+    youLost: '¡Perdiste!'
   }
 };
 

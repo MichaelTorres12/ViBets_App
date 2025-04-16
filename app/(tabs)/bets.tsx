@@ -157,38 +157,102 @@ export default function BetsScreen() {
       total: 0, 
       won: 0, 
       lost: 0, 
-      active: 0, 
+      active: 0,
       winRate: 0,
       totalProfit: 0,
+      roi: 0,
       winRateByMonth: [62, 58, 80, 82, 55, 70],
       profitByMonth: [100, 200, -50, 300, 150, 250],
     };
     
     // Filtrar apuestas en las que el usuario participó
     const userBets = bets.filter(bet => 
-      bet.participations?.some(p => (p.userId === user.id || p.user_id === user.id)) ||
-      bet.winner === user.id
+      bet.participations?.some(p => (p.userId === user.id || p.user_id === user.id))
     );
-    
-    // Apuestas que ganó el usuario (donde él es el winner)
-    const won = userBets.filter(bet => bet.status === 'settled' && bet.winner === user.id).length;
     
     // Apuestas activas en las que el usuario participó
     const active = userBets.filter(bet => bet.status === 'open').length;
     
-    // Apuestas cerradas en las que participó pero no ganó
-    const lost = userBets.filter(bet => 
-      bet.status === 'settled' && 
-      bet.winner && 
-      bet.winner !== user.id &&
-      bet.participations?.some(p => p.userId === user.id || p.user_id === user.id)
-    ).length;
+    // Apuestas que ganó el usuario (donde su opción coincide con la opción ganadora)
+    const won = userBets.filter(bet => {
+      if (bet.status !== 'settled' || !bet.settled_option) return false;
+      
+      // Encuentra la participación del usuario
+      const userPart = bet.participations?.find(p => 
+        p.userId === user.id || p.user_id === user.id
+      );
+      
+      // Si la opción elegida por el usuario es la opción ganadora
+      return userPart && (userPart.optionId === bet.settled_option || userPart.option_id === bet.settled_option);
+    }).length;
+    
+    // Apuestas perdidas por el usuario
+    const lost = userBets.filter(bet => {
+      if (bet.status !== 'settled' || !bet.settled_option) return false;
+      
+      // Encuentra la participación del usuario
+      const userPart = bet.participations?.find(p => 
+        p.userId === user.id || p.user_id === user.id
+      );
+      
+      // Si la opción elegida por el usuario NO es la opción ganadora
+      return userPart && (userPart.optionId !== bet.settled_option && userPart.option_id !== bet.settled_option);
+    }).length;
     
     // Calcular estadísticas
     const total = userBets.length;
+    const settled = won + lost; // Total de apuestas con resultado
     
-    // (Ganadas / Total) * 100
-    const winRate = total > 0 ? (won / total * 100) : 0;
+    // (Ganadas / Total de finalizadas) * 100
+    const winRate = settled > 0 ? (won / settled * 100) : 0;
+    
+    // Calcular ganancia total aproximada
+    let totalProfit = 0;
+    let totalInvested = 0;
+    let totalReturned = 0;
+    
+    userBets.forEach(bet => {
+      const userPart = bet.participations?.find(p => 
+        p.userId === user.id || p.user_id === user.id
+      );
+      
+      if (!userPart) return;
+      
+      // Aseguramos que amount sea un número válido
+      const amount = typeof userPart.amount === 'number' ? userPart.amount : 
+                    (parseInt(userPart.amount) || 0);
+      
+      if (amount <= 0) return; // Skip if invalid amount
+      
+      totalInvested += amount;
+      
+      // Si la apuesta está resuelta y el usuario ganó
+      if (bet.status === 'settled' && bet.settled_option && 
+          (userPart.optionId === bet.settled_option || userPart.option_id === bet.settled_option)) {
+        // Encontrar el odds de la opción ganada
+        const winningOption = bet.options?.find(opt => opt.id === bet.settled_option);
+        
+        if (winningOption && typeof winningOption.odd === 'number' && winningOption.odd > 0) {
+          totalReturned += amount * winningOption.odd;
+        } else {
+          // Si no podemos encontrar odds, al menos devolvemos la apuesta (1:1)
+          totalReturned += amount;
+        }
+      }
+    });
+    
+    console.log(`ROI calculation: Invested ${totalInvested}, Returned ${totalReturned}`);
+    
+    // Calcular ROI con prevención de NaN
+    let roi = 0;
+    if (totalInvested > 0) {
+      roi = ((totalReturned - totalInvested) / totalInvested) * 100;
+    }
+    
+    // Verificar validez del ROI
+    if (isNaN(roi) || !isFinite(roi)) {
+      roi = 0;
+    }
     
     return { 
       total, 
@@ -196,7 +260,8 @@ export default function BetsScreen() {
       lost, 
       active, 
       winRate,
-      totalProfit: 1250, // Mock para demostración
+      totalProfit: Math.round(totalProfit),
+      roi: Math.round(roi * 10) / 10, // ROI redondeado a 1 decimal
       winRateByMonth: [62, 58, 80, 82, 55, 70],
       profitByMonth: [100, 200, -50, 300, 150, 250],
     };
@@ -206,6 +271,8 @@ export default function BetsScreen() {
   const filteredBets = useMemo(() => {
     if (!bets || !user) return [];
     
+    console.log(`Filtrando ${bets.length} apuestas para tab: ${activeTab}`);
+    
     let filtered = [...bets];
     
     switch (activeTab) {
@@ -213,22 +280,42 @@ export default function BetsScreen() {
         filtered = filtered.filter(bet => bet.status === 'open');
         break;
       case 'won':
-        filtered = filtered.filter(bet => bet.status === 'settled' && bet.winner === user.id);
+        // Apuestas donde el usuario es explícitamente el ganador
+        filtered = filtered.filter(bet => {
+          if (bet.status !== 'settled' || !bet.settled_option) return false;
+          
+          // Encuentra la participación del usuario
+          const userPart = bet.participations?.find(p => 
+            p.userId === user.id || p.user_id === user.id
+          );
+          
+          // Si la opción elegida por el usuario es la opción ganadora
+          return userPart && (userPart.optionId === bet.settled_option || userPart.option_id === bet.settled_option);
+        });
         break;
       case 'lost':
-        filtered = filtered.filter(bet => 
-          bet.status === 'settled' && 
-          bet.winner && 
-          bet.winner !== user.id &&
-          bet.participations?.some(p => p.userId === user.id || p.user_id === user.id)
-        );
+        // Apuestas donde el usuario participó pero no ganó
+        filtered = filtered.filter(bet => {
+          if (bet.status !== 'settled' || !bet.settled_option) return false;
+          
+          // Encuentra la participación del usuario
+          const userPart = bet.participations?.find(p => 
+            p.userId === user.id || p.user_id === user.id
+          );
+          
+          // Si la opción elegida por el usuario NO es la opción ganadora
+          return userPart && (userPart.optionId !== bet.settled_option && userPart.option_id !== bet.settled_option);
+        });
         break;
       case 'mine':
         filtered = filtered.filter(bet => 
           bet.participations?.some(p => p.userId === user.id || p.user_id === user.id)
         );
         break;
+      // La pestaña 'all' no necesita filtrado adicional
     }
+    
+    console.log(`Después de filtrar por tab: ${filtered.length} apuestas`);
     
     // Filtrar por búsqueda
     if (searchQuery.trim()) {
@@ -241,20 +328,24 @@ export default function BetsScreen() {
     
     // Ordenar de la más reciente a la más antigua
     filtered.sort((a, b) => {
+      // Primero intentamos usar created_at
       const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
       const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
       
+      // Si ambas tienen created_at, ordenamos por esa fecha
       if (dateA && dateB) {
-        return dateB - dateA;
+        return dateB - dateA; // Orden descendente (más reciente primero)
       }
       
+      // Si no tienen created_at, intentamos con end_date
       const endDateA = a.end_date ? new Date(a.end_date).getTime() : 0;
       const endDateB = b.end_date ? new Date(b.end_date).getTime() : 0;
       
       if (endDateA && endDateB) {
-        return dateB - dateA;
+        return dateB - dateA; // Orden descendente
       }
       
+      // Si no tienen ninguna fecha, mantenemos el orden actual
       return 0;
     });
     
@@ -352,10 +443,17 @@ export default function BetsScreen() {
           elevation: 3
         }]}>
           <View style={[styles.statIconContainer, { backgroundColor: `${colors.primary}15` }]}>
-            <DollarSign size={20} color={colors.primary} />
+            <Percent size={20} color={colors.primary} />
           </View>
-          <Text style={[styles.statValue, { color: colors.text }]}>${stats.totalProfit}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('totalProfit') || 'Total Profit'}</Text>
+          <Text style={[styles.statValue, { 
+            color: stats.roi >= 0 ? colors.success : colors.error 
+          }]}>
+            {isNaN(stats.roi) ? '0.0' : 
+             stats.roi > 0 ? `+${stats.roi}` : `${stats.roi}`}%
+          </Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            {t('roi') || 'ROI'}
+          </Text>
         </View>
       </View>
       

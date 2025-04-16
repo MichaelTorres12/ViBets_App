@@ -17,6 +17,7 @@ import {
 import { useRouter } from 'expo-router';
 import { BetCard } from '@/components/BetCard';
 import { Group } from '@/types';
+import { useAuth } from '@/store/auth-context';
 
 // Tipo para las pestañas
 type TabType = 'bets' | 'parlays';
@@ -30,6 +31,7 @@ export function GroupBets({ group }: GroupBetsProps) {
   const isLight = theme === 'light';
   const { t } = useLanguage();
   const router = useRouter();
+  const { user } = useAuth();
 
   // Estado para las pestañas
   const [activeTab, setActiveTab] = useState<TabType>('bets');
@@ -268,14 +270,21 @@ export function GroupBets({ group }: GroupBetsProps) {
             keyExtractor={(item) => item.id}
             ListHeaderComponent={listHeader}
             ListEmptyComponent={EmptyState}
-            renderItem={({ item }) => (
-              <BetCard
-                key={item.id}
-                bet={item}
-                userParticipation={item.userParticipation || null}
-                onPress={() => router.push(`/groups/${group.id}/bet/${item.id}`)}
-              />
-            )}
+            renderItem={({ item }) => {
+              // Buscar la participación del usuario actual en esta apuesta
+              const userParticipation = item.participations?.find(p => 
+                p.userId === user?.id || p.user_id === user?.id
+              );
+              
+              return (
+                <BetCard
+                  key={item.id}
+                  bet={item}
+                  userParticipation={userParticipation || null}
+                  onPress={() => router.push(`/groups/${group.id}/bet/${item.id}`)}
+                />
+              );
+            }}
             contentContainerStyle={[
               styles.betsList,
               sortedBets.length === 0 && { flex: 1 }

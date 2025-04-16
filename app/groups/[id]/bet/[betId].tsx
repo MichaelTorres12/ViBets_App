@@ -202,7 +202,7 @@ export default function BetDetailScreen() {
       // Usar la función SQL settle_bet en lugar de actualizar directamente
       const { data, error } = await supabase.rpc('settle_bet', {
         p_bet_id: betId,
-        p_winning_option: optionId,
+        p_winning_opt: optionId,
         p_user_id: user.id
       });
       
@@ -553,7 +553,7 @@ export default function BetDetailScreen() {
             </Card>
           )}
 
-          {bet && bet.created_by === user?.id && bet.status === 'open' && new Date(bet.end_date) < new Date() && (
+          {bet && bet.created_by === user?.id && (bet.status === 'open' || bet.status === 'expired')  && new Date(bet.end_date) < new Date() && (
             <View style={styles.settleSection}>
               <Text style={[styles.settleTitle, { color: colors.text }]}>
                 {t('setWinningOption') || 'Set winning option'}

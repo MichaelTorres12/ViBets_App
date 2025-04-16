@@ -1,6 +1,6 @@
 // app/settings.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert, Image, Platform, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { useAuth } from '@/store/auth-context';
@@ -71,7 +71,34 @@ export default function SettingsScreen() {
   const handleBack = () => {
     router.back();
   };
-  
+
+  const handleContactUs = () => {
+    const email = 'vibetsapp@gmail.com';
+    const subject = encodeURIComponent(t('contactSubject') || 'Consulta desde ViBets App');
+    const body = encodeURIComponent(t('contactBody') || 'Hola, me gustaría hablar sobre...');
+    
+    const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
+    
+    Linking.canOpenURL(mailtoUrl)
+      .then(supported => {
+        if (supported) {
+          return Linking.openURL(mailtoUrl);
+        } else {
+          Alert.alert(
+            t('error') || 'Error',
+            t('noEmailClient') || 'No se encontró una aplicación de correo electrónico'
+          );
+        }
+      })
+      .catch(error => {
+        console.error('Error al abrir el cliente de correo:', error);
+        Alert.alert(
+          t('error') || 'Error',
+          t('emailError') || 'No se pudo abrir la aplicación de correo'
+        );
+      });
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       <Stack.Screen 
@@ -247,6 +274,7 @@ export default function SettingsScreen() {
               backgroundColor: isLight ? colors.card : colors.cardLight,
             }]}
             activeOpacity={0.7}
+            onPress={handleContactUs}
           >
             <View style={styles.settingLeft}>
               <Mail size={22} color={isLight ? colors.primary : colors.text} />

@@ -114,6 +114,7 @@ export interface Group {
   chatMessages?: ChatMessage[];
   challenges?: Challenge[];
   bets?: Bet[];
+  
 }
 
 export type BetType = 'binary' | 'multiple' | 'custom';

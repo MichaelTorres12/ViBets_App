@@ -143,7 +143,7 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
             <View key={option.id || idx}>
               <View style={styles.optionRow}>
                 <Text style={[styles.optionLabel, { color: colors.text }]}>{option.label}</Text>
-                <Text style={[styles.optionOdd, { color: '#FFD60A' }]}>{(option.odd || 0).toFixed(2)}</Text>
+                <Text style={[styles.optionOdd, { color: colors.primary }]}>{(option.odd || 0).toFixed(2)}</Text>
               </View>
               {idx < options.length - 1 && (
                 <View style={[styles.divider, { backgroundColor: 'rgba(255,255,255,0.1)' }]} />
@@ -183,6 +183,26 @@ export const BetCard: React.FC<BetCardProps> = ({ bet, userParticipation, onPres
         <View style={[styles.winnerBadge, { backgroundColor: colors.success }]}>
           <Trophy size={14} color="white" />
           <Text style={styles.winnerBadgeText}>{t('winner') || 'Winner'}</Text>
+        </View>
+      )}
+
+      {/* Indicador si el usuario ganó o perdió (para apuestas resueltas) */}
+      {bet.status === 'settled' && bet.settled_option && userParticipation && (
+        <View style={[
+          styles.resultBadge, 
+          { 
+            backgroundColor: userParticipation.option_id === bet.settled_option || 
+                            userParticipation.optionId === bet.settled_option
+              ?`${colors.success}99`
+              : colors.error 
+          }
+        ]}>
+          <Text style={styles.resultBadgeText}>
+            {userParticipation.option_id === bet.settled_option || 
+             userParticipation.optionId === bet.settled_option
+              ? t('youWon') || 'You Won!' 
+              : t('youLost') || 'You Lost!'}
+          </Text>
         </View>
       )}
     </TouchableOpacity>
@@ -286,5 +306,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  resultBadge: {
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  resultBadgeText: {
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
