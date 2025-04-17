@@ -43,7 +43,7 @@ export const darkColors: ColorTheme = {
   
   // UI colors
   background: '#15202B', // Antes en #232324
-  card: '#212c38',
+  card: '#222d3b', // Antes en #212c38
   cardLight: '#2f3d4d',
   text: '#FFFFFF',
   textInverted: '#000000',

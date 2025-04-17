@@ -345,6 +345,12 @@ type TranslationKey =
   | 'betSettlement'
   | 'betSettlementInfo'
 
+  // New translations
+  | 'usernameFormatError'
+  | 'emailFormatError'
+  | 'passwordLengthError'
+  | 'passwordMatchError'
+
 type Translations = {
   [key in Language]: {
     [key in TranslationKey]: string;
@@ -686,7 +692,13 @@ export const translations: Translations = {
     challengeSettlement: 'Challenge Settlement',
     challengeSettlementInfo: 'Automatic challenge settlement and prize distribution occurs every 30 minutes. Please be patient.',
     betSettlement: 'Bet Settlement',
-    betSettlementInfo: 'Automatic bet settlement and prize distribution occurs every 20 minutes. Please be patient.'
+    betSettlementInfo: 'Automatic bet settlement and prize distribution occurs every 20 minutes. Please be patient.',
+
+    // New translations
+    usernameFormatError: 'Username must be at least 3 characters and can only contain letters, numbers, and underscores.',
+    emailFormatError: 'Please enter a valid email address.',
+    passwordLengthError: 'Password must be at least 6 characters long.',
+    passwordMatchError: 'Passwords do not match. Please make sure they are identical.'
   },
   es: {
     // Common
@@ -1021,7 +1033,13 @@ export const translations: Translations = {
     challengeSettlement: 'Liquidación de Retos',
     challengeSettlementInfo: 'La adjudicación automática de retos y reparto de ganancias se realiza cada 30 minutos. Por favor tenga paciencia.',
     betSettlement: 'Liquidación de Apuestas', 
-    betSettlementInfo: 'La adjudicación automática de apuestas y reparto de ganancias se realiza cada 20 minutos. Por favor tenga paciencia.'
+    betSettlementInfo: 'La adjudicación automática de apuestas y reparto de ganancias se realiza cada 20 minutos. Por favor tenga paciencia.',
+
+    // New translations
+    usernameFormatError: 'El username debe tener al menos 3 caracteres y solo puede contener letras, números y guiones bajos.',
+    emailFormatError: 'Por favor ingresa una dirección de correo electrónico válida.',
+    passwordLengthError: 'La contraseña debe tener al menos 6 caracteres.',
+    passwordMatchError: 'Las contraseñas no coinciden. Por favor verifica que sean iguales.'
   }
 };
 

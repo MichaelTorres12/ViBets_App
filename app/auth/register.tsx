@@ -1,5 +1,5 @@
 // app/auth/register.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -7,16 +7,14 @@ import { colors } from '@/constants/colors';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { useLanguage } from '@/components/LanguageContext';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react-native';
+import { Mail, Lock, User, ArrowRight, Check, X } from 'lucide-react-native';
 
-import { useAuth } from '@/store/auth-context';  // <-- Usa AuthContext
+import { useAuth } from '@/store/auth-context';
 import { supabase } from '@/services/supabaseClient';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-
-  // Reemplazamos { signUp, loading } de la store por { signUp, isLoading } del AuthContext
   const { signUp, isLoading } = useAuth();
 
   // Estados para registro
@@ -24,31 +22,70 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  // Estados para validación en tiempo real
+  const [usernameValid, setUsernameValid] = useState<boolean | null>(null);
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [passwordValid, setPasswordValid] = useState<boolean | null>(null);
+  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
+  
+  // Expresiones regulares para validación
+  const usernameRegex = /^[a-zA-Z0-9_]{3,}$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const passwordRegex = /^.{6,}$/;
+
+  // Validar username en tiempo real
+  useEffect(() => {
+    if (username === '') {
+      setUsernameValid(null);
+      return;
+    }
+    setUsernameValid(usernameRegex.test(username));
+  }, [username]);
+
+  // Validar email en tiempo real
+  useEffect(() => {
+    if (email === '') {
+      setEmailValid(null);
+      return;
+    }
+    setEmailValid(emailRegex.test(email));
+  }, [email]);
+
+  // Validar password en tiempo real
+  useEffect(() => {
+    if (password === '') {
+      setPasswordValid(null);
+      return;
+    }
+    setPasswordValid(passwordRegex.test(password));
+    
+    // También validamos si las contraseñas coinciden
+    if (confirmPassword === '') {
+      setPasswordsMatch(null);
+    } else {
+      setPasswordsMatch(password === confirmPassword);
+    }
+  }, [password]);
+
+  // Validar confirmación de password en tiempo real
+  useEffect(() => {
+    if (confirmPassword === '') {
+      setPasswordsMatch(null);
+      return;
+    }
+    setPasswordsMatch(password === confirmPassword);
+  }, [confirmPassword, password]);
 
   const handleRegister = async () => {
-    // Validaciones REGEX
-    const usernameRegex = /^[a-zA-Z0-9_]{3,}$/; // Al menos 3 caracteres, solo letras, números y guiones bajos.
-    const emailRegex = /^\S+@\S+\.\S+$/;
-    const passwordRegex = /^.{6,}$/; // Al menos 6 caracteres
-
+    // Validación completa antes de enviar
     if (!username || !email || !password || !confirmPassword) {
       Alert.alert(t('error'), t('fillAllFields'));
       return;
     }
-    if (!usernameRegex.test(username)) {
-      Alert.alert(t('error'), 'El username debe tener al menos 3 caracteres y solo puede contener letras, números y guiones bajos.');
-      return;
-    }
-    if (!emailRegex.test(email)) {
-      Alert.alert(t('error'), 'El correo electrónico no es válido.');
-      return;
-    }
-    if (!passwordRegex.test(password)) {
-      Alert.alert(t('error'), 'La contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      Alert.alert(t('error'), 'Las contraseñas no coinciden.');
+
+    if (!usernameValid || !emailValid || !passwordValid || !passwordsMatch) {
+      Alert.alert(t('error'), t('fixFormErrors') || 'Por favor corrige los errores en el formulario');
       return;
     }
 
@@ -114,49 +151,94 @@ export default function RegisterScreen() {
         </View>
         
         <View style={styles.form}>
-          <Input
-            label="Username"
-            placeholder="Tu nombre de usuario"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-            leftIcon={<User size={20} color={colors.textSecondary} />}
-          />
+          <View>
+            <Input
+              label="Username"
+              placeholder="Tu nombre de usuario"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              leftIcon={<User size={20} color={colors.textSecondary} />}
+              rightIcon={
+                usernameValid === true ? <Check size={20} color={colors.success} /> : 
+                usernameValid === false ? <X size={20} color={colors.error} /> : null
+              }
+            />
+            {usernameValid === false && (
+              <Text style={styles.validationText}>
+                Al menos 3 caracteres, solo letras, números y _
+              </Text>
+            )}
+          </View>
 
-          <Input
-            label={t('email')}
-            placeholder="user@example.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            leftIcon={<Mail size={20} color={colors.textSecondary} />}
-          />
+          <View>
+            <Input
+              label={t('email')}
+              placeholder="user@example.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              leftIcon={<Mail size={20} color={colors.textSecondary} />}
+              rightIcon={
+                emailValid === true ? <Check size={20} color={colors.success} /> : 
+                emailValid === false ? <X size={20} color={colors.error} /> : null
+              }
+            />
+            {emailValid === false && (
+              <Text style={styles.validationText}>
+                Introduce un correo electrónico válido
+              </Text>
+            )}
+          </View>
           
-          <Input
-            label={t('password')}
-            placeholder="••••••••"
-            value={password}
-            onChangeText={setPassword}
-            isPassword
-            leftIcon={<Lock size={20} color={colors.textSecondary} />}
-          />
+          <View>
+            <Input
+              label={t('password')}
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              isPassword
+              leftIcon={<Lock size={20} color={colors.textSecondary} />}
+              rightIcon={
+                passwordValid === true ? <Check size={20} color={colors.success} /> : 
+                passwordValid === false ? <X size={20} color={colors.error} /> : null
+              }
+            />
+            {passwordValid === false && (
+              <Text style={styles.validationText}>
+                La contraseña debe tener al menos 6 caracteres
+              </Text>
+            )}
+          </View>
 
-          <Input
-            label="Confirmar contraseña"
-            placeholder="••••••••"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            isPassword
-            leftIcon={<Lock size={20} color={colors.textSecondary} />}
-          />
+          <View>
+            <Input
+              label="Confirmar contraseña"
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              isPassword
+              leftIcon={<Lock size={20} color={colors.textSecondary} />}
+              rightIcon={
+                passwordsMatch === true ? <Check size={20} color={colors.success} /> : 
+                passwordsMatch === false ? <X size={20} color={colors.error} /> : null
+              }
+            />
+            {passwordsMatch === false && (
+              <Text style={styles.validationText}>
+                Las contraseñas no coinciden
+              </Text>
+            )}
+          </View>
           
           <Button
             title={t('register')}
             onPress={handleRegister}
-            isLoading={isLoading}  // <-- Reemplaza loading por isLoading
+            isLoading={isLoading}
             style={styles.registerButton}
             rightIcon={<ArrowRight size={20} color="#000000" />}
+            disabled={!usernameValid || !emailValid || !passwordValid || !passwordsMatch}
           />
         </View>
         
@@ -171,7 +253,7 @@ export default function RegisterScreen() {
   );
 }
 
-// Estilos
+// Estilos (añadimos más estilos)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -214,4 +296,10 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
+  validationText: {
+    color: colors.error,
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 8,
+  }
 });
