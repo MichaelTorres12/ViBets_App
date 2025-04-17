@@ -124,6 +124,7 @@ export function GroupChat({ group }: { group: Group }) {
 
   const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
     const isCurrentUser = item.sender === user?.id;
+    const isSystemMessage = item.is_system;
     const showDateHeader =
       index === 0 ||
       formatDate(messages[index - 1].timestamp) !== formatDate(item.timestamp);
@@ -131,6 +132,70 @@ export function GroupChat({ group }: { group: Group }) {
     const bubbleColors = getBubbleColors(isCurrentUser);
     const isLightMode = colors.background === '#FFFFFF' || colors.background === '#F6F8FA';
 
+    // Renderizar mensaje del sistema con un estilo diferente
+    if (isSystemMessage) {
+      // Parseamos el mensaje para reemplazar *texto* con texto en negrita
+      const formattedMessage = item.message.split('\n').map((line, i) => {
+        // Reemplazamos *texto* con texto en negrita
+        const parts = line.split(/(\*[^*]+\*)/g);
+        
+        return (
+          <Text key={i} style={[styles.systemMessageTextLine, { color: colors.text }]}>
+            {parts.map((part, j) => {
+              if (part.startsWith('*') && part.endsWith('*')) {
+                // Es negrita
+                return (
+                  <Text 
+                    key={j} 
+                    style={[styles.systemMessageBold, { color: colors.text }]}
+                  >
+                    {part.slice(1, -1)}
+                  </Text>
+                );
+              }
+              return <Text key={j}>{part}</Text>;
+            })}
+          </Text>
+        );
+      });
+
+      return (
+        <>
+          {showDateHeader && (
+            <View style={styles.dateHeaderContainer}>
+              <Text style={[styles.dateHeader, { color: colors.textSecondary }]}>
+                {formatDate(item.timestamp)}
+              </Text>
+            </View>
+          )}
+          <View style={styles.systemMessageContainer}>
+            <View 
+              style={[
+                styles.systemMessageBubble, 
+                { 
+                  backgroundColor: isLightMode ? 'rgba(255, 214, 10, 0.2)' : 'rgba(255, 214, 10, 0.15)',
+                  borderColor: isLightMode ? 'rgba(255, 214, 10, 0.5)' : 'rgba(255, 214, 10, 0.3)',
+                }
+              ]}
+            >
+              <View style={styles.systemMessageTextContainer}>
+                {formattedMessage}
+              </View>
+              <Text
+                style={[
+                  styles.messageTime,
+                  { color: colors.textSecondary, position: 'relative', marginTop: 4, textAlign: 'right' },
+                ]}
+              >
+                {formatTime(item.timestamp)}
+              </Text>
+            </View>
+          </View>
+        </>
+      );
+    }
+
+    // Resto del código para mensajes normales
     return (
       <>
         {showDateHeader && (
@@ -552,5 +617,28 @@ const styles = StyleSheet.create({
   fullScreenImage: {
     width: '100%',
     height: '100%',
+  },
+
+  // New styles for system messages
+  systemMessageContainer: {
+    alignItems: 'center',
+    marginVertical: 12,
+  },
+  systemMessageBubble: {
+    maxWidth: '90%',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  systemMessageTextContainer: {
+    alignItems: 'center',
+  },
+  systemMessageTextLine: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  systemMessageBold: {
+    fontWeight: 'bold',
   },
 });

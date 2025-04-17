@@ -334,7 +334,7 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
     try {
       const { data, error } = await supabase
         .from('chat_messages')
-        .select('*')
+        .select('id, group_id, sender, username, message, image, timestamp, is_system')
         .eq('group_id', groupId)
         .order('timestamp', { ascending: true });
       if (error) throw error;

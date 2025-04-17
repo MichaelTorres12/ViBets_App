@@ -18,12 +18,14 @@ export interface GroupMember {
 }
 
 export interface ChatMessage {
-  id: string;
-  sender: string;
-  avatar?: string;
-  message?: string;
-  image?: string;
+  id?: string;
+  group_id?: string;
+  sender: string | null;  // Puede ser null para mensajes del sistema
+  username: string;
+  message: string;
+  image?: string | null;
   timestamp: string;
+  is_system?: boolean;
 }
 
 export interface ChallengeTask {
