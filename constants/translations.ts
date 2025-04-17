@@ -255,8 +255,9 @@ type TranslationKey =
   | 'proofSubmitted'
   | 'youAlreadySubmitted'
   | 'voteRecorded'
-  | 'succesJoinChallenge'
+  | 'successJoinChallenge'
   | 'myChallengesCreated'
+  | 'joined'
 
   // Chat
   | 'typeAMessage'
@@ -591,8 +592,9 @@ export const translations: Translations = {
     proofSubmitted: 'Proof submitted',
     youAlreadySubmitted: 'You have already submitted your proof',
     voteRecorded: 'Vote recorded',
-    succesJoinChallenge: 'You have joined the challenge',
+    successJoinChallenge: 'You have joined the challenge',
     myChallengesCreated: 'Created by me',
+    joined: 'Joined',
 
     // Chat
     typeAMessage: 'Type a message...',
@@ -918,8 +920,9 @@ export const translations: Translations = {
     proofSubmitted: 'Prueba enviada',
     youAlreadySubmitted: 'Ya has enviado una prueba',
     voteRecorded: 'Voto registrado',
-    succesJoinChallenge: 'Te has unido el desafío',
+    successJoinChallenge: 'Te has unido el desafío',
     myChallengesCreated: 'Creados por mí',
+    joined: 'Unido',
 
     // Chat
     typeAMessage: 'Escribe un mensaje...',  

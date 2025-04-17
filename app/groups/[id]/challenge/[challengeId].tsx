@@ -1,3 +1,4 @@
+// app/groups/[id]/challenge/[challengeId].tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -95,7 +96,7 @@ export default function ChallengeDetailScreen() {
   }
 
   const isChallengeOpen = challenge.status === 'open';
-  const userAlreadyParticipates = challenge.participants?.some((p: any) => p.user_id === user?.id);
+  const userAlreadyParticipates = challenge.participants?.some((p: any) => p.userId === user?.id);
   const userAlreadySubmitted = challenge.justifications?.some((j: any) => j.user_id === user?.id);
 
   // Formatear fechas
@@ -105,13 +106,13 @@ export default function ChallengeDetailScreen() {
     return d.toLocaleDateString();
   }
   
-  const createdDate = formatDate(challenge.created_at);
-  const endDate = formatDate(challenge.end_date);
+  const createdDate = formatDate(challenge.createdAt);
+  const endDate = formatDate(challenge.endDate);
   const participantsCount = challenge.participants?.length || 0;
   // Calculamos el total de votos necesarios:
   const totalNeeded = Math.floor(participantsCount / 2) + 1;
   const totalPrize = challenge.totalPrize || challenge.initial_prize || 0;
-  const creatorName = getUsernameById(challenge.created_by);
+  const creatorName = getUsernameById(challenge.createdBy);
 
   // Función para subir imagen al bucket
   const uploadImage = async (uri: string, userId: string): Promise<string> => {
@@ -187,23 +188,51 @@ export default function ChallengeDetailScreen() {
   };
 
   // Función para votar en una justificación
-  const handleVote = async (justifId: string, approved: boolean) => {
-    try {
-      const { data, error } = await supabase
-        .from('challenge_votes')
-        .insert({
-          justification_id: justifId,
-          user_id: user.id,
-          approved,
-        });
-      if (error) throw error;
-      Alert.alert(t('thankYou') || 'Thank you', t('voteRecorded') || 'Your vote has been recorded.');
-      fetchGroupChallenges(groupId as string);
-    } catch (error) {
-      console.error('Error voting on justification:', error);
-      Alert.alert(t('error') || 'Error', t('couldNotRecordVote') || 'Could not record your vote.');
+// Función para votar en una justificación
+const handleVote = async (justifId: string, approved: boolean) => {
+  try {
+    /* 1) ¿Ya votó este usuario por esta justificación? */
+    const { data: existing } = await supabase
+      .from('challenge_votes')
+      .select('id')
+      .eq('justification_id', justifId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (existing) {
+      Alert.alert(
+        t('alreadyVoted') || 'You already voted',
+        t('onlyOneVote')  || 'You can vote only once per submission.'
+      );
+      return;
     }
-  };
+
+    /* 2) Inserta el voto */
+    const { error } = await supabase
+      .from('challenge_votes')
+      .insert(
+        { justification_id: justifId, user_id: user.id, approved },
+        { ignoreDuplicates: true }          // evita 23505 en taps rápidos
+      );
+
+    if (error) throw error;
+
+    Alert.alert(
+      t('thankYou')      || 'Thank you',
+      t('voteRecorded')  || 'Your vote has been recorded.'
+    );
+
+    /* 3) Refresca los datos para actualizar el contador */
+    fetchGroupChallenges(groupId as string);
+  } catch (err: any) {
+    console.error('Error voting on justification:', err);
+    Alert.alert(
+      t('error')               || 'Error',
+      t('couldNotRecordVote')  || 'Could not record your vote.'
+    );
+  }
+};
+
 
   // Función para seleccionar imagen de la galería
   const handleAttachImage = async () => {
@@ -364,7 +393,7 @@ export default function ChallengeDetailScreen() {
     return (
       <View style={{ gap: 8 }}>
         {participants.map((p: any) => {
-          const username = p.profile?.username || 'Unknown';
+          const username = p.username || 'Unknown';
           const initials = getInitials(username);
           return (
             <Card key={p.id} style={styles.participantCard} variant={isLight ? "elevated" : "default"}>

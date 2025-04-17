@@ -1,18 +1,24 @@
 // types/index.tsx
 import { ReactNode } from 'react';
 
+/* ------------------------------------------------------------------ */
+/*                                USERS                               */
+/* ------------------------------------------------------------------ */
 export interface User {
   id: string;
   username: string;
   email: string;
   avatar?: string;
-  coins: number; // Global coins (real money $1 = 1 coin)
+  coins: number;
   createdAt: string;
 }
 
+/* ------------------------------------------------------------------ */
+/*                                GROUPS                              */
+/* ------------------------------------------------------------------ */
 export interface GroupMember {
   userId: string;
-  username?: string;  // Make it optional in case we can't fetch the username
+  username?: string;
   groupCoins: number;
   joinedAt: string;
 }
@@ -20,88 +26,12 @@ export interface GroupMember {
 export interface ChatMessage {
   id?: string;
   group_id?: string;
-  sender: string | null;  // Puede ser null para mensajes del sistema
+  sender: string | null; // null → sistema
   username: string;
   message: string;
   image?: string | null;
   timestamp: string;
   is_system?: boolean;
-}
-
-export interface ChallengeTask {
-  id: string;
-  description: string;
-  progress: number;
-  total: number;
-  reward: string;
-  completed?: boolean;
-}
-
-export interface ChallengeLeaderboard {
-  rank: number;
-  name: string;
-  wins: number;
-  avatar: string;
-}
-
-export interface ChallengeParticipant {
-  name: string;
-  currentStreak: number;
-  bestStreak: number;
-  avatar: string;
-}
-
-export interface ChallengeCompleted {
-  name: string;
-  date: string;
-  betAmount: number;
-  avatar: string;
-}
-
-export interface ChallengeParticipation {
-  id: string;
-  challengeId: string;
-  userId: string;
-  username?: string;
-  avatar?: string;
-  blindAmount: number; // Entre 50-100 monedas
-  createdAt: string;
-}
-
-export interface ChallengeJustification {
-  id: string;
-  challengeId: string;
-  userId: string;
-  type: 'text' | 'image' ;
-  content: string; // Texto o URL del archivo
-  createdAt: string;
-  votes?: ChallengeVote[]; // Votos de los miembros
-}
-
-export interface ChallengeVote {
-  userId: string;
-  justificationId: string;
-  approved: boolean; // true = aprobado, false = rechazado
-  createdAt: string;
-}
-
-export interface Challenge {
-  id: string;
-  groupId: string; // Importante para filtrar por grupo
-  title: string;
-  description: string;
-  initialPrize: number;
-  status: 'open' | 'completed' | 'expired';
-  winner?: string; // ID del usuario ganador
-  endDate: string;
-  createdBy: string;
-  createdAt: string;
-  participants?: ChallengeParticipation[];
-  justifications?: ChallengeJustification[];
-  totalPrize?: number; // Campo calculado (initial + suma de blinds)
-  tasks: ChallengeTask[];
-  leaderboard?: ChallengeLeaderboard[];
-  completedBy?: ChallengeCompleted[];
 }
 
 export interface Group {
@@ -116,10 +46,62 @@ export interface Group {
   chatMessages?: ChatMessage[];
   challenges?: Challenge[];
   bets?: Bet[];
-  
 }
 
-export type BetType = 'binary' | 'multiple' | 'custom';
+/* ------------------------------------------------------------------ */
+/*                               CHALLENGES                           */
+/* ------------------------------------------------------------------ */
+export type ChallengeStatus = 'open' | 'completed' | 'expired';
+
+export interface ChallengeParticipation {
+  id: string;
+  challengeId: string;
+  userId: string;
+  username?: string;
+  avatar?: string;
+  blindAmount: number;
+  status: 'active' | 'won' | 'lost';
+  createdAt: string;
+}
+
+export interface ChallengeVote {
+  userId: string;
+  justificationId: string;
+  approved: boolean;
+  createdAt: string;
+}
+
+export interface ChallengeJustification {
+  id: string;
+  challengeId: string;
+  userId: string;
+  type: 'text' | 'image';
+  content: string;
+  createdAt: string;
+  votes?: ChallengeVote[];
+}
+
+export interface Challenge {
+  id: string;
+  groupId: string;
+  title: string;
+  description: string;
+  initialPrize: number;
+  finalPrize?: number;
+  status: ChallengeStatus;
+  winner?: string;
+  endDate: string;
+  settledAt?: string;
+  createdBy: string;
+  createdAt: string;
+  participants?: ChallengeParticipation[];
+  justifications?: ChallengeJustification[];
+  totalPrize?: number;
+}
+
+/* ------------------------------------------------------------------ */
+/*                                 BETS                               */
+/* ------------------------------------------------------------------ */
 export type BetStatus = 'open' | 'closed' | 'settled';
 export type ParticipationStatus = 'active' | 'won' | 'lost';
 
@@ -127,8 +109,18 @@ export interface BetOption {
   id: string;
   betId: string;
   text: string;
-  label: string;     // antes 'text'
-  odd: number;       // antes 'odds'
+  label: string;
+  odd: number;
+}
+
+export interface BetParticipation {
+  id: string;
+  betId: string;
+  userId: string;
+  optionId: string;
+  amount: number;
+  status: ParticipationStatus;
+  createdAt: string;
 }
 
 export interface Bet {
@@ -140,21 +132,8 @@ export interface Bet {
   status: BetStatus;
   endDate?: string;
   createdAt: string;
-  // Se llena tras hacer JOIN
   options?: BetOption[];
-  // Otros campos calculados (ej. betsCount, pot, etc.) si los deseas
-
-  participations?: any[];
+  participations?: BetParticipation[];
   userParticipation?: BetParticipation;
   settled_option?: string;
-}
-
-export interface BetParticipation {
-  id: string;
-  betId: string;
-  userId: string;
-  optionId: string;
-  amount: number;
-  status: ParticipationStatus;
-  createdAt: string;
 }
