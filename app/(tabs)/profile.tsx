@@ -26,7 +26,8 @@ import {
   Heart,
   Plus,
   Play,
-  Ban
+  Ban,
+  Clock
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
@@ -54,16 +55,29 @@ export default function ProfileScreen() {
     bet.participations?.some(p => (p.userId === user.id || p.user_id === user.id))
   );
   
-  const betsWon = userBets.filter(bet => 
-    bet.status === 'settled' && bet.winner === user.id
-  ).length;
+  const betsWon = userBets.filter(bet => {
+    if (bet.status !== 'settled' || !bet.settled_option) return false;
+    
+    // Encuentra la participación del usuario
+    const userPart = bet.participations?.find(p => 
+      p.userId === user.id || p.user_id === user.id
+    );
+    
+    // Si la opción elegida por el usuario es la opción ganadora
+    return userPart && (userPart.optionId === bet.settled_option || userPart.option_id === bet.settled_option);
+  }).length;
   
-  const betsLost = userBets.filter(bet => 
-    bet.status === 'settled' && 
-    bet.winner && 
-    bet.winner !== user.id &&
-    bet.participations?.some(p => p.userId === user.id || p.user_id === user.id)
-  ).length;
+  const betsLost = userBets.filter(bet => {
+    if (bet.status !== 'settled' || !bet.settled_option) return false;
+    
+    // Encuentra la participación del usuario
+    const userPart = bet.participations?.find(p => 
+      p.userId === user.id || p.user_id === user.id
+    );
+    
+    // Si la opción elegida por el usuario NO es la opción ganadora
+    return userPart && (userPart.optionId !== bet.settled_option && userPart.option_id !== bet.settled_option);
+  }).length;
   
   const userGroups = getUserGroups(user.id).length;
   
@@ -281,6 +295,46 @@ export default function ProfileScreen() {
               <ChevronRight size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           </Card>
+          
+          <Text style={[styles.menuTitle, { color: colors.text }]}>{t('importantInfo') || 'Información Importante'}</Text>
+          <Card style={[styles.menuCard, { 
+            backgroundColor: colors.card,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3 
+          }]}>
+            <View style={styles.infoItem}>
+              <View style={[styles.menuIcon, { backgroundColor: `${colors.warning}15` }]}>
+                <Clock size={20} color={colors.warning} />
+              </View>
+              <View style={styles.infoTextContainer}>
+                <Text style={[styles.infoTitle, { color: colors.text }]}>
+                  {t('challengeSettlement') || 'Liquidación de Retos'}
+                </Text>
+                <Text style={[styles.infoDescription, { color: colors.textSecondary }]}>
+                  {t('challengeSettlementInfo') || 'La adjudicación automática de retos y reparto de ganancias se realiza cada 30 minutos. Por favor tenga paciencia.'}
+                </Text>
+              </View>
+            </View>
+            
+            <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+            
+            <View style={styles.infoItem}>
+              <View style={[styles.menuIcon, { backgroundColor: `${colors.primary}15` }]}>
+                <Clock size={20} color={colors.primary} />
+              </View>
+              <View style={styles.infoTextContainer}>
+                <Text style={[styles.infoTitle, { color: colors.text }]}>
+                  {t('betSettlement') || 'Liquidación de Apuestas'}
+                </Text>
+                <Text style={[styles.infoDescription, { color: colors.textSecondary }]}>
+                  {t('betSettlementInfo') || 'La adjudicación automática de apuestas y reparto de ganancias se realiza cada 20 minutos. Por favor tenga paciencia.'}
+                </Text>
+              </View>
+            </View>
+          </Card>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -429,5 +483,23 @@ const styles = StyleSheet.create({
   menuDivider: {
     height: 1,
     marginHorizontal: 16,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 16,
+  },
+  infoTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  infoDescription: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

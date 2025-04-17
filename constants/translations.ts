@@ -338,6 +338,13 @@ type TranslationKey =
   | 'youWon'
   | 'youLost'
 
+  // New translations
+  | 'importantInfo'
+  | 'challengeSettlement'
+  | 'challengeSettlementInfo'
+  | 'betSettlement'
+  | 'betSettlementInfo'
+
 type Translations = {
   [key in Language]: {
     [key in TranslationKey]: string;
@@ -672,7 +679,14 @@ export const translations: Translations = {
 
     // New translations
     youWon: 'You Won!',
-    youLost: 'You Lost!'
+    youLost: 'You Lost!',
+
+    // New translations
+    importantInfo: 'Important Information',
+    challengeSettlement: 'Challenge Settlement',
+    challengeSettlementInfo: 'Automatic challenge settlement and prize distribution occurs every 30 minutes. Please be patient.',
+    betSettlement: 'Bet Settlement',
+    betSettlementInfo: 'Automatic bet settlement and prize distribution occurs every 20 minutes. Please be patient.'
   },
   es: {
     // Common
@@ -1000,7 +1014,14 @@ export const translations: Translations = {
 
     // New translations
     youWon: '¡Ganaste!',
-    youLost: '¡Perdiste!'
+    youLost: '¡Perdiste!',
+
+    // New translations
+    importantInfo: 'Información Importante',
+    challengeSettlement: 'Liquidación de Retos',
+    challengeSettlementInfo: 'La adjudicación automática de retos y reparto de ganancias se realiza cada 30 minutos. Por favor tenga paciencia.',
+    betSettlement: 'Liquidación de Apuestas', 
+    betSettlementInfo: 'La adjudicación automática de apuestas y reparto de ganancias se realiza cada 20 minutos. Por favor tenga paciencia.'
   }
 };
 
