@@ -1,3 +1,4 @@
+// app/groups/[id]/index.tsx
 import React, { useState, useCallback, useEffect } from 'react';
 import { 
   View, 

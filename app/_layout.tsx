@@ -11,6 +11,7 @@ import { useTheme } from '@/components/ThemeContext';
 import { useRouter } from 'expo-router';
 import { AuthProvider, useAuth } from '@/store/auth-context'; // <-- importamos el AuthProvider y el hook
 import { useGroupsStore } from '@/store/groups-store';         // si necesitas cargar grupos
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 // Este será tu componente que define la lógica principal
 function AppContent() {
@@ -42,7 +43,6 @@ function AppContent() {
   // Si quieres cargar grupos cuando tengas un usuario:
   const { fetchGroups } = useGroupsStore();
   
-  
   useEffect(() => {
     const init = async () => {
       // Revisa si ya vio onboarding
@@ -64,9 +64,9 @@ function AppContent() {
     }
   }, [user, fetchGroups]);
 
-  // Si estamos cargando (isLoading) o no sabemos si onboarding se completó => muestra loader o null
+  // Si estamos cargando (isLoading) o no sabemos si onboarding se completó => muestra pantalla de carga
   if (onboardingComplete === null || isLoading) {
-    return null; 
+    return <LoadingScreen />;
   }
 
   return (

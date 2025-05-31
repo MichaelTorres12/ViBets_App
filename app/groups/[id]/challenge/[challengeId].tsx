@@ -188,9 +188,9 @@ export default function ChallengeDetailScreen() {
   };
 
   // Función para votar en una justificación
-// Función para votar en una justificación
-const handleVote = async (justifId: string, approved: boolean) => {
-  try {
+  // Función para votar en una justificación
+  const handleVote = async (justifId: string, approved: boolean) => {
+    try {
     /* 1) ¿Ya votó este usuario por esta justificación? */
     const { data: existing } = await supabase
       .from('challenge_votes')
@@ -209,13 +209,13 @@ const handleVote = async (justifId: string, approved: boolean) => {
 
     /* 2) Inserta el voto */
     const { error } = await supabase
-      .from('challenge_votes')
+        .from('challenge_votes')
       .insert(
         { justification_id: justifId, user_id: user.id, approved },
         { ignoreDuplicates: true }          // evita 23505 en taps rápidos
       );
 
-    if (error) throw error;
+      if (error) throw error;
 
     Alert.alert(
       t('thankYou')      || 'Thank you',
@@ -223,7 +223,7 @@ const handleVote = async (justifId: string, approved: boolean) => {
     );
 
     /* 3) Refresca los datos para actualizar el contador */
-    fetchGroupChallenges(groupId as string);
+      fetchGroupChallenges(groupId as string);
   } catch (err: any) {
     console.error('Error voting on justification:', err);
     Alert.alert(
@@ -279,8 +279,8 @@ const handleVote = async (justifId: string, approved: boolean) => {
         <View style={styles.emptyStateContainer}>
           <FileText size={48} color={colors.textSecondary} style={{ marginBottom: 12 }} />
           <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
-            {t('noSubmissions') || 'No submissions yet.'}
-          </Text>
+          {t('noSubmissions') || 'No submissions yet.'}
+        </Text>
         </View>
       );
     }
@@ -308,8 +308,8 @@ const handleVote = async (justifId: string, approved: boolean) => {
                 <Text style={{ color: colors.primary, fontWeight: '600' }}>{getInitials(username)}</Text>
               </View>
               <View>
-                <Text style={[styles.submissionUser, { color: colors.text }]}>{username}</Text>
-                <Text style={[styles.submissionDate, { color: colors.textSecondary }]}>{createdAtStr}</Text>
+            <Text style={[styles.submissionUser, { color: colors.text }]}>{username}</Text>
+            <Text style={[styles.submissionDate, { color: colors.textSecondary }]}>{createdAtStr}</Text>
               </View>
             </View>
             {isApproved && (
@@ -323,18 +323,18 @@ const handleVote = async (justifId: string, approved: boolean) => {
           </View>
           
           <View style={{ marginVertical: 12 }}>
-            {justif.type === 'text' ? (
-              <Text style={[styles.submissionText, { color: colors.text }]}>{justif.content}</Text>
-            ) : (
+          {justif.type === 'text' ? (
+            <Text style={[styles.submissionText, { color: colors.text }]}>{justif.content}</Text>
+          ) : (
               <TouchableOpacity 
                 activeOpacity={0.9}
                 onPress={() => handleImagePress(justif.content)}
               >
-                <Image
-                  source={{ uri: justif.content }}
+            <Image
+              source={{ uri: justif.content }}
                   style={{ width: '100%', height: 200, borderRadius: 8 }}
-                  resizeMode="cover"
-                />
+              resizeMode="cover"
+            />
                 <View style={[styles.imageOverlay, { backgroundColor: `${colors.primary}20` }]}>
                   <Text style={[styles.imageHint, { color: colors.primary }]}>
                     {t('tapToEnlarge') || 'Tap to enlarge'}
@@ -351,27 +351,27 @@ const handleVote = async (justifId: string, approved: boolean) => {
               <ThumbsUp size={14} color={colors.primary} style={{ marginRight: 4 }} />
               <Text style={{ color: colors.primary, fontWeight: '500' }}>
                 {votesCount}/{threshold}
-              </Text>
+          </Text>
             </View>
             
-            {!isAuthor && isChallengeOpen && !alreadyVoted && (
-              <TouchableOpacity
-                style={[styles.voteButton, { backgroundColor: colors.primary }]}
-                onPress={() => handleVote(justif.id, true)}
-              >
+          {!isAuthor && isChallengeOpen && !alreadyVoted && (
+            <TouchableOpacity
+              style={[styles.voteButton, { backgroundColor: colors.primary }]}
+              onPress={() => handleVote(justif.id, true)}
+            >
                 <ThumbsUp size={16} color="#000" style={{ marginRight: 6 }} />
-                <Text style={{ fontWeight: '600', color: '#000' }}>
+              <Text style={{ fontWeight: '600', color: '#000' }}>
                   {t('vote') || 'Vote'}
-                </Text>
-              </TouchableOpacity>
-            )}
+              </Text>
+            </TouchableOpacity>
+          )}
             
-            {alreadyVoted && (
+          {alreadyVoted && (
               <Text style={[styles.votedText, { color: colors.primary }]}>
                 {t('youVoted') || 'You voted'}
-              </Text>
-            )}
-          </View>
+            </Text>
+          )}
+        </View>
         </Card>
       );
     });
@@ -385,8 +385,8 @@ const handleVote = async (justifId: string, approved: boolean) => {
         <View style={styles.emptyStateContainer}>
           <Users size={48} color={colors.textSecondary} style={{ marginBottom: 12 }} />
           <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
-            {t('noParticipants') || 'No participants yet.'}
-          </Text>
+          {t('noParticipants') || 'No participants yet.'}
+        </Text>
         </View>
       );
     }
@@ -400,9 +400,9 @@ const handleVote = async (justifId: string, approved: boolean) => {
               <View style={styles.participantRow}>
                 <View style={[styles.participantAvatar, { backgroundColor: isLight ? `${colors.primary}20` : colors.cardLight }]}>
                   <Text style={{ color: colors.primary, fontWeight: '600' }}>{initials}</Text>
-                </View>
-                <Text style={[styles.participantName, { color: colors.text }]}>{username}</Text>
               </View>
+              <Text style={[styles.participantName, { color: colors.text }]}>{username}</Text>
+            </View>
             </Card>
           );
         })}
@@ -526,7 +526,7 @@ const handleVote = async (justifId: string, approved: boolean) => {
                     {endDate}
                   </Text>
                 </View>
-              </View>
+            </View>
             </View>
           </View>
 
@@ -561,7 +561,7 @@ const handleVote = async (justifId: string, approved: boolean) => {
                   {t('submitProof') || 'Submit your proof'}
                 </Text>
                 
-                <View style={styles.typeRow}>
+            <View style={styles.typeRow}>
                   <TouchableOpacity
                     style={[styles.typeButton, { 
                       backgroundColor: justificationType === 'text' ? colors.primary : 'transparent',
@@ -579,7 +579,7 @@ const handleVote = async (justifId: string, approved: boolean) => {
                     </Text>
                   </TouchableOpacity>
                   
-                  <TouchableOpacity
+                <TouchableOpacity
                     style={[styles.typeButton, { 
                       backgroundColor: justificationType === 'image' ? colors.primary : 'transparent',
                       borderColor: colors.primary,
@@ -594,10 +594,10 @@ const handleVote = async (justifId: string, approved: boolean) => {
                     }}>
                       {t('image') || 'Image'}
                     </Text>
-                  </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
+            </View>
 
-                {justificationType === 'image' && (
+            {justificationType === 'image' && (
                   <TouchableOpacity 
                     style={[styles.attachButton, { 
                       backgroundColor: isLight ? `${colors.primary}10` : colors.cardLight,
@@ -608,32 +608,32 @@ const handleVote = async (justifId: string, approved: boolean) => {
                     <Text style={{ color: colors.primary, fontWeight: '500' }}>
                       {t('attachImage') || 'Attach Image'}
                     </Text>
-                  </TouchableOpacity>
-                )}
+              </TouchableOpacity>
+            )}
 
-                <View style={styles.textAreaContainer}>
-                  <TextInput
+            <View style={styles.textAreaContainer}>
+              <TextInput
                     style={[styles.textArea, { 
                       color: colors.text, 
                       borderColor: colors.border,
                       backgroundColor: isLight ? colors.card : colors.cardLight,
                     }]}
-                    placeholder={
-                      justificationType === 'text'
-                        ? t('describeProof') || 'Describe your proof...'
+                placeholder={
+                  justificationType === 'text'
+                    ? t('describeProof') || 'Describe your proof...'
                         : t('imagePlaceholder') || 'Add a description for your image (optional)'
-                    }
-                    placeholderTextColor={colors.textTertiary}
-                    value={justificationContent}
-                    onChangeText={setJustificationContent}
-                    multiline
-                    numberOfLines={4}
-                  />
-                </View>
+                }
+                placeholderTextColor={colors.textTertiary}
+                value={justificationContent}
+                onChangeText={setJustificationContent}
+                multiline
+                numberOfLines={4}
+              />
+            </View>
 
-                {/* Previsualización de imagen si se seleccionó */}
-                {localImageUri && (
-                  <View style={styles.previewContainer}>
+            {/* Previsualización de imagen si se seleccionó */}
+            {localImageUri && (
+              <View style={styles.previewContainer}>
                     <View style={[styles.previewImageWrapper, { borderColor: colors.border }]}>
                       <Image source={{ uri: localImageUri }} style={styles.previewImage} resizeMode="cover" />
                       <TouchableOpacity 
@@ -641,10 +641,10 @@ const handleVote = async (justifId: string, approved: boolean) => {
                         onPress={() => setLocalImageUri(null)}
                       >
                         <XCircle size={20} color={colors.error} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
                 <TouchableOpacity 
                   style={[styles.submitBtn, { backgroundColor: colors.primary }]} 

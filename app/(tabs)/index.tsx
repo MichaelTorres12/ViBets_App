@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -30,20 +31,47 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { colors } = useTheme(); // Usa el hook de tema para obtener los colores actuales
 
+  // Estados de carga
+  const [loadingBets, setLoadingBets] = useState(true);
+  const [loadingGroups, setLoadingGroups] = useState(true);
+  
+  // Referencias para controlar si ya se han cargado datos
+  const betsLoadedRef = useRef(false);
+  const groupsLoadedRef = useRef(false);
+
   const { fetchUserBets, bets } = useBetsStore();
   const { getUserGroups, getGroupById } = useGroupsStore();
 
+  // Carga inicial de datos
   useEffect(() => {
-    if (user) {
-      fetchUserBets(user.id);
+    if (user && !betsLoadedRef.current) {
+      setLoadingBets(true);
+      fetchUserBets(user.id)
+        .finally(() => {
+          setLoadingBets(false);
+          betsLoadedRef.current = true;
+        });
+    }
+    
+    if (user && !groupsLoadedRef.current) {
+      setLoadingGroups(true);
+      Promise.resolve(getUserGroups(user.id))
+        .finally(() => {
+          setLoadingGroups(false);
+          groupsLoadedRef.current = true;
+        });
     }
   }, [user, fetchUserBets]);
 
+  // Solo actualizamos si los datos han cambiado pero no mostramos el indicador de carga
   useFocusEffect(
     useCallback(() => {
-      if (user) {
+      if (user && betsLoadedRef.current) {
+        // Actualización silenciosa sin mostrar indicador de carga
         fetchUserBets(user.id);
       }
+      
+      // No es necesario hacer nada con los grupos ya que se actualizan automáticamente
     }, [user, fetchUserBets])
   );
 
@@ -102,8 +130,8 @@ export default function HomeScreen() {
             source={require('../../assets/images/vibets-icon.png')}
             style={styles.logoImage}
           />
-          <Text style={[styles.logoText, { color: colors.text }]}>Vi</Text>
-          <Text style={[styles.logoTextSecondary, { color: colors.primary }]}>Bets</Text>
+          <Text style={[styles.logoTextSecondary, { color: colors.primary }]}>Goat</Text>
+          <Text style={[styles.logoText, { color: colors.text }]}>ify</Text>
         </View>
         <View style={styles.headerActions}>
           {/**
@@ -147,7 +175,11 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {recentBets.length > 0 ? (
+      {loadingBets ? (
+        <Card style={[styles.loadingCard, { backgroundColor: colors.card }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </Card>
+      ) : recentBets.length > 0 ? (
         <FlatList
           data={recentBets}
           horizontal
@@ -197,7 +229,11 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {userGroups.length > 0 ? (
+      {loadingGroups ? (
+        <Card style={[styles.loadingCard, { backgroundColor: colors.card }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </Card>
+      ) : userGroups.length > 0 ? (
         <View>
           {userGroups.slice(0, 2).map((group) => (
             <GroupCard
@@ -388,5 +424,20 @@ const styles = StyleSheet.create({
   gradientPillText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  loadingCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 30,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    minHeight: 120,
   },
 });

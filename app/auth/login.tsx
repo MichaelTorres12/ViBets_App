@@ -49,8 +49,8 @@ export default function LoginScreen() {
             source={require('../../assets/images/vibets-icon.png')}
             style={styles.logoImage}
           />
-          <Text style={styles.logoText}>Vi</Text>
-          <Text style={styles.logoText}>Bets</Text>
+          <Text style={[styles.logoText, { color: colors.primary }]}>Goat</Text>
+          <Text style={[styles.logoText, { color: colors.text }]}>ify</Text>
         </View>
 
         <View style={styles.header}>

@@ -74,7 +74,7 @@ export default function SettingsScreen() {
 
   const handleContactUs = () => {
     const email = 'vibetsapp@gmail.com';
-    const subject = encodeURIComponent(t('contactSubject') || 'Consulta desde ViBets App');
+    const subject = encodeURIComponent(t('contactSubject') || 'Consulta desde Goatify App');
     const body = encodeURIComponent(t('contactBody') || 'Hola, me gustaría hablar sobre...');
     
     const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
@@ -121,8 +121,8 @@ export default function SettingsScreen() {
           source={require('../assets/images/vibets-icon.png')}
           style={styles.logoImage}
         />
-        <Text style={[styles.logoText, { color: colors.text }]}>Vi</Text>
-        <Text style={[styles.logoTextSecondary, { color: colors.primary }]}>Bets</Text>
+          <Text style={[styles.logoTextSecondary, { color: colors.primary }]}>Goat</Text>
+          <Text style={[styles.logoText, { color: colors.text }]}>ify</Text>
       </View>
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

@@ -112,6 +112,8 @@ type TranslationKey =
   | 'left'
   | 'noEndDate'   
   | 'joinGroupDescription'
+  | 'createGroupDescription'
+  | 'invalidInviteCode'
   
   // Bets
   | 'bets'
@@ -383,7 +385,7 @@ export const translations: Translations = {
     ok: 'OK',
     thankYou: 'Thank you!',
     tapToEnlarge: 'Tap to enlarge',
-
+    
     // Auth
     login: 'Login',
     register: 'Register',
@@ -470,8 +472,8 @@ export const translations: Translations = {
     left: 'Left',
     noEndDate: 'No end date',
     joinGroupDescription: 'Join a group to start betting and competing with your friends!',
-
-
+    createGroupDescription: 'Create a group to start betting and competing with your friends!',
+    invalidInviteCode: 'Invalid invite code',
     // Bets
     bets: 'Bets',
     activeBets: 'Active Bets',
@@ -553,7 +555,7 @@ export const translations: Translations = {
   asWinner: 'As Winner',
   confirmWinningOptionMessage: 'Are you sure you want to set this option as the winning option?',
   winningOptionSet: 'Winning option set',
-
+    
 
     // Challenges
     challengeTitle: 'Challenge Title',
@@ -674,7 +676,7 @@ export const translations: Translations = {
 
     // Onboarding
     onboardingTitle1: 'Friendly Betting',
-    onboardingSubtitle1: 'ViBets allows you to create and participate in friendly bets of any kind. From sporting events to personal predictions, everything is recorded without using real money (for now 😉)',
+    onboardingSubtitle1: 'Goatify allows you to create and participate in friendly bets of any kind. From sporting events to personal predictions, everything is recorded without using real money (for now 😉)',
     onboardingTitle2: 'Create Groups and Compete',
     onboardingSubtitle2: 'Form groups with your friends, family or colleagues. Create custom bets and launch fun challenges on any event. From sports matches to personal predictions, everything goes in the competition to be the best!',
     onboardingTitle3: 'Track Your Stats',
@@ -811,6 +813,9 @@ export const translations: Translations = {
     left: 'Faltan',
     noEndDate: 'No hay fecha de fin',
     joinGroupDescription: 'Únete a un grupo para empezar a apostar y competir con tus amigos!',
+    createGroupDescription: 'Crea un grupo para empezar a apostar y competir con tus amigos!',
+    invalidInviteCode: 'Código de invitación inválido',
+    
     // Bets
     bets: 'Apuestas',
     activeBets: 'Apuestas Activas',
@@ -1015,7 +1020,7 @@ export const translations: Translations = {
 
     // Onboarding
     onboardingTitle1: 'Apuestas Entre Amigos',
-    onboardingSubtitle1: 'ViBets te permite crear y participar en apuestas amistosas de cualquier tipo. Desde eventos deportivos hasta predicciones personales, todo queda registrado sin usar dinero real (Por el momento 😉)',
+    onboardingSubtitle1: 'Goatify te permite crear y participar en apuestas amistosas de cualquier tipo. Desde eventos deportivos hasta predicciones personales, todo queda registrado sin usar dinero real (Por el momento 😉)',
     onboardingTitle2: 'Crea Grupos y Compite',
     onboardingSubtitle2: 'Forma grupos con tus amigos, familiares o colegas. Crea apuestas personalizadas y lanza retos divertidos sobre cualquier evento. Desde partidos deportivos hasta predicciones personales, ¡todo vale en la competencia por ser el mejor!',
     onboardingTitle3: 'Sigue tus Estadísticas',
