@@ -7,7 +7,7 @@
     "start-web": "expo start --web --tunnel",
     "start-web-dev": "DEBUG=expo* expo start --web --tunnel",
     "android": "expo start --android",
-    "ios": "expor srart --ios"
+    "ios": "expo start --ios"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
