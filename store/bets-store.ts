@@ -15,7 +15,7 @@ interface BetsState {
   getBetParticipations: (betId: string) => BetParticipation[];
   getUserParticipationInBet: (betId: string, userId: string) => BetParticipation | undefined;
 
-  // Apuestas
+  // Predicciones
   fetchBets: (groupId: string) => Promise<void>;
   participateInBet: (betId: string, userId: string, optionId: string, amount: number) => Promise<void>;
   settleBet: (betId: string, winningOptionId: string) => Promise<void>;
@@ -130,9 +130,9 @@ export const useBetsStore = create<BetsState>((set, get) => ({
         return;
       }
       
-      // Dos tipos de apuestas relevantes para el usuario:
-      // 1. Apuestas donde el usuario es el ganador (winner === userId)
-      // 2. Apuestas donde el usuario ha participado
+      // Dos tipos de predicciones relevantes para el usuario:
+      // 1. Predicciones donde el usuario es el ganador (winner === userId)
+      // 2. Predicciones donde el usuario ha participado
       const userBets = data.filter((bet: any) =>
         bet.winner === userId || 
         (bet.bet_participations && bet.bet_participations.some((p: any) => p.user_id === userId))

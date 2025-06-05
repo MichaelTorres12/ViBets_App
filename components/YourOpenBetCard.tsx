@@ -62,7 +62,7 @@ export function YourOpenBetCard({
   // 4. Participantes
   const participantsCount = bet.participations?.length || 0;
 
-  // 5. Apuesta del usuario
+  // 5. Predicción del usuario
   const userBetAmount = userParticipation?.amount || 0;
 
   // 6. Progreso (opcional) - basado en tiempo transcurrido vs. total

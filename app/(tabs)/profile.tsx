@@ -255,7 +255,7 @@ export default function ProfileScreen() {
                 <View style={[styles.menuIcon, { backgroundColor: `${colors.secondary}15` }]}>
                   <Trophy size={20} color={colors.secondary} />
                 </View>
-                <Text style={[styles.menuItemText, { color: colors.text }]}>{t('myBets') || 'Mis Apuestas'}</Text>
+                <Text style={[styles.menuItemText, { color: colors.text }]}>{t('myBets') || 'Mis Predicciones'}</Text>
               </View>
               <View style={styles.menuItemRight}>
                 <Text style={[styles.menuItemValue, { color: colors.primary }]}>{userBets.length}</Text>
@@ -327,7 +327,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.infoTextContainer}>
                 <Text style={[styles.infoTitle, { color: colors.text }]}>
-                  {t('betSettlement') || 'Liquidación de Apuestas'}
+                  {t('betSettlement') || 'Liquidación de Predicciones'}
                 </Text>
                 <Text style={[styles.infoDescription, { color: colors.textSecondary }]}>
                   {t('betSettlementInfo') || 'La adjudicación automática de apuestas y reparto de ganancias se realiza cada 20 minutos. Por favor tenga paciencia.'}

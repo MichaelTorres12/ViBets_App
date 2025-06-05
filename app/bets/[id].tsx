@@ -47,7 +47,7 @@ export default function BetDetailScreen() {
   if (!bet) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.text }}>Bet not found</Text>
+        <Text style={{ color: colors.text }}>Prediction not found</Text>
       </View>
     );
   }
@@ -61,16 +61,16 @@ export default function BetDetailScreen() {
     
     const amount = parseInt(betAmount, 10);
     if (isNaN(amount) || amount <= 0) {
-      setError('Please enter a valid bet amount');
+      setError('Please enter a valid prediction amount');
       return;
     }
     
     try {
       await participateInBet(id, user.id, selectedOption, amount);
-      Alert.alert('Success', 'Your bet has been placed!');
+      Alert.alert('Success', 'Your prediction has been placed!');
     } catch (error) {
-      console.error('Error placing bet:', error);
-      Alert.alert('Error', 'Failed to place bet. Please try again.');
+      console.error('Error placing prediction:', error);
+      Alert.alert('Error', 'Failed to place prediction. Please try again.');
     }
   };
   
@@ -79,16 +79,16 @@ export default function BetDetailScreen() {
     
     try {
       await settleBet(id, optionId);
-      Alert.alert('Success', 'Bet has been settled!');
+      Alert.alert('Success', 'Prediction has been settled!');
     } catch (error) {
-      console.error('Error settling bet:', error);
-      Alert.alert('Error', 'Failed to settle bet. Please try again.');
+      console.error('Error settling prediction:', error);
+      Alert.alert('Error', 'Failed to settle prediction. Please try again.');
     }
   };
   
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Stack.Screen options={{ title: 'Bet Details' }} />
+      <Stack.Screen options={{ title: 'Prediction Details' }} />
       <ScrollView style={styles.scrollView}>
         <Text style={[styles.title, { color: colors.text }]}>{bet.title}</Text>
         
@@ -146,7 +146,7 @@ export default function BetDetailScreen() {
                   style={[styles.settleButton, { backgroundColor: colors.primary }]}
                   onPress={() => {
                     Alert.alert(
-                      'Settle Bet',
+                      'Settle Prediction',
                       `Are you sure "${option.text}" is the winning option?`,
                       [
                         { text: 'Cancel', style: 'cancel' },
@@ -164,12 +164,12 @@ export default function BetDetailScreen() {
         
         {canParticipate && (
           <View style={styles.placeBetContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Place Your Bet</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Place Your Prediction</Text>
             
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
             
             <Input
-              label="Bet Amount (Coins)"
+              label="Prediction Amount (Coins)"
               value={betAmount}
               onChangeText={setBetAmount}
               keyboardType="numeric"
@@ -177,7 +177,7 @@ export default function BetDetailScreen() {
             />
             
             <Button
-              title={userParticipation ? "Update Bet" : "Place Bet"}
+              title={userParticipation ? "Update Prediction" : "Place Prediction"}
               onPress={handlePlaceBet}
               isLoading={loading}
               disabled={!selectedOption}
@@ -190,7 +190,7 @@ export default function BetDetailScreen() {
         
         {participations.length === 0 ? (
           <Text style={[styles.noDataText, { color: colors.textSecondary }]}>
-            No one has placed a bet yet
+            No one has placed a prediction yet
           </Text>
         ) : (
           participations.map((participation) => {
@@ -201,7 +201,7 @@ export default function BetDetailScreen() {
                   User {participation.userId.substring(0, 8)}
                 </Text>
                 <Text style={[styles.participationDetails, { color: colors.textSecondary }]}>
-                  Bet {participation.amount} coins on "{option?.text}"
+                  Prediction {participation.amount} coins on "{option?.text}"
                 </Text>
                 {bet.status === 'settled' && (
                   <Text
