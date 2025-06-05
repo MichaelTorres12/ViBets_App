@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/services/supabaseClient';
 import { Group, GroupMember, ChatMessage, Challenge } from '@/types';
+import { sendPushNotifications } from '@/services/notificationService';
 
 interface GroupsState {
   groups: Group[];
@@ -321,6 +322,30 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         .from('chat_messages')
         .insert([{ group_id: groupId, ...message }]);
       if (error) throw error;
+
+      // Enviar notificaciones push a los miembros del grupo (excepto el remitente)
+      try {
+        const { data: members } = await supabase
+          .from('group_members')
+          .select('user_id, profiles(expo_push_token)')
+          .eq('group_id', groupId);
+
+        const tokens = (members || [])
+          .filter((m: any) => m.user_id !== message.sender)
+          .map((m: any) => m.profiles?.expo_push_token)
+          .filter((t: string | null) => !!t);
+
+        if (tokens.length) {
+          const group = get().getGroupById(groupId);
+          const title = group ? `Nuevo mensaje en ${group.name}` : 'Nuevo mensaje';
+          const body = message.message
+            ? `${message.username}: ${message.message}`
+            : `${message.username} envió una imagen`;
+          await sendPushNotifications(tokens, title, body, { groupId });
+        }
+      } catch (notifyError) {
+        console.error('Error sending push notifications:', notifyError);
+      }
     } catch (error: any) {
       set({ error: error.message });
       throw error;

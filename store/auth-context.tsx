@@ -3,6 +3,7 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import * as SecureStore from 'expo-secure-store';
 import { supabase } from '@/services/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
+import { registerForPushNotificationsAsync } from '@/services/notificationService';
 
 // Claves para almacenamiento seguro
 const AUTH_TOKEN_KEY = 'auth-token';
@@ -257,6 +258,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     removeSessionToken,
     saveSessionToken,
   ]);
+
+  // Registrar token de notificaciones cuando haya un usuario
+  useEffect(() => {
+    if (user) {
+      registerForPushNotificationsAsync(user.id);
+    }
+  }, [user]);
 
   // --------------------------------
   // Retornar el AuthContext
