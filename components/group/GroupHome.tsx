@@ -104,7 +104,7 @@ export function GroupHome({ group, userGroupCoins }: GroupHomeProps) {
           <View>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('recentBets') || 'Recent Bets'}
+                {t('recentBets') || 'Recent Predictions'}
               </Text>
               
               <TouchableOpacity onPress={() => router.push(`/groups/${group.id}?tab=bets`)}>
@@ -114,10 +114,10 @@ export function GroupHome({ group, userGroupCoins }: GroupHomeProps) {
               </TouchableOpacity>
             </View>
 
-            {/* Botón Crear Apuesta */}
+            {/* Botón Crear Predicción */}
             <TouchableOpacity style={styles.newBetButton} onPress={handleCreateBet}>
               <Plus size={16} color="#000" />
-              <Text style={styles.newBetButtonText}>{t('newBet') || 'New Bet'}</Text>
+              <Text style={styles.newBetButtonText}>{t('newBet') || 'New Prediction'}</Text>
             </TouchableOpacity>
 
             {/* Lista de apuestas recientes */}

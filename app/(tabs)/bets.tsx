@@ -165,15 +165,15 @@ export default function BetsScreen() {
       profitByMonth: [100, 200, -50, 300, 150, 250],
     };
     
-    // Filtrar apuestas en las que el usuario participó
+    // Filtrar predicciones en las que el usuario participó
     const userBets = bets.filter(bet => 
       bet.participations?.some(p => (p.userId === user.id || p.user_id === user.id))
     );
     
-    // Apuestas activas en las que el usuario participó
+    // Predicciones activas en las que el usuario participó
     const active = userBets.filter(bet => bet.status === 'open').length;
     
-    // Apuestas que ganó el usuario (donde su opción coincide con la opción ganadora)
+    // Predicciones que ganó el usuario (donde su opción coincide con la opción ganadora)
     const won = userBets.filter(bet => {
       if (bet.status !== 'settled' || !bet.settled_option) return false;
       
@@ -186,7 +186,7 @@ export default function BetsScreen() {
       return userPart && (userPart.optionId === bet.settled_option || userPart.option_id === bet.settled_option);
     }).length;
     
-    // Apuestas perdidas por el usuario
+    // Predicciones perdidas por el usuario
     const lost = userBets.filter(bet => {
       if (bet.status !== 'settled' || !bet.settled_option) return false;
       
@@ -280,7 +280,7 @@ export default function BetsScreen() {
         filtered = filtered.filter(bet => bet.status === 'open');
         break;
       case 'won':
-        // Apuestas donde el usuario es explícitamente el ganador
+        // Predicciones donde el usuario es explícitamente el ganador
         filtered = filtered.filter(bet => {
           if (bet.status !== 'settled' || !bet.settled_option) return false;
           
@@ -294,7 +294,7 @@ export default function BetsScreen() {
         });
         break;
       case 'lost':
-        // Apuestas donde el usuario participó pero no ganó
+        // Predicciones donde el usuario participó pero no ganó
         filtered = filtered.filter(bet => {
           if (bet.status !== 'settled' || !bet.settled_option) return false;
           
@@ -725,7 +725,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     transform: [{ translateX: -4 }, { translateY: 4 }],
   },
-  // Estilos para la vista de Mis Apuestas
+  // Estilos para la vista de Mis Predicciones
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

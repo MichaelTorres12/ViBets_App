@@ -203,11 +203,11 @@ export default function HomeScreen() {
       ) : (
         <Card style={[styles.emptyCard, { backgroundColor: colors.card }]}>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {t('noYourOpenBets') || 'You have no open bets yet.'}
+            {t('noYourOpenBets') || 'You have no open predictions yet.'}
           </Text>
           {userGroups.length > 0 && (
             <Button
-              title={t('createBet') || 'Create Bet'}
+              title={t('createBet') || 'Create Prediction'}
               onPress={() => router.push(`/groups/${userGroups[0]?.id}/create-bet`)}
             />
           )}

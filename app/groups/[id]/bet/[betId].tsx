@@ -128,7 +128,7 @@ export default function BetDetailScreen() {
       return creatorMember.username;
     }
     // fallback:
-    return t('betCreator') || 'Bet Creator';
+    return t('betCreator') || 'Prediction Creator';
   };
 
   const isBetOpen = bet.status === 'open';
@@ -151,11 +151,11 @@ export default function BetDetailScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       await betsStore.participateInBet(betId, user.id, selectedOption, amount);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setSuccessMessage(t('betPlacedSuccess') || "¡Apuesta realizada con éxito!");
+      setSuccessMessage(t('betPlacedSuccess') || "¡Predicción realizada con éxito!");
       router.push(`/groups/${id}?tab=bets`);
     } catch (error) {
-      console.error('Error al colocar apuesta:', error);
-      setErrorMessage(t('betPlaceError') || "Error al colocar apuesta");
+      console.error('Error al colocar predicción:', error);
+      setErrorMessage(t('betPlaceError') || "Error al colocar predicción");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsSubmitting(false);
@@ -245,7 +245,7 @@ export default function BetDetailScreen() {
               <View style={styles.betTypeBadge}>
                 <Trophy size={14} color="#000" />
                 <Text style={styles.betTypeText}>
-                  {bet.options?.length === 2 ? 'Binary Bet' : 'Multiple Bet'}
+                  {bet.options?.length === 2 ? 'Binary Prediction' : 'Multiple Prediction'}
                 </Text>
               </View>
               <Text style={[styles.groupName, { color: colors.textSecondary }]}>
@@ -514,7 +514,7 @@ export default function BetDetailScreen() {
           {bet.settledOption && (
             <Card style={styles.resultCard} variant="elevated">
               <Text style={[styles.resultTitle, { color: colors.text }]}>
-                {t('betResult') || 'Bet Result'}
+                {t('betResult') || 'Prediction Result'}
               </Text>
               
               <View style={[styles.winnerBox, { backgroundColor: `${colors.success}15` }]}>

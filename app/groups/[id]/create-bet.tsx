@@ -95,7 +95,7 @@ export default function CreateBetScreen() {
         })),
       });
       
-      Alert.alert('Success', 'Bet created successfully!');
+      Alert.alert('Success', 'Prediction created successfully!');
       router.back();
     } catch (error) {
       console.error('Error creating bet:', error);
@@ -142,8 +142,8 @@ export default function CreateBetScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen 
-        options={{ 
-          title: 'Create Bet',
+        options={{
+          title: 'Create Prediction',
         }} 
       />
       
@@ -242,7 +242,7 @@ export default function CreateBetScreen() {
         </Card>
 
         <Button
-          title="Create Bet"
+          title="Create Prediction"
           onPress={handleCreateBet}
           style={styles.createButton}
         />

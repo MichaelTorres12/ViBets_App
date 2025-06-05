@@ -182,7 +182,7 @@ export function GroupBets({ group }: GroupBetsProps) {
       >
         <Plus size={18} color={colors.textInverted} />
         <Text style={[styles.emptyButtonText, { color: colors.textInverted }]}>
-          {t('createBet') || 'Crear Apuesta'}
+          {t('createBet') || 'Crear Predicción'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -206,7 +206,7 @@ export function GroupBets({ group }: GroupBetsProps) {
               styles.tabText,
               { color: activeTab === 'bets' ? colors.primary : colors.textSecondary }
             ]}>
-              {t('bets') || 'Apuestas'}
+              {t('bets') || 'Predicciones'}
             </Text>
           </TouchableOpacity>
           
@@ -259,7 +259,7 @@ export function GroupBets({ group }: GroupBetsProps) {
             >
               <Plus size={16} color={colors.textInverted} />
               <Text style={[styles.newBetButtonText, { color: colors.textInverted }]}>
-                {t('newBet') || 'New Bet'}
+                {t('newBet') || 'New Prediction'}
               </Text>
             </TouchableOpacity>
           </View>
